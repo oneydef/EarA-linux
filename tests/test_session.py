@@ -2,6 +2,7 @@ import socket
 import unittest
 from unittest.mock import MagicMock, patch
 
+from eara import bluez
 from eara.models import model_from_name, model_from_serial
 from eara.session import Device
 
@@ -49,6 +50,16 @@ class SessionTests(unittest.TestCase):
         recv.assert_called_once()
         self.assertEqual(recv.call_args.kwargs.get("seq"), 42)
         self.assertEqual(out, b"ok")
+
+    def test_shutdown_disconnects_and_powers_off(self):
+        device = Device("AA:BB:CC:DD:EE:FF", "Nothing Ear (a)")
+        with patch.object(device, "close_control") as close_ctl:
+            with patch.object(bluez, "disconnect") as disconnect:
+                with patch.object(bluez, "power_off") as power_off:
+                    device.shutdown()
+        close_ctl.assert_called_once()
+        disconnect.assert_called_once_with("AA:BB:CC:DD:EE:FF")
+        power_off.assert_called_once()
 
 
 if __name__ == "__main__":

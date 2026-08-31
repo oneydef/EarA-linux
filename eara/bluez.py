@@ -96,6 +96,12 @@ def power_on() -> None:
         raise RuntimeError(recover_hint() + (f"\n({out.strip()})" if out.strip() else ""))
 
 
+def power_off() -> None:
+    if "Powered: no" in _ctl("show"):
+        return
+    _ctl("power", "off")
+
+
 def _device_path(address: str) -> str:
     mac = "dev_" + address.replace(":", "_")
     try:

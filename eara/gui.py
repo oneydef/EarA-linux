@@ -740,7 +740,9 @@ class EarAWindow(Adw.ApplicationWindow):
             pass
 
         self._header_active = "connect"
+        self._shutting_down = False
         self.connect("notify::is-active", self._on_active_changed)
+        self.connect("close-request", self._on_close_request)
         self._update_focus_class()
 
         self.header = Adw.HeaderBar()
@@ -1561,6 +1563,22 @@ class EarAWindow(Adw.ApplicationWindow):
         }
         GLib.idle_add(lambda: self._show(t("disconnect_ok")) or False)
 
+    def _shutdown_bluetooth(self) -> None:
+        if self._shutting_down:
+            return
+        self._shutting_down = True
+        if self.device:
+            self.device.shutdown()
+        else:
+            try:
+                bluez.power_off()
+            except Exception:
+                pass
+
+    def _on_close_request(self, *_args) -> bool:
+        self._shutdown_bluetooth()
+        return False
+
     def _do_refresh(self) -> None:
         self._last = self._require().status()
 
@@ -1802,6 +1820,12 @@ class EarAWindow(Adw.ApplicationWindow):
 class EarAApp(Adw.Application):
     def __init__(self) -> None:
         super().__init__(application_id="io.github.oneydef.eara")
+
+    def do_shutdown(self) -> None:  # noqa: N802
+        win = self.props.active_window
+        if isinstance(win, EarAWindow):
+            win._shutdown_bluetooth()
+        super().do_shutdown()
 
     def do_activate(self) -> None:  # noqa: N802
         win = self.props.active_window
