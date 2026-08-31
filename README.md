@@ -55,7 +55,7 @@ Adds `~/.local/bin/eara` and a **Nothing X; Nothing Ears** entry in the app menu
 
 ### Packages
 
-Download `.deb`, `.rpm`, or AppImage from [GitHub Releases](https://github.com/oneydef/EarA-linux/releases). More options: [docs/PACKAGING.md](docs/PACKAGING.md).
+Download `.deb`, `.rpm`, or AppImage from [GitHub Releases](https://github.com/oneydef/EarA-linux/releases).
 
 ```bash
 sudo dpkg -i eara_*_all.deb
