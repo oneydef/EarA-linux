@@ -150,19 +150,29 @@
               </div>
 
               <div class="eara-card">
-                <div class="eara-card-title">BLUETOOTH CODEC (HOST)</div>
+                <div class="eara-toggle-row">
+                  <span class="eara-toggle-label">Power off Bluetooth on exit</span>
+                  <button type="button" class="eara-switch is-on" id="sw-power-off" aria-pressed="true"><span></span></button>
+                </div>
+                <p class="dim-label dim-label--small">When enabled, closing EarA disconnects earbuds and turns off the adapter.</p>
+              </div>
+
+              <div class="eara-card">
+                <div class="eara-card-title">Bluetooth codec (host)</div>
                 <div class="eara-codec-row">
                   <div class="eara-dropdown eara-dropdown--sm">sbc</div>
                   <button type="button" class="eara-chip">Apply codec</button>
                 </div>
-                <p class="dim-label dim-label--small">Host codec list — LHDC if your adapter supports it.</p>
+                <p class="dim-label dim-label--small">LHDC/LDAC only appear if your adapter and BlueZ advertise them.</p>
               </div>
+
+              <p class="dim-label dim-label--legal">Unofficial community app. Not affiliated with Nothing Technology.</p>
             </div>
 
             <div class="eara-panel-page" data-panel="sound" role="tabpanel" hidden>
               <div class="eara-sound-cards">
                 <div class="eara-card eara-sound-card">
-                  <div class="eara-card-title eara-card-title--center">QUICK SETTINGS</div>
+                  <div class="eara-card-title eara-card-title--center">Quick settings</div>
                   <div class="eara-toggles">
                     <div class="eara-toggle-row">
                       <span class="eara-toggle-label">Bass enhance</span>
@@ -180,6 +190,14 @@
                       <span class="eara-toggle-label">Advanced EQ (device)</span>
                       <button type="button" class="eara-switch" aria-pressed="false"><span></span></button>
                     </div>
+                    <div class="eara-toggle-row">
+                      <span class="eara-toggle-label">Personalized ANC</span>
+                      <button type="button" class="eara-switch" aria-pressed="false"><span></span></button>
+                    </div>
+                  </div>
+                  <div class="eara-field">
+                    <label class="dim-label">Listening mode</label>
+                    <div class="eara-dropdown">Normal</div>
                   </div>
                   <div class="eara-noise-label">Noise control</div>
                   <div class="eara-anc-list">
@@ -193,42 +211,45 @@
                 </div>
 
                 <div class="eara-card eara-sound-card">
-                  <div class="eara-card-title eara-card-title--center">EQ PRESET</div>
-                  <p class="dim-label">Current: Balanced</p>
+                  <div class="eara-card-title eara-card-title--center">Equalizer</div>
+                  <p class="dim-label">EQ presets</p>
                   <div class="eara-eq-grid">
                     <button type="button" class="eara-chip eara-chip-active">Balanced</button>
                     <button type="button" class="eara-chip">More bass</button>
                     <button type="button" class="eara-chip">More treble</button>
                     <button type="button" class="eara-chip">Voice</button>
                   </div>
-                  <p class="dim-label">Custom graphic EQ</p>
+                  <p class="dim-label">Advanced EQ bands (32–4k Hz; mapped to device 3-band)</p>
                   <div class="eara-eq-panel" id="eq-bands"></div>
+                  <button type="button" class="eara-chip">Apply EQ bands</button>
                 </div>
               </div>
             </div>
 
             <div class="eara-panel-page" data-panel="gestures" role="tabpanel" hidden>
-              <div class="eara-card">
-                <div class="eara-card-title">GESTURES</div>
-                <p class="dim-label">Pinch left / right — demo only. Map actions in the installed app.</p>
-                <div class="eara-gesture-side">LEFT</div>
-                <div class="eara-gesture-row"><span class="eara-gesture-type">Pinch hold</span><span class="eara-chip">Play / Pause</span></div>
-                <div class="eara-gesture-row"><span class="eara-gesture-type">Pinch x2</span><span class="eara-chip">Next track</span></div>
-                <div class="eara-gesture-side">RIGHT</div>
-                <div class="eara-gesture-row"><span class="eara-gesture-type">Pinch hold</span><span class="eara-chip">ANC cycle</span></div>
-                <div class="eara-gesture-row"><span class="eara-gesture-type">Pinch x3</span><span class="eara-chip">Previous track</span></div>
-              </div>
+              <p class="dim-label">Current pinch actions from the earbuds — change and tap Set.</p>
+              <div class="eara-gesture-side">LEFT</div>
+              <div class="eara-gesture-row"><span class="eara-gesture-type">double-pinch</span><div class="eara-dropdown eara-dropdown--sm">No action</div><button type="button" class="eara-chip">Set</button></div>
+              <div class="eara-gesture-row"><span class="eara-gesture-type">triple-pinch</span><div class="eara-dropdown eara-dropdown--sm">Skip forward</div><button type="button" class="eara-chip">Set</button></div>
+              <div class="eara-gesture-row"><span class="eara-gesture-type">pinch-hold</span><div class="eara-dropdown eara-dropdown--sm">Play / Pause</div><button type="button" class="eara-chip">Set</button></div>
+              <div class="eara-gesture-row"><span class="eara-gesture-type">double-pinch-hold</span><div class="eara-dropdown eara-dropdown--sm">Volume up</div><button type="button" class="eara-chip">Set</button></div>
+              <div class="eara-gesture-side">RIGHT</div>
+              <div class="eara-gesture-row"><span class="eara-gesture-type">double-pinch</span><div class="eara-dropdown eara-dropdown--sm">Skip forward</div><button type="button" class="eara-chip">Set</button></div>
+              <div class="eara-gesture-row"><span class="eara-gesture-type">triple-pinch</span><div class="eara-dropdown eara-dropdown--sm">Skip back</div><button type="button" class="eara-chip">Set</button></div>
+              <div class="eara-gesture-row"><span class="eara-gesture-type">pinch-hold</span><div class="eara-dropdown eara-dropdown--sm">ANC cycle</div><button type="button" class="eara-chip">Set</button></div>
+              <div class="eara-gesture-row"><span class="eara-gesture-type">double-pinch-hold</span><div class="eara-dropdown eara-dropdown--sm">Volume down</div><button type="button" class="eara-chip">Set</button></div>
             </div>
 
             <div class="eara-panel-page" data-panel="tools" role="tabpanel" hidden>
+              <button type="button" class="eara-chip" id="btn-ring-l">Find left</button>
+              <button type="button" class="eara-chip" id="btn-ring-r">Find right</button>
+              <button type="button" class="eara-chip" id="btn-ring">Find both</button>
+              <button type="button" class="eara-chip" id="btn-ring-off">Stop ringing</button>
               <div class="eara-card">
-                <div class="eara-card-title">TOOLS</div>
-                <div class="eara-tools-list">
-                  <button type="button" class="eara-chip" id="btn-ring">Find my — ring both</button>
-                  <button type="button" class="eara-chip">Ear-tip fit test</button>
-                  <button type="button" class="eara-chip">Doctor / diagnostics</button>
-                </div>
+                <p class="dim-label">Wear both earbuds snugly, then run the test. You will hear short tones for ~10 seconds while the seal is measured.</p>
+                <button type="button" class="eara-chip">Ear-tip fit test</button>
               </div>
+              <p class="dim-label dim-label--legal">Unofficial community app. Not affiliated with Nothing Technology.</p>
             </div>
           </div>
         </div>

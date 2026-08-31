@@ -45,7 +45,9 @@
 
   document.getElementById("btn-refresh")?.addEventListener("click", () => toast("Refresh (demo)"));
 
-  document.getElementById("btn-ring")?.addEventListener("click", () => toast("Ringing both earbuds… (demo)"));
+  ["btn-ring-l", "btn-ring-r", "btn-ring", "btn-ring-off"].forEach((id) => {
+    document.getElementById(id)?.addEventListener("click", () => toast(`${id.replace("btn-ring", "Ring")} (demo)`));
+  });
 
   document.getElementById("btn-disconnect")?.addEventListener("click", () => {
     document.getElementById("status-dot")?.classList.replace("eara-dot-ok", "eara-dot-off");
@@ -66,7 +68,7 @@
 
   const bandsEl = document.getElementById("eq-bands");
   if (bandsEl) {
-    [120, 250, 500, 1000, 2000, 4000, 6000, 8000].forEach((hz) => {
+    [32, 64, 125, 250, 500, 1000, 2000, 4000].forEach((hz) => {
       const wrap = document.createElement("div");
       wrap.className = "eara-eq-band";
       const input = document.createElement("input");

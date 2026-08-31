@@ -291,9 +291,9 @@ button.eara-header-btn {{
   opacity: 0.75;
 }}
 button.eara-header-btn.eara-header-connect {{
-  background-color: #5a1010;
-  color: #cc8888;
-  border-color: #5a2020;
+  background-color: #222222;
+  color: #f0f0f0;
+  border-color: #555555;
 }}
 button.eara-header-btn.eara-header-reset {{
   background-color: #141414;
@@ -344,6 +344,12 @@ window.eara-window.eara-focused button.eara-header-btn.eara-header-reset.eara-he
   font-weight: 700;
   letter-spacing: 2px;
   color: #999999;
+  text-transform: uppercase;
+}}
+.eara-header-title {{
+  font-family: {ui}, {_FONT_UI_FALLBACK};
+  font-weight: 600;
+  font-size: 14px;
 }}
 .eara-meta, .dim-label {{
   color: #b8b8b8;
@@ -447,16 +453,15 @@ window.eara-window.eara-focused .eara-content button:not(.flat):not(.eara-header
 }}
 .eara-chip {{
   border-radius: 999px;
-  background-color: #0a0a0a;
-  color: #c0c0c0;
-  border: 1px solid #2e2e2e;
+  background-color: #141414;
+  color: #ffffff;
+  border: 1px solid #444444;
   min-height: 36px;
   font-family: {ui}, {_FONT_UI_FALLBACK};
   font-weight: 500;
-  opacity: 0.78;
+  font-size: 13px;
 }}
 window.eara-window.eara-focused .eara-chip {{
-  opacity: 1;
   color: #ffffff;
   border-color: #444444;
   background-color: #141414;
@@ -585,43 +590,57 @@ button.eara-about-coffee:hover {{
   border-bottom: none;
 }}
 .eara-toggle-label {{
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
-  color: #e8e8e8;
+  color: #dddddd;
 }}
 switch.eara-switch {{
-  background-color: #141414;
+  background-color: #1a1a1a;
   border: 1px solid #333333;
   border-radius: 999px;
-  min-width: 50px;
-  min-height: 28px;
+  min-width: 44px;
+  min-height: 24px;
   padding: 0;
   outline: none;
 }}
 switch.eara-switch:checked {{
-  background-color: #d71921;
+  background-color: alpha(#d71921, 0.35);
   border-color: #d71921;
 }}
 switch.eara-switch slider {{
-  background-color: #555555;
+  background-color: #666666;
   border: none;
   border-radius: 999px;
-  min-width: 22px;
-  min-height: 22px;
+  min-width: 18px;
+  min-height: 18px;
   margin: 2px;
 }}
 switch.eara-switch:checked slider {{
-  background-color: #ffffff;
-}}
-window.eara-window.eara-focused switch.eara-switch {{
-  border-color: #444444;
+  background-color: #d71921;
 }}
 window.eara-window.eara-focused switch.eara-switch:checked {{
-  background-color: #ffffff;
-  border-color: #ffffff;
+  background-color: alpha(#d71921, 0.35);
+  border-color: #d71921;
 }}
 window.eara-window.eara-focused switch.eara-switch:checked slider {{
   background-color: #d71921;
+}}
+.eara-noise-label {{
+  font-size: 13px;
+  color: #dddddd;
+  margin: 12px 0 8px;
+}}
+.eara-anc-list {{
+  margin-top: 4px;
+}}
+.eara-anc-list button {{
+  width: 100%;
+}}
+.eara-anc-list flowboxchild {{
+  width: 100%;
+}}
+.eara-anc-list flowboxchild button {{
+  width: 100%;
 }}
 switch.eara-switch:focus {{
   outline: none;
@@ -720,7 +739,7 @@ class EarAWindow(Adw.ApplicationWindow):
     def __init__(self, app: Adw.Application) -> None:
         super().__init__(application=app)
         self.add_css_class("eara-window")
-        self.set_default_size(520, 760)
+        self.set_default_size(611, 868)
         self.set_size_request(480, 640)
         self.device: Device | None = None
         self._busy = False
@@ -763,6 +782,9 @@ class EarAWindow(Adw.ApplicationWindow):
         self.btn_about.connect("clicked", lambda *_: self._about())
         self.header.pack_start(self.btn_connect)
         self.header.pack_start(self.btn_reset)
+        title = _ui_text(Gtk.Label(label="EarA"))
+        title.add_css_class("eara-header-title")
+        self.header.set_title_widget(title)
         self.header.pack_end(self.btn_about)
 
         self.stack = Adw.ViewStack()
@@ -1047,7 +1069,7 @@ class EarAWindow(Adw.ApplicationWindow):
         cards = Gtk.FlowBox()
         cards.add_css_class("eara-sound-cards")
         cards.set_selection_mode(Gtk.SelectionMode.NONE)
-        cards.set_max_children_per_line(2)
+        cards.set_max_children_per_line(1)
         cards.set_min_children_per_line(1)
         cards.set_column_spacing(12)
         cards.set_row_spacing(12)
@@ -1089,12 +1111,15 @@ class EarAWindow(Adw.ApplicationWindow):
         quick_card.append(self.listening_box)
 
         self.lbl_noise = _ui_text(Gtk.Label(xalign=0))
+        self.lbl_noise.add_css_class("eara-noise-label")
         quick_card.append(self.lbl_noise)
-        self.anc_flow = Gtk.FlowBox(max_children_per_line=2, selection_mode=Gtk.SelectionMode.NONE)
+        self.anc_flow = Gtk.FlowBox(max_children_per_line=1, selection_mode=Gtk.SelectionMode.NONE)
+        self.anc_flow.add_css_class("eara-anc-list")
         self.anc_buttons: dict[str, Gtk.Button] = {}
         for mode in ("off", "transparency", "high", "mid", "low", "adaptive"):
             btn = Gtk.Button()
             btn.add_css_class("eara-chip")
+            btn.set_hexpand(True)
             btn.connect("clicked", lambda *_, m=mode: self._run(lambda: self._require().set_anc(m)))
             self.anc_buttons[mode] = btn
             self.anc_flow.append(btn)

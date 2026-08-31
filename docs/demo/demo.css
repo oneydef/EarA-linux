@@ -345,6 +345,12 @@ main {
   margin: 8px 0 0;
 }
 
+.dim-label--legal {
+  text-align: center;
+  margin-top: 12px;
+  font-size: 11px;
+}
+
 .eara-status-card {
   background: linear-gradient(180deg, #171717 0%, #101010 100%);
   border: 1px solid #2c2c2c;
@@ -575,6 +581,11 @@ main {
   letter-spacing: 2px;
   color: #999;
   margin-bottom: 10px;
+  text-transform: uppercase;
+}
+.eara-header-title {
+  font-weight: 600;
+  font-size: 14px;
 }
 
 .eara-card-title--center {
@@ -594,10 +605,8 @@ main {
   gap: 12px;
 }
 
-@media (min-width: 640px) {
-  .eara-sound-cards {
-    grid-template-columns: 1fr 1fr;
-  }
+.eara-window .eara-sound-cards {
+  grid-template-columns: 1fr;
 }
 
 .eara-sound-card {
@@ -729,6 +738,7 @@ main {
   align-items: center;
   gap: 8px;
   padding: 6px 0;
+  flex-wrap: wrap;
 }
 
 .eara-gesture-type {
