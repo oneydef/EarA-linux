@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 220">
+  <defs>
+    <linearGradient id="shine" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.95"/>
+      <stop offset="100%" stop-color="#b8b8b8" stop-opacity="0.85"/>
+    </linearGradient>
+  </defs>
+  <!-- Left bud -->
+  <ellipse cx="108" cy="92" rx="40" ry="54" fill="#111" stroke="url(#shine)" stroke-width="2.5"/>
+  <path d="M84 92c0-30 24-52 24-52s24 22 24 52" fill="none" stroke="url(#shine)" stroke-width="3.5" stroke-linecap="round"/>
+  <rect x="96" y="134" width="26" height="38" rx="11" fill="#d71921"/>
+  <!-- Right bud -->
+  <ellipse cx="312" cy="92" rx="40" ry="54" fill="#111" stroke="url(#shine)" stroke-width="2.5"/>
+  <path d="M288 92c0-30 24-52 24-52s24 22 24 52" fill="none" stroke="url(#shine)" stroke-width="3.5" stroke-linecap="round"/>
+  <rect x="300" y="134" width="26" height="38" rx="11" fill="#d71921"/>
+  <!-- Case -->
+  <rect x="158" y="178" width="104" height="28" rx="10" fill="#0d0d0d" stroke="#444" stroke-width="1.5"/>
+  <rect x="188" y="186" width="44" height="12" rx="4" fill="#222"/>
+</svg>

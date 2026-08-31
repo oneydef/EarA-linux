@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="920" height="280" viewBox="0 0 920 280">
+  <rect width="920" height="280" fill="#0a0a0a"/>
+  <g fill="#f4f4f4" opacity="0.35">
+    <circle cx="48" cy="48" r="2"/><circle cx="64" cy="48" r="2"/><circle cx="80" cy="48" r="2"/>
+    <circle cx="840" cy="48" r="2"/><circle cx="856" cy="48" r="2"/><circle cx="872" cy="48" r="2"/>
+    <circle cx="48" cy="232" r="2"/><circle cx="64" cy="232" r="2"/><circle cx="872" cy="232" r="2"/>
+  </g>
+  <text x="460" y="120" text-anchor="middle" fill="#ffffff" font-family="monospace" font-size="42" font-weight="700" letter-spacing="12">E A R A</text>
+  <text x="460" y="152" text-anchor="middle" fill="#d71921" font-family="sans-serif" font-size="14" letter-spacing="3">LINUX COMPANION</text>
+  <text x="460" y="248" text-anchor="middle" fill="#888888" font-family="sans-serif" font-size="13">Nothing / CMF earbuds · GTK4 · GPL-3.0-or-later</text>
+</svg>

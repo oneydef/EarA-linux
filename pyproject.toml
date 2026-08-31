@@ -1,0 +1,23 @@
+[project]
+name = "eara"
+version = "0.3.0"
+description = "Unofficial Linux companion for compatible True Wireless earbuds"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "GPL-3.0-or-later" }
+authors = [{ name = "oneydef", email = "oneydefwork@gmail.com" }]
+keywords = ["nothing", "nothing-x", "nothing-earbuds", "cmf", "earbuds", "bluetooth", "linux", "gtk4", "flatpak", "pipewire", "bluez", "anc"]
+classifiers = [
+  "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
+  "Operating System :: POSIX :: Linux",
+  "Programming Language :: Python :: 3",
+  "Topic :: Multimedia :: Sound/Audio",
+]
+scripts = { eara = "eara.cli:main" }
+
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["eara*"]

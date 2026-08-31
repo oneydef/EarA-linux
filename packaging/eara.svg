@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <rect width="128" height="128" rx="28" fill="#0a0a0a"/>
+  <!-- Dot matrix (Nothing-inspired, original layout) -->
+  <g fill="#f4f4f4">
+    <circle cx="28" cy="28" r="2.2"/><circle cx="40" cy="28" r="2.2"/><circle cx="52" cy="28" r="2.2"/>
+    <circle cx="76" cy="28" r="2.2"/><circle cx="88" cy="28" r="2.2"/><circle cx="100" cy="28" r="2.2"/>
+    <circle cx="28" cy="40" r="2.2"/><circle cx="100" cy="40" r="2.2"/>
+    <circle cx="28" cy="52" r="2.2"/><circle cx="100" cy="52" r="2.2"/>
+    <circle cx="28" cy="76" r="2.2"/><circle cx="100" cy="76" r="2.2"/>
+    <circle cx="28" cy="88" r="2.2"/><circle cx="40" cy="88" r="2.2"/><circle cx="52" cy="88" r="2.2"/>
+    <circle cx="76" cy="88" r="2.2"/><circle cx="88" cy="88" r="2.2"/><circle cx="100" cy="88" r="2.2"/>
+  </g>
+  <path d="M42 70c0-14 10-24 22-24s22 10 22 24" fill="none" stroke="#f4f4f4" stroke-width="6" stroke-linecap="round"/>
+  <rect x="34" y="68" width="14" height="22" rx="6" fill="#d71921"/>
+  <rect x="80" y="68" width="14" height="22" rx="6" fill="#d71921"/>
+</svg>

@@ -1,0 +1,46 @@
+# Maintainer: oneydef <oneydefwork@gmail.com>
+pkgname=eara
+pkgver=0.3.0
+pkgrel=1
+pkgdesc="Unofficial GTK companion for Nothing/CMF earbuds on Linux"
+arch=('any')
+url="https://github.com/oneydef/EarA-linux"
+license=('GPL3')
+depends=(
+  'python'
+  'python-gobject'
+  'python-dbus'
+  'gtk4'
+  'libadwaita'
+  'bluez'
+  'pipewire-pulse'
+)
+makedepends=()
+source=("${pkgname}-${pkgver}.tar.gz::https://github.com/oneydef/EarA-linux/releases/download/v${pkgver}/${pkgname}-${pkgver}.tar.gz")
+sha256sums=('b4220c2ce754b19a2dbc08c3a0ed8b7ec0ef2ccc4dc3621991ace334a7db9be1')
+
+package() {
+  cd "$srcdir"
+  install -dm755 "$pkgdir/usr/share/eara"
+  cp -a eara "$pkgdir/usr/share/eara/"
+  install -dm755 "$pkgdir/usr/bin"
+  install -dm755 "$pkgdir/usr/share/applications"
+  install -dm755 "$pkgdir/usr/share/icons/hicolor/scalable/apps"
+  install -dm755 "$pkgdir/usr/share/doc/eara"
+
+  cat > "$pkgdir/usr/bin/eara" <<'EOF'
+#!/usr/bin/env python3
+import sys
+sys.path.insert(0, "/usr/share/eara")
+from eara.cli import main
+raise SystemExit(main())
+EOF
+  chmod 755 "$pkgdir/usr/bin/eara"
+
+  install -m644 packaging/eara.desktop "$pkgdir/usr/share/applications/eara.desktop"
+  install -m644 packaging/eara.metainfo.xml "$pkgdir/usr/share/metainfo/eara.metainfo.xml"
+  install -dm755 "$pkgdir/usr/share/eara/screenshots"
+  install -m644 packaging/screenshots/*.png "$pkgdir/usr/share/eara/screenshots/"
+  install -m644 packaging/eara.svg "$pkgdir/usr/share/icons/hicolor/scalable/apps/eara.svg"
+  install -m644 README.md LINEUP.md LICENSE NOTICE "$pkgdir/usr/share/doc/eara/" 2>/dev/null || true
+}

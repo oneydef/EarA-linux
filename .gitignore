@@ -1,0 +1,21 @@
+# Byte-compiled
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+dist/
+build/
+*.AppImage
+*.deb
+*.rpm
+.env
+.venv/
+venv/
+.token
+*.pat
+.DS_Store
+packaging/root/
+.flatpak-builder/
+repo/
+builddir/
+.pytest_cache/

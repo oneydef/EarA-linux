@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="EarA — unofficial Linux app for Nothing X, Nothing Ear, and CMF earbuds. GTK4 GUI, ANC, EQ, battery, Bluetooth, PipeWire. Free open source.">
+  <meta name="keywords" content="Nothing Linux, Nothing Ear Linux, Nothing X Linux app, CMF earbuds Linux, EarA, GTK4, Flatpak, PipeWire, Bluetooth ANC, Nothing Ear 2, Ear (a)">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://oneydef.github.io/EarA-linux/">
+  <meta name="theme-color" content="#0a0a0a">
+  <meta property="og:title" content="EarA — Nothing X / CMF on Linux">
+  <meta property="og:description" content="Try the Nothing-style UI demo. Battery, ANC, EQ, gestures — unofficial Linux companion.">
+  <meta property="og:image" content="https://oneydef.github.io/EarA-linux/assets/device.png">
+  <meta property="og:url" content="https://oneydef.github.io/EarA-linux/">
+  <title>EarA — Live Demo | Nothing X / CMF on Linux</title>
+  <link rel="icon" href="assets/eara.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DotGothic16&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="demo.css">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "EarA",
+    "alternateName": ["Nothing X Linux", "Nothing Ears Linux"],
+    "applicationCategory": "MultimediaApplication",
+    "operatingSystem": "Linux",
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+    "description": "Unofficial GTK4 companion for Nothing and CMF earbuds on Linux.",
+    "url": "https://github.com/oneydef/EarA-linux",
+    "downloadUrl": "https://github.com/oneydef/EarA-linux/releases",
+    "softwareVersion": "0.3.0",
+    "author": { "@type": "Person", "name": "oneydef" }
+  }
+  </script>
+</head>
+<body>
+  <div class="page-bg"></div>
+
+  <header class="topbar">
+    <a class="topbar__brand" href="https://github.com/oneydef/EarA-linux" target="_blank" rel="noopener">
+      <img src="assets/eara.svg" alt="" width="28" height="28">
+      <span>EarA</span>
+    </a>
+    <nav class="topbar__nav">
+      <a href="#demo">Demo</a>
+      <a href="#shots">Screenshots</a>
+      <a href="https://github.com/oneydef/EarA-linux#install" target="_blank" rel="noopener">Install</a>
+      <a class="topbar__cta" href="https://github.com/oneydef/EarA-linux" target="_blank" rel="noopener">GitHub</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="intro">
+      <p class="intro__tag">Interactive demo · not affiliated with Nothing / CMF</p>
+      <h1>Nothing X &amp; CMF earbuds on Linux</h1>
+      <p class="intro__lead">
+        Pixel-accurate preview of the GTK4 app. Install EarA for real Bluetooth control.
+      </p>
+      <div class="intro__actions">
+        <a class="btn btn--primary" href="#demo">Try demo</a>
+        <a class="btn btn--ghost" href="https://github.com/oneydef/EarA-linux/releases" target="_blank" rel="noopener">Download</a>
+      </div>
+    </section>
+
+    <section class="demo" id="demo">
+      <div class="demo__frame">
+        <div class="eara-window eara-focused" id="eara-app">
+          <header class="eara-headerbar">
+            <div class="eara-headerbar__start">
+              <button type="button" class="eara-header-btn eara-header-connect eara-header-active" id="hdr-connect">Connect</button>
+              <button type="button" class="eara-header-btn eara-header-reset" id="hdr-reset">Reset</button>
+            </div>
+            <div class="eara-headerbar__title">EarA</div>
+            <div class="eara-headerbar__end">
+              <button type="button" class="eara-header-about" title="About">?</button>
+              <span class="wc wc-min" aria-hidden="true"></span>
+              <span class="wc wc-max" aria-hidden="true"></span>
+              <span class="wc wc-close" aria-hidden="true"></span>
+            </div>
+          </header>
+
+          <div class="eara-hero">
+            <div class="eara-brand">E A R A</div>
+            <div class="eara-tag">UNOFFICIAL · NOTHING / CMF COMPANION</div>
+          </div>
+
+          <nav class="eara-buttons" role="tablist">
+            <button type="button" class="eara-tab eara-tab-active" data-tab="device" role="tab">Device</button>
+            <button type="button" class="eara-tab" data-tab="sound" role="tab">Sound</button>
+            <button type="button" class="eara-tab" data-tab="gestures" role="tab">Gestures</button>
+            <button type="button" class="eara-tab" data-tab="tools" role="tab">Tools</button>
+            <span class="eara-buttons-spacer"></span>
+            <button type="button" class="eara-tab eara-tab-refresh" id="btn-refresh">Refresh</button>
+          </nav>
+
+          <div class="eara-stack">
+            <div class="eara-panel-page is-active" data-panel="device" role="tabpanel">
+              <div class="eara-lang">
+                <span class="dim-label">Language</span>
+                <button type="button" class="eara-chip eara-chip-active">EN</button>
+                <button type="button" class="eara-chip">UA</button>
+              </div>
+
+              <div class="eara-status-card">
+                <div class="eara-status-head">
+                  <span class="eara-status-dot eara-dot-ok" id="status-dot"></span>
+                  <div class="eara-status-titlecol">
+                    <div class="eara-status-name" id="status-name">Nothing Ear (a)</div>
+                    <div class="eara-status-badges">
+                      <span class="eara-status-badge eara-status-badge-ok">BT ON</span>
+                      <span class="eara-status-badge eara-status-badge-ok">PROTOCOL OK</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="eara-status-meta" id="status-meta">Connected · Nothing Ear (a) · fw 1.0.1.51 · SN10832421008835</div>
+                <div class="eara-batteries">
+                  <div class="eara-batt-cell">
+                    <div class="eara-batt-head"><span class="eara-batt-side">L</span><span class="eara-batt-pct">35%</span></div>
+                    <div class="eara-batt-bar"><span style="width:35%"></span></div>
+                    <div class="eara-batt-sub"></div>
+                  </div>
+                  <div class="eara-batt-cell">
+                    <div class="eara-batt-head"><span class="eara-batt-side">R</span><span class="eara-batt-pct">65%</span></div>
+                    <div class="eara-batt-bar"><span style="width:65%"></span></div>
+                    <div class="eara-batt-sub"></div>
+                  </div>
+                  <div class="eara-batt-cell eara-batt-off">
+                    <div class="eara-batt-head"><span class="eara-batt-side">C</span><span class="eara-batt-pct">—</span></div>
+                    <div class="eara-batt-bar"><span style="width:0%"></span></div>
+                    <div class="eara-batt-sub eara-batt-sub-muted">Open the lid and tap Refresh</div>
+                  </div>
+                </div>
+                <div class="eara-status-modes">
+                  <span class="eara-mode-chip">ANC · Transparency</span>
+                  <span class="eara-mode-chip">EQ · Balanced</span>
+                </div>
+              </div>
+
+              <div class="eara-field">
+                <label class="dim-label">Bluetooth device</label>
+                <div class="eara-dropdown">Nothing Ear (a) (2C:BE:EB:D0:3A:3A)</div>
+              </div>
+
+              <div class="eara-button-row">
+                <button type="button" class="eara-chip">Music (A2DP)</button>
+                <button type="button" class="eara-chip">Calls (A2DP)</button>
+                <button type="button" class="eara-chip eara-chip-disconnect" id="btn-disconnect">Disconnect</button>
+              </div>
+
+              <div class="eara-card">
+                <div class="eara-card-title">BLUETOOTH CODEC (HOST)</div>
+                <div class="eara-codec-row">
+                  <div class="eara-dropdown eara-dropdown--sm">sbc</div>
+                  <button type="button" class="eara-chip">Apply codec</button>
+                </div>
+                <p class="dim-label dim-label--small">Host codec list — LHDC if your adapter supports it.</p>
+              </div>
+            </div>
+
+            <div class="eara-panel-page" data-panel="sound" role="tabpanel" hidden>
+              <div class="eara-sound-cards">
+                <div class="eara-card eara-sound-card">
+                  <div class="eara-card-title eara-card-title--center">QUICK SETTINGS</div>
+                  <div class="eara-toggles">
+                    <div class="eara-toggle-row">
+                      <span class="eara-toggle-label">Bass enhance</span>
+                      <button type="button" class="eara-switch" aria-pressed="false"><span></span></button>
+                    </div>
+                    <div class="eara-toggle-row">
+                      <span class="eara-toggle-label">In-ear detection</span>
+                      <button type="button" class="eara-switch is-on" aria-pressed="true"><span></span></button>
+                    </div>
+                    <div class="eara-toggle-row">
+                      <span class="eara-toggle-label">Low latency</span>
+                      <button type="button" class="eara-switch" aria-pressed="false"><span></span></button>
+                    </div>
+                    <div class="eara-toggle-row">
+                      <span class="eara-toggle-label">Advanced EQ (device)</span>
+                      <button type="button" class="eara-switch" aria-pressed="false"><span></span></button>
+                    </div>
+                  </div>
+                  <div class="eara-noise-label">Noise control</div>
+                  <div class="eara-anc-list">
+                    <button type="button" class="eara-chip eara-chip-active">Off</button>
+                    <button type="button" class="eara-chip">Transparency</button>
+                    <button type="button" class="eara-chip">ANC High</button>
+                    <button type="button" class="eara-chip">ANC Mid</button>
+                    <button type="button" class="eara-chip">ANC Low</button>
+                    <button type="button" class="eara-chip">Adaptive</button>
+                  </div>
+                </div>
+
+                <div class="eara-card eara-sound-card">
+                  <div class="eara-card-title eara-card-title--center">EQ PRESET</div>
+                  <p class="dim-label">Current: Balanced</p>
+                  <div class="eara-eq-grid">
+                    <button type="button" class="eara-chip eara-chip-active">Balanced</button>
+                    <button type="button" class="eara-chip">More bass</button>
+                    <button type="button" class="eara-chip">More treble</button>
+                    <button type="button" class="eara-chip">Voice</button>
+                  </div>
+                  <p class="dim-label">Custom graphic EQ</p>
+                  <div class="eara-eq-panel" id="eq-bands"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="eara-panel-page" data-panel="gestures" role="tabpanel" hidden>
+              <div class="eara-card">
+                <div class="eara-card-title">GESTURES</div>
+                <p class="dim-label">Pinch left / right — demo only. Map actions in the installed app.</p>
+                <div class="eara-gesture-side">LEFT</div>
+                <div class="eara-gesture-row"><span class="eara-gesture-type">Pinch hold</span><span class="eara-chip">Play / Pause</span></div>
+                <div class="eara-gesture-row"><span class="eara-gesture-type">Pinch x2</span><span class="eara-chip">Next track</span></div>
+                <div class="eara-gesture-side">RIGHT</div>
+                <div class="eara-gesture-row"><span class="eara-gesture-type">Pinch hold</span><span class="eara-chip">ANC cycle</span></div>
+                <div class="eara-gesture-row"><span class="eara-gesture-type">Pinch x3</span><span class="eara-chip">Previous track</span></div>
+              </div>
+            </div>
+
+            <div class="eara-panel-page" data-panel="tools" role="tabpanel" hidden>
+              <div class="eara-card">
+                <div class="eara-card-title">TOOLS</div>
+                <div class="eara-tools-list">
+                  <button type="button" class="eara-chip" id="btn-ring">Find my — ring both</button>
+                  <button type="button" class="eara-chip">Ear-tip fit test</button>
+                  <button type="button" class="eara-chip">Doctor / diagnostics</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="demo__hint">Browser preview — install <a href="https://github.com/oneydef/EarA-linux#install">EarA</a> for real Bluetooth.</p>
+    </section>
+
+    <section class="shots" id="shots">
+      <h2>Real app screenshots</h2>
+      <p class="shots__note">Native 611×868 captures — 1:1 scale</p>
+      <div class="shots__grid">
+        <figure class="shots__figure">
+          <img src="assets/device.png" alt="EarA Device tab" width="611" height="868" decoding="async">
+          <figcaption>Device</figcaption>
+        </figure>
+        <figure class="shots__figure">
+          <img src="assets/sound.png" alt="EarA Sound tab" width="611" height="868" decoding="async">
+          <figcaption>Sound</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section class="install-cta">
+      <h2>Install</h2>
+      <pre><code>git clone https://github.com/oneydef/EarA-linux.git
+cd eara && ./scripts/install-user.sh
+eara gui</code></pre>
+      <a class="btn btn--primary" href="https://github.com/oneydef/EarA-linux" target="_blank" rel="noopener">GitHub</a>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>Independent community project — not affiliated with Nothing Technology or CMF.</p>
+  </footer>
+
+  <div class="toast" id="toast" hidden></div>
+  <script src="demo.js"></script>
+</body>
+</html>

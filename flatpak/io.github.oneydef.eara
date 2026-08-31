@@ -1,0 +1,7 @@
+#!/bin/sh
+# Flatpak launcher — PYTHONPATH and default to GUI.
+export PYTHONPATH="/app/share/eara${PYTHONPATH:+:$PYTHONPATH}"
+if [ "${1:-}" = "" ]; then
+  exec python3 -m eara gui
+fi
+exec python3 -m eara "$@"

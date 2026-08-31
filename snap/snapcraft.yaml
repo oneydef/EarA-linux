@@ -1,0 +1,51 @@
+name: eara
+title: EarA — Nothing X / CMF on Linux
+summary: Unofficial Linux companion for Nothing / CMF earbuds
+description: |
+  EarA brings battery, ANC, EQ, gestures, find-my, and Bluetooth audio routing
+  to Linux desktops for Nothing and CMF earbuds. GTK4 / libadwaita GUI plus CLI.
+
+  Independent community project — not affiliated with Nothing Technology or CMF.
+
+adopt-info: eara
+license: GPL-3.0-or-later
+base: core24
+grade: stable
+confinement: strict
+
+apps:
+  eara:
+    command: bin/eara-launch
+    extensions: [gnome]
+    plugs:
+      - bluez
+      - network
+      - audio-playback
+      - audio-record
+      - pulseaudio
+    desktop: meta/gui/eara.desktop
+
+parts:
+  eara:
+    plugin: dump
+    source: .
+    organize:
+      eara: usr/share/eara/eara
+      packaging/eara.svg: meta/gui/eara.svg
+      packaging/eara.desktop: meta/gui/eara.desktop
+    override-build: |
+      craftctl default
+      mkdir -p "$CRAFT_PART_INSTALL/bin"
+      cat > "$CRAFT_PART_INSTALL/bin/eara-launch" <<'EOF'
+      #!/bin/sh
+      export PYTHONPATH="$SNAP/usr/share/eara${PYTHONPATH:+:$PYTHONPATH}"
+      exec "$SNAP/usr/bin/python3" -m eara "$@"
+      EOF
+      chmod +x "$CRAFT_PART_INSTALL/bin/eara-launch"
+    stage-packages:
+      - python3
+      - python3-gi
+      - python3-dbus
+      - gir1.2-gtk-4.0
+      - gir1.2-adw-1
+      - bluez

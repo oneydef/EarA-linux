@@ -1,0 +1,86 @@
+name: Bug report
+description: Something broken in EarA on Linux
+title: "[Bug]: "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting. EarA is **unofficial** and not affiliated with Nothing or CMF.
+
+  - type: input
+    id: version
+    attributes:
+      label: EarA version
+      description: Output of `eara --version` or release tag
+      placeholder: "0.3.0"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: distro
+    attributes:
+      label: Linux distro
+      options:
+        - Ubuntu / Debian
+        - Fedora
+        - Arch / Manjaro
+        - openSUSE
+        - Other
+    validations:
+      required: true
+
+  - type: input
+    id: desktop
+    attributes:
+      label: Desktop / session
+      placeholder: "GNOME 46 / Wayland, KDE Plasma 6, etc."
+    validations:
+      required: true
+
+  - type: input
+    id: device
+    attributes:
+      label: Earbuds model
+      placeholder: "Nothing Ear (a), CMF Buds Pro 2, …"
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: "1. Open eara gui\n2. …"
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+
+  - type: textarea
+    id: doctor
+    attributes:
+      label: `eara doctor` output
+      description: Run in a terminal and paste the full output
+      render: shell
+    validations:
+      required: true
+
+  - type: textarea
+    id: status_json
+    attributes:
+      label: `eara status --json` (optional)
+      description: Redact MAC if you prefer; serial helps model detection
+      render: json

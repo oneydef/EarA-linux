@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>io.github.oneydef.eara</id>
+  <name>Nothing X; Nothing Ears</name>
+  <summary>Unofficial Linux companion for Nothing / CMF earbuds</summary>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-3.0-or-later</project_license>
+  <developer_name>oneydef</developer_name>
+  <launchable type="desktop-id">io.github.oneydef.eara.desktop</launchable>
+  <url type="homepage">https://github.com/oneydef/EarA-linux</url>
+  <url type="bugtracker">https://github.com/oneydef/EarA-linux/issues</url>
+  <url type="donation">https://buymeacoffee.com/r18fon7sj9</url>
+  <description>
+    <p>
+      EarA brings the missing Nothing X / Nothing Ears desktop experience to Linux:
+      battery (left, right, case), ANC, EQ, gestures, find-my, and ear-tip fit test.
+    </p>
+    <p>
+      GTK4 / libadwaita GUI plus CLI. Uses BlueZ RFCOMM — the same protocol family as
+      community Ear (web). Tested with Nothing Ear (a); other Nothing and CMF models
+      are best-effort.
+    </p>
+    <p xml:lang="uk">
+      EarA — неофіційний Linux-компаньйон для навушників Nothing / CMF: батарея,
+      ANC, EQ, жести, find-my та тест амбушюр.
+    </p>
+    <p>
+      Independent community project — <em>not</em> affiliated with Nothing Technology
+      or CMF. Product names are trademarks of their owners.
+    </p>
+  </description>
+  <screenshots>
+    <screenshot type="default">
+      <image type="source">https://raw.githubusercontent.com/oneydef/EarA-linux/main/packaging/screenshots/device.png</image>
+      <caption>Device status — battery, ANC, and Bluetooth routing</caption>
+    </screenshot>
+    <screenshot>
+      <image type="source">https://raw.githubusercontent.com/oneydef/EarA-linux/main/packaging/screenshots/sound.png</image>
+      <caption>Sound — ANC modes, EQ presets, and quick settings</caption>
+    </screenshot>
+  </screenshots>
+  <categories>
+    <category>AudioVideo</category>
+    <category>Audio</category>
+    <category>Utility</category>
+  </categories>
+  <keywords>
+    <keyword>Nothing</keyword>
+    <keyword>Nothing X</keyword>
+    <keyword>Nothing Ears</keyword>
+    <keyword>CMF</keyword>
+    <keyword>earbuds</keyword>
+    <keyword>bluetooth</keyword>
+    <keyword>ANC</keyword>
+    <keyword>EQ</keyword>
+    <keyword>EarA</keyword>
+  </keywords>
+  <content_rating type="oars-1.1"/>
+  <releases>
+    <release version="0.3.0" date="2026-08-30">
+      <description>
+        <p>Nothing-style GTK4 UI, fit test fix, case battery, Flatpak packaging.</p>
+      </description>
+    </release>
+  </releases>
+</component>

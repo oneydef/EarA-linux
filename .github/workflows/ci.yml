@@ -1,0 +1,80 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Tests
+        run: python3 -m unittest discover -s tests -v
+      - name: i18n key parity (en / uk)
+        run: |
+          PYTHONPATH=. python3 - <<'PY'
+          from eara.i18n import STRINGS
+
+          en = set(STRINGS["en"])
+          uk = set(STRINGS["uk"])
+          missing_uk = sorted(en - uk)
+          missing_en = sorted(uk - en)
+          if missing_uk or missing_en:
+              if missing_uk:
+                  print("Missing in uk:", ", ".join(missing_uk))
+              if missing_en:
+                  print("Missing in en:", ", ".join(missing_en))
+              raise SystemExit(1)
+          print(f"i18n ok — {len(en)} keys in en/uk")
+          PY
+      - name: CLI help
+        run: PYTHONPATH=. python3 -m eara --help
+
+  packages:
+    needs: test
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: appimagetool
+        run: |
+          curl -fsSL -o appimagetool "https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage"
+          chmod +x appimagetool
+          sudo mv appimagetool /usr/local/bin/appimagetool
+      - name: Build .deb, tarball, AppImage
+        env:
+          APPIMAGE_EXTRACT_AND_RUN: "1"
+        run: |
+          chmod +x scripts/build-packages.sh packaging/eara
+          VERSION=$(PYTHONPATH=. python3 -c 'from eara import __version__; print(__version__)')
+          VERSION="$VERSION" ./scripts/build-packages.sh
+      - name: RPM (nfpm)
+        run: |
+          curl -fsSL -o /tmp/nfpm.deb https://github.com/goreleaser/nfpm/releases/download/v2.41.3/nfpm_2.41.3_amd64.deb
+          sudo dpkg -i /tmp/nfpm.deb
+          VER=$(PYTHONPATH=. python3 -c 'from eara import __version__; print(__version__)')
+          nfpm pkg --packager rpm --target "dist/eara-${VER}-1.noarch.rpm"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux-packages
+          path: |
+            dist/*.deb
+            dist/*.rpm
+            dist/*.tar.gz
+            dist/*.AppImage
+      - name: Publish GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "${{ github.ref_name }}" dist/*.deb dist/*.rpm dist/*.tar.gz dist/*.AppImage \
+            --title "EarA ${{ github.ref_name }}" \
+            --generate-notes

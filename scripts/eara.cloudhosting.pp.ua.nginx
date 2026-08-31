@@ -1,0 +1,15 @@
+server {
+    listen 192.168.1.8:80;
+    listen 176.122.105.19:80;
+    listen 127.0.0.1:80;
+    server_name eara.cloudhosting.pp.ua;
+
+    root /var/www/eara;
+    index index.html;
+
+    add_header X-Content-Type-Options nosniff always;
+
+    location / {
+        try_files $uri $uri/ =404;
+    }
+}

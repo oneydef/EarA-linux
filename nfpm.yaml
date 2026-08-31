@@ -1,0 +1,43 @@
+name: eara
+arch: all
+platform: linux
+version: 0.3.0
+section: sound
+priority: optional
+maintainer: oneydef <oneydefwork@gmail.com>
+description: Unofficial Linux companion for compatible True Wireless earbuds
+contents:
+  - src: eara
+    dst: /usr/share/eara/eara
+  - src: packaging/eara
+    dst: /usr/bin/eara
+    file_info:
+      mode: 0755
+  - src: packaging/eara.desktop
+    dst: /usr/share/applications/eara.desktop
+  - src: packaging/eara.metainfo.xml
+    dst: /usr/share/metainfo/eara.metainfo.xml
+  - src: packaging/screenshots
+    dst: /usr/share/eara/screenshots
+  - src: packaging/eara.svg
+    dst: /usr/share/icons/hicolor/scalable/apps/eara.svg
+  - src: LICENSE
+    dst: /usr/share/doc/eara/LICENSE
+  - src: NOTICE
+    dst: /usr/share/doc/eara/NOTICE
+overrides:
+  deb:
+    depends:
+      - python3
+      - python3-gi
+      - python3-dbus
+      - gir1.2-gtk-4.0
+      - gir1.2-adw-1
+      - bluez
+  rpm:
+    depends:
+      - python3
+      - python3-gobject
+      - gtk4
+      - libadwaita
+      - bluez

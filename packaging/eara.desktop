@@ -1,0 +1,12 @@
+[Desktop Entry]
+Name=Nothing X; Nothing Ears
+GenericName=EarA — Nothing / CMF earbuds
+Comment=Unofficial Linux companion for Nothing / CMF earbuds
+Exec=eara gui
+Icon=eara
+Terminal=false
+Type=Application
+Categories=AudioVideo;Audio;Utility;
+Keywords=Nothing;Nothing X;Nothing Ears;CMF;Ear;earbuds;ANC;Bluetooth;EarA;
+StartupNotify=true
+StartupWMClass=eara

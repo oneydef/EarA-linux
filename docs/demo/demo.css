@@ -1,0 +1,860 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+:root {
+  --bg: #0a0a0a;
+  --black: #000000;
+  --line: #1f1f1f;
+  --line2: #2a2a2a;
+  --text: #f2f2f2;
+  --muted: #888888;
+  --dim: #aaaaaa;
+  --red: #d71921;
+  --green: #22c55e;
+  --green-text: #86efac;
+  --font-ui: "Inter", system-ui, sans-serif;
+  --font-dot: "DotGothic16", monospace;
+  --app-w: 611px;
+  --shot-w: 611px;
+  --shot-h: 868px;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: var(--font-ui);
+  color: var(--text);
+  background: var(--bg);
+  line-height: 1.5;
+}
+
+a {
+  color: var(--text);
+}
+
+.page-bg {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background-image: radial-gradient(circle, #252525 0.65px, transparent 0.65px);
+  background-size: 16px 16px;
+  opacity: 0.35;
+  z-index: -1;
+}
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.85rem 1.25rem;
+  background: rgba(0, 0, 0, 0.82);
+  border-bottom: 1px solid var(--line);
+  backdrop-filter: blur(10px);
+}
+
+.topbar__brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  text-decoration: none;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.topbar__nav {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.topbar__nav a {
+  text-decoration: none;
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.topbar__nav a:hover {
+  color: var(--text);
+}
+
+.topbar__cta {
+  color: var(--text) !important;
+  border: 1px solid var(--line2);
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+}
+
+main {
+  width: min(980px, calc(100% - 2rem));
+  margin: 0 auto;
+  padding: 2rem 0 4rem;
+}
+
+.intro {
+  text-align: center;
+  padding: 1rem 0 2rem;
+}
+
+.intro__tag {
+  color: var(--red);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.intro h1 {
+  margin: 0.6rem 0 1rem;
+  font-size: clamp(1.75rem, 4vw, 2.5rem);
+}
+
+.intro__lead {
+  max-width: 520px;
+  margin: 0 auto 1.25rem;
+  color: var(--muted);
+}
+
+.intro__actions {
+  display: flex;
+  justify-content: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.btn {
+  display: inline-flex;
+  padding: 0.7rem 1.25rem;
+  border-radius: 999px;
+  text-decoration: none;
+  font-weight: 600;
+  border: 1px solid transparent;
+}
+
+.btn--primary {
+  background: var(--red);
+  color: #fff;
+}
+
+.btn--ghost {
+  border-color: var(--line2);
+  color: var(--text);
+}
+
+/* ── EarA window (matches gui.py) ── */
+
+.demo__frame {
+  width: fit-content;
+  max-width: 100%;
+  margin: 0 auto;
+  border: 1px solid #333;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.55);
+}
+
+.eara-window {
+  width: var(--app-w);
+  max-width: 100%;
+  background-color: var(--black);
+  background-image: radial-gradient(circle, #252525 0.65px, transparent 0.65px);
+  background-size: 16px 16px;
+  font-family: var(--font-ui);
+  color: var(--text);
+}
+
+.eara-headerbar {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: var(--black);
+  border-bottom: 1px solid var(--line);
+  min-height: 46px;
+}
+
+.eara-headerbar__start {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.eara-headerbar__title {
+  font-weight: 600;
+  font-size: 14px;
+  text-align: center;
+}
+
+.eara-headerbar__end {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.eara-header-btn {
+  border-radius: 999px;
+  min-height: 34px;
+  padding: 0 18px;
+  font-family: var(--font-ui);
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  border: 1px solid #555;
+  background: #222;
+  color: #f0f0f0;
+}
+
+.eara-header-connect.eara-header-active {
+  background: #fff;
+  color: #000;
+  border-color: #fff;
+  font-weight: 700;
+}
+
+.eara-header-reset {
+  background: #141414;
+  color: #777;
+  border-color: #333;
+}
+
+.eara-header-about {
+  background: transparent;
+  border: none;
+  color: #ccc;
+  font-size: 16px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+
+.wc {
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  border: 1px solid #555;
+  display: inline-block;
+}
+
+.eara-hero {
+  background: var(--black);
+  border-bottom: 1px solid #222;
+  padding: 12px 18px 8px;
+}
+
+.eara-brand {
+  font-family: var(--font-dot);
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: 6px;
+  color: #fff;
+  line-height: 1;
+}
+
+.eara-tag {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  color: var(--red);
+  margin-top: 3px;
+}
+
+.eara-buttons {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  padding: 10px 16px;
+  background: var(--black);
+  border-bottom: 1px solid var(--line);
+}
+
+.eara-buttons-spacer {
+  flex: 1;
+  min-width: 8px;
+}
+
+.eara-tab {
+  border-radius: 999px;
+  min-height: 34px;
+  padding: 0 16px;
+  background: transparent;
+  color: #ccc;
+  border: 1px solid transparent;
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.eara-tab:hover {
+  color: #fff;
+  background: #161616;
+  border-color: var(--line2);
+}
+
+.eara-tab-active {
+  background: #fff !important;
+  color: #000 !important;
+  border-color: #fff !important;
+  font-weight: 700;
+}
+
+.eara-stack {
+  min-height: 720px;
+  max-height: min(868px, 75vh);
+  overflow-y: auto;
+}
+
+.eara-panel-page {
+  padding: 12px 20px 16px;
+  display: none;
+}
+
+.eara-panel-page.is-active {
+  display: block;
+}
+
+.eara-lang {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.dim-label {
+  color: var(--dim);
+  font-size: 11px;
+}
+
+.dim-label--small {
+  font-size: 13px;
+  margin: 8px 0 0;
+}
+
+.eara-status-card {
+  background: linear-gradient(180deg, #171717 0%, #101010 100%);
+  border: 1px solid #2c2c2c;
+  border-radius: 18px;
+  padding: 14px 16px 12px;
+  margin-bottom: 14px;
+}
+
+.eara-focused .eara-status-card {
+  border-color: #454545;
+}
+
+.eara-status-head {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  margin-bottom: 4px;
+}
+
+.eara-status-dot {
+  width: 11px;
+  height: 11px;
+  border-radius: 999px;
+  margin-top: 7px;
+  flex-shrink: 0;
+  background: #666;
+}
+
+.eara-dot-ok {
+  background: var(--green);
+  box-shadow: 0 0 10px rgba(34, 197, 94, 0.55);
+}
+
+.eara-dot-off {
+  background: var(--red);
+  box-shadow: 0 0 10px rgba(215, 25, 33, 0.45);
+}
+
+.eara-status-name {
+  font-size: 18px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.eara-status-badges {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+.eara-status-badge {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  padding: 4px 9px;
+  border-radius: 999px;
+  background: #222;
+  color: #999;
+  border: 1px solid #333;
+}
+
+.eara-status-badge-ok {
+  background: #132818;
+  color: var(--green-text);
+  border-color: #1f4d31;
+}
+
+.eara-status-meta {
+  color: #8f8f8f;
+  font-size: 12px;
+  margin: 2px 0 10px;
+  line-height: 1.4;
+}
+
+.eara-batteries {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.eara-batt-cell {
+  min-width: 0;
+  background: #0d0d0d;
+  border: 1px solid #262626;
+  border-radius: 14px;
+  padding: 10px 10px 8px;
+}
+
+.eara-batt-cell.eara-batt-off {
+  opacity: 0.72;
+}
+
+.eara-batt-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 5px;
+}
+
+.eara-batt-side {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: #9a9a9a;
+}
+
+.eara-batt-pct {
+  font-size: 20px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.eara-batt-bar {
+  height: 5px;
+  border-radius: 999px;
+  background: #252525;
+  overflow: hidden;
+}
+
+.eara-batt-bar span {
+  display: block;
+  height: 100%;
+  background: #f2f2f2;
+  border-radius: 999px;
+}
+
+.eara-batt-sub {
+  min-height: 14px;
+  font-size: 10px;
+  font-weight: 600;
+  margin-top: 4px;
+}
+
+.eara-batt-sub-muted {
+  color: #888;
+  font-size: 10px;
+  line-height: 1.2;
+}
+
+.eara-status-modes {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+
+.eara-mode-chip {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: #121212;
+  color: #bdbdbd;
+  border: 1px solid #2f2f2f;
+}
+
+.eara-field {
+  margin-bottom: 12px;
+}
+
+.eara-field label {
+  display: block;
+  margin-bottom: 4px;
+}
+
+.eara-dropdown {
+  background: #141414;
+  border: 1px solid var(--line2);
+  border-radius: 999px;
+  padding: 10px 14px;
+  font-size: 13px;
+  color: #ececec;
+}
+
+.eara-dropdown--sm {
+  display: inline-block;
+  min-width: 80px;
+  padding: 8px 12px;
+}
+
+.eara-button-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  margin: 14px 0;
+}
+
+.eara-chip {
+  border-radius: 999px;
+  background: #141414;
+  color: #fff;
+  border: 1px solid #444;
+  min-height: 36px;
+  padding: 0 14px;
+  font-family: var(--font-ui);
+  font-weight: 500;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.eara-chip-active {
+  background: #fff;
+  color: #000;
+  border-color: #fff;
+  font-weight: 700;
+}
+
+.eara-chip-disconnect {
+  background: #301010;
+  color: #fecaca;
+  border-color: var(--red);
+}
+
+.eara-card {
+  background: #141414;
+  border: 1px solid var(--line2);
+  border-radius: 20px;
+  padding: 16px;
+  margin-bottom: 14px;
+}
+
+.eara-card-title {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: #999;
+  margin-bottom: 10px;
+}
+
+.eara-card-title--center {
+  text-align: center;
+}
+
+.eara-codec-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.eara-sound-cards {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+@media (min-width: 640px) {
+  .eara-sound-cards {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.eara-sound-card {
+  min-width: 0;
+}
+
+.eara-toggles {
+  border-top: 1px solid #222;
+}
+
+.eara-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid #222;
+}
+
+.eara-toggle-row:last-child {
+  border-bottom: none;
+}
+
+.eara-toggle-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #ddd;
+}
+
+.eara-switch {
+  width: 44px;
+  height: 24px;
+  border-radius: 999px;
+  border: 1px solid #333;
+  background: #1a1a1a;
+  padding: 2px;
+  cursor: pointer;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.eara-switch span {
+  display: block;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #666;
+  transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.eara-switch.is-on {
+  background: rgba(215, 25, 33, 0.35);
+  border-color: var(--red);
+}
+
+.eara-switch.is-on span {
+  transform: translateX(20px);
+  background: var(--red);
+}
+
+.eara-noise-label {
+  font-size: 13px;
+  color: #ddd;
+  margin: 12px 0 8px;
+}
+
+.eara-anc-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.eara-anc-list .eara-chip {
+  width: 100%;
+  text-align: center;
+}
+
+.eara-eq-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin: 10px 0;
+}
+
+.eara-eq-panel {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 4px;
+  background: #111;
+  border: 1px solid #262626;
+  border-radius: 16px;
+  padding: 10px 8px;
+  min-height: 120px;
+}
+
+.eara-eq-band {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.eara-eq-band input {
+  writing-mode: vertical-lr;
+  direction: rtl;
+  width: 22px;
+  height: 80px;
+  accent-color: var(--red);
+}
+
+.eara-eq-band label {
+  font-size: 9px;
+  color: var(--muted);
+}
+
+.eara-gesture-side {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: var(--red);
+  margin: 12px 0 6px;
+}
+
+.eara-gesture-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+}
+
+.eara-gesture-type {
+  font-size: 13px;
+  color: #ddd;
+}
+
+.eara-tools-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.demo__hint {
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.9rem;
+  margin-top: 1rem;
+}
+
+/* ── Screenshots 1:1 ── */
+
+.shots {
+  margin-top: 3.5rem;
+  text-align: center;
+}
+
+.shots h2 {
+  margin-bottom: 0.35rem;
+}
+
+.shots__note {
+  color: var(--muted);
+  font-size: 0.88rem;
+  margin-bottom: 1.5rem;
+}
+
+.shots__grid {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 1.5rem;
+}
+
+.shots__figure {
+  margin: 0;
+  width: var(--shot-w);
+  max-width: 100%;
+}
+
+.shots__figure img {
+  display: block;
+  width: var(--shot-w);
+  height: var(--shot-h);
+  max-width: 100%;
+  height: auto;
+  aspect-ratio: 611 / 868;
+  object-fit: contain;
+  image-rendering: auto;
+  border: 1px solid var(--line2);
+  border-radius: 12px;
+  background: var(--black);
+}
+
+.shots__figure figcaption {
+  margin-top: 0.5rem;
+  color: var(--muted);
+  font-size: 0.88rem;
+}
+
+.install-cta {
+  margin-top: 3rem;
+  text-align: center;
+  border: 1px solid var(--line2);
+  border-radius: 16px;
+  padding: 2rem 1.25rem;
+}
+
+.install-cta pre {
+  text-align: left;
+  display: inline-block;
+  max-width: 100%;
+  overflow-x: auto;
+  background: #000;
+  border: 1px solid var(--line2);
+  border-radius: 12px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.footer {
+  border-top: 1px solid var(--line);
+  padding: 1.5rem;
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 1.5rem;
+  transform: translateX(-50%);
+  background: #111;
+  border: 1px solid var(--line2);
+  padding: 0.75rem 1rem;
+  border-radius: 999px;
+  font-size: 0.88rem;
+  z-index: 50;
+  max-width: calc(100% - 2rem);
+}
+
+.toast[hidden] {
+  display: none;
+}
+
+@media (max-width: 640px) {
+  .topbar__nav a:not(.topbar__cta) {
+    display: none;
+  }
+
+  .eara-sound-cards {
+    grid-template-columns: 1fr;
+  }
+
+  .eara-batteries {
+    grid-template-columns: 1fr;
+  }
+}

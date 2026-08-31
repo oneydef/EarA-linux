@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Q&A (Discussions)
+    url: https://github.com/oneydef/EarA-linux/discussions/categories/q-a
+    about: Install help, distro questions, general usage
+  - name: Device reports (Discussions)
+    url: https://github.com/oneydef/EarA-linux/discussions/categories/general
+    about: Share what works on your Nothing / CMF model (informal reports)

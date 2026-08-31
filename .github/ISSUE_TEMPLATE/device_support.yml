@@ -1,0 +1,65 @@
+name: Device support
+description: Report testing results for a Nothing / CMF model
+title: "[Device]: "
+labels:
+  - device-support
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Help expand the [LINEUP.md](https://github.com/oneydef/EarA-linux/blob/main/LINEUP.md) matrix.
+        See also the pinned issue **Supported devices — help us test**.
+
+  - type: input
+    id: product
+    attributes:
+      label: Product name
+      placeholder: "Nothing Ear (2)"
+    validations:
+      required: true
+
+  - type: input
+    id: distro
+    attributes:
+      label: Linux distro + version
+      placeholder: "Ubuntu 24.04, Fedora 40, …"
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: features
+    attributes:
+      label: What works?
+      options:
+        - label: Connect / RFCOMM protocol
+        - label: Battery L / R / case
+        - label: ANC / transparency
+        - label: EQ presets
+        - label: Advanced / graphic EQ
+        - label: Bass / latency / in-ear toggles
+        - label: Gestures
+        - label: Find my earbuds
+        - label: Ear-tip fit test
+        - label: A2DP audio routing
+        - label: HFP microphone (`eara audio hfp`)
+
+  - type: textarea
+    id: broken
+    attributes:
+      label: What does not work?
+      placeholder: "Case battery only after 2nd refresh, ANC mid ignored, …"
+
+  - type: textarea
+    id: status_json
+    attributes:
+      label: `eara status --json`
+      description: Required — used to map SKU / serial to model flags
+      render: json
+    validations:
+      required: true
+
+  - type: textarea
+    id: notes
+    attributes:
+      label: Extra notes
+      placeholder: BT adapter, PipeWire vs PulseAudio, firmware version, …
