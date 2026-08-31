@@ -1,6 +1,6 @@
 [project]
 name = "eara"
-version = "0.3.0"
+version = "0.3.3"
 description = "Unofficial Linux companion for compatible True Wireless earbuds"
 readme = "README.md"
 requires-python = ">=3.10"

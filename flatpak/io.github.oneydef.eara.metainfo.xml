@@ -57,6 +57,11 @@
   </keywords>
   <content_rating type="oars-1.1"/>
   <releases>
+    <release version="0.3.3" date="2026-08-31">
+      <description>
+        <p>Fix install path in docs, optional power-off Bluetooth on exit.</p>
+      </description>
+    </release>
     <release version="0.3.0" date="2026-08-30">
       <description>
         <p>Nothing-style GTK4 UI, fit test fix, case battery, Flatpak packaging.</p>

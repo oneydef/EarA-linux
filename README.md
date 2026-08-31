@@ -46,7 +46,7 @@ EarA brings battery, ANC, EQ, gestures, find-my, and Bluetooth audio routing to 
 ```bash
 sudo apt install python3 python3-gi python3-dbus gir1.2-gtk-4.0 gir1.2-adw-1 bluez
 git clone https://github.com/oneydef/EarA-linux.git
-cd eara
+cd EarA-linux
 ./scripts/install-user.sh
 eara gui
 ```

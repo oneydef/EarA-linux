@@ -13,7 +13,7 @@ from gi.repository import Adw, Gdk, GLib, Gtk
 
 from eara import __version__, bluez
 from eara import SUPPORT_URL
-from eara.i18n import load_lang, set_lang, t
+from eara.i18n import load_lang, power_off_on_exit, set_lang, set_power_off_on_exit, t
 from eara.protocol import (
     GESTURE_ACTIONS,
     GESTURE_TYPES,
@@ -915,6 +915,18 @@ class EarAWindow(Adw.ApplicationWindow):
         self.audio_box.append(self.btn_disconnect)
         box.append(self.audio_box)
 
+        exit_card = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=4)
+        exit_card.add_css_class("eara-card")
+        self.row_power_off, self.power_off_switch, self.lbl_power_off = _toggle_row(t("power_off_exit"))
+        self.power_off_switch.set_active(power_off_on_exit())
+        self.power_off_switch.connect("notify::active", self._on_power_off_exit_changed)
+        exit_card.append(self.row_power_off)
+        self.lbl_power_off_hint = Gtk.Label(wrap=True, xalign=0)
+        self.lbl_power_off_hint.add_css_class("dim-label")
+        self.lbl_power_off_hint.set_text(t("power_off_exit_hint"))
+        exit_card.append(self.lbl_power_off_hint)
+        box.append(exit_card)
+
         codec_card = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
         codec_card.add_css_class("eara-card")
         self.lbl_codec = Gtk.Label(xalign=0, wrap=True)
@@ -1285,6 +1297,8 @@ class EarAWindow(Adw.ApplicationWindow):
         self.btn_music.set_label(t("music"))
         self.btn_calls.set_label(t("calls"))
         self.btn_disconnect.set_label(t("disconnect"))
+        self.lbl_power_off.set_text(t("power_off_exit"))
+        self.lbl_power_off_hint.set_text(t("power_off_exit_hint"))
         self.lbl_codec.set_text(t("codec"))
         self.btn_codec.set_label(t("apply_codec"))
         self.lbl_codec_hint.set_text(t("codec_hint"))
@@ -1491,6 +1505,7 @@ class EarAWindow(Adw.ApplicationWindow):
             self.lat_switch,
             self.adv_switch,
             self.panc_switch,
+            self.power_off_switch,
         ):
             widgets.append(switch)
         return widgets
@@ -1567,13 +1582,17 @@ class EarAWindow(Adw.ApplicationWindow):
         if self._shutting_down:
             return
         self._shutting_down = True
+        power_off = power_off_on_exit()
         if self.device:
-            self.device.shutdown()
-        else:
+            self.device.shutdown(power_off=power_off)
+        elif power_off:
             try:
                 bluez.power_off()
             except Exception:
                 pass
+
+    def _on_power_off_exit_changed(self, switch: Gtk.Switch, _pspec) -> None:
+        set_power_off_on_exit(bool(switch.get_active()))
 
     def _on_close_request(self, *_args) -> bool:
         self._shutdown_bluetooth()

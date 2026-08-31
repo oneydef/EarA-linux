@@ -14,7 +14,7 @@ body:
     attributes:
       label: EarA version
       description: Output of `eara --version` or release tag
-      placeholder: "0.3.0"
+      placeholder: "0.3.3"
     validations:
       required: true
 

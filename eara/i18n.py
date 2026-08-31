@@ -114,6 +114,8 @@ STRINGS = {
         "status_ready": "Connected",
         "status_partial": "Bluetooth only",
         "status_offline": "Not connected",
+        "power_off_exit": "Power off Bluetooth on exit",
+        "power_off_exit_hint": "When enabled, closing EarA disconnects earbuds and turns off the adapter.",
     },
     "uk": {
         "app_title": "EarA",
@@ -218,6 +220,8 @@ STRINGS = {
         "status_ready": "Підключено",
         "status_partial": "Лише Bluetooth",
         "status_offline": "Не підключено",
+        "power_off_exit": "Вимикати Bluetooth при виході",
+        "power_off_exit_hint": "Якщо увімкнено, при закритті EarA відключає навушники та вимикає адаптер.",
     },
 }
 
@@ -228,26 +232,39 @@ def t(key: str, **kwargs) -> str:
     return text.format(**kwargs) if kwargs else text
 
 
-def load_lang() -> str:
-    global LANG
+def _read_config() -> dict:
     try:
         data = json.loads(_CONFIG.read_text(encoding="utf-8"))
-        lang = str(data.get("lang", "en"))
-        if lang in SUPPORTED:
-            LANG = lang
+        return data if isinstance(data, dict) else {}
     except (OSError, ValueError):
-        LANG = "en"
+        return {}
+
+
+def _write_config(data: dict) -> None:
+    _CONFIG.parent.mkdir(parents=True, exist_ok=True)
+    _CONFIG.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
+
+
+def power_off_on_exit() -> bool:
+    return bool(_read_config().get("power_off_on_exit", True))
+
+
+def set_power_off_on_exit(enabled: bool) -> None:
+    data = _read_config()
+    data["power_off_on_exit"] = bool(enabled)
+    _write_config(data)
+
+
+def load_lang() -> str:
+    global LANG
+    lang = str(_read_config().get("lang", "en"))
+    LANG = lang if lang in SUPPORTED else "en"
     return LANG
 
 
 def set_lang(lang: str) -> None:
     global LANG
     LANG = lang if lang in SUPPORTED else "en"
-    _CONFIG.parent.mkdir(parents=True, exist_ok=True)
-    data = {}
-    try:
-        data = json.loads(_CONFIG.read_text(encoding="utf-8"))
-    except (OSError, ValueError):
-        data = {}
+    data = _read_config()
     data["lang"] = LANG
-    _CONFIG.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
+    _write_config(data)

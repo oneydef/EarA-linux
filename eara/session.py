@@ -170,18 +170,19 @@ class Device:
         if self.address:
             bluez.disconnect(self.address)
 
-    def shutdown(self) -> None:
-        """Drop RFCOMM, disconnect earbuds, and power off the BT adapter."""
+    def shutdown(self, *, power_off: bool = True) -> None:
+        """Drop RFCOMM, disconnect earbuds, and optionally power off the BT adapter."""
         self.close_control()
         if self.address:
             try:
                 bluez.disconnect(self.address)
             except Exception:
                 pass
-        try:
-            bluez.power_off()
-        except Exception:
-            pass
+        if power_off:
+            try:
+                bluez.power_off()
+            except Exception:
+                pass
 
     def open_control(self, *, probe_device: bool = False) -> None:
         with self._lock:
