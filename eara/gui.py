@@ -1540,10 +1540,12 @@ class EarAWindow(Adw.ApplicationWindow):
         for widget in self._busy_widgets():
             widget.set_sensitive(not busy)
 
-    def _run(self, fn) -> None:
+    def _run(self, fn, *, soft_timeout: float = 90.0) -> None:
         if self._busy:
             return
         self._set_busy(True)
+        generation = getattr(self, "_busy_generation", 0) + 1
+        self._busy_generation = generation
 
         def worker():
             err = None
@@ -1553,15 +1555,28 @@ class EarAWindow(Adw.ApplicationWindow):
                 err = str(exc)
 
             def done():
+                if getattr(self, "_busy_generation", 0) != generation:
+                    return False
                 self._set_busy(False)
                 if err:
                     self._show(err)
                 else:
                     self._paint()
+                return False
 
             GLib.idle_add(done)
 
+        def watchdog():
+            if getattr(self, "_busy_generation", 0) != generation or not self._busy:
+                return False
+            self._busy_generation = generation + 1
+            self._set_busy(False)
+            self._show(t("connect_timeout") if fn == self._do_connect else t("busy_timeout"))
+            return False
+
         threading.Thread(target=worker, daemon=True).start()
+        if soft_timeout > 0:
+            GLib.timeout_add(int(soft_timeout * 1000), watchdog)
 
     def _bootstrap(self) -> bool:
         self._fill_devices()
@@ -1579,7 +1594,8 @@ class EarAWindow(Adw.ApplicationWindow):
 
     def _do_connect(self) -> None:
         GLib.idle_add(lambda: self._show(t("connect_busy")) or False)
-        result = self._require().connect_audio(False)
+        # Keep the header button responsive: fewer retries, fast path if already linked.
+        result = self._require().connect_audio(False, attempts=2)
         if not result.get("ok"):
             raise RuntimeError(str(result.get("error")))
         self._last = self.device.status() if self.device else {}
@@ -1869,7 +1885,8 @@ class EarAApp(Adw.Application):
         win = self.props.active_window
         if isinstance(win, EarAWindow):
             win._shutdown_bluetooth()
-        super().do_shutdown()
+        # PyGObject: super().do_shutdown() can call Gio.Application.shutdown() incorrectly.
+        Adw.Application.do_shutdown(self)
 
     def do_activate(self) -> None:  # noqa: N802
         win = self.props.active_window

@@ -107,29 +107,36 @@ class Device:
     def connected(self) -> bool:
         return bool(self.address) and bluez.is_connected(self.address)
 
-    def connect_audio(self, with_mic: bool = False, attempts: int = 5) -> dict[str, object]:
+    def connect_audio(self, with_mic: bool = False, attempts: int = 3) -> dict[str, object]:
         if not self.address:
             raise RuntimeError("No Bluetooth address")
         fn = audio.ensure_call_audio if with_mic else audio.ensure_music_audio
         last: dict[str, object] = {"ok": False, "error": "Connect failed"}
+
+        # Already linked with A2DP — just (re)apply the audio profile.
+        if self.connected and bluez.has_audio_sink(self.address):
+            result = fn(self.address)
+            if result.get("ok"):
+                result["attempt"] = 0
+                return result
 
         for attempt in range(attempts):
             self.close_control()
             try:
                 bluez.trust_and_connect(
                     self.address,
-                    timeout=45,
-                    scan=True,
-                    max_rounds=4 if attempt == 0 else 5,
+                    timeout=28 if attempt == 0 else 36,
+                    scan=attempt > 0 or not self.connected,
+                    max_rounds=2 if attempt == 0 else 3,
                 )
             except TimeoutError as exc:
                 last = {"ok": False, "error": str(exc), "attempt": attempt + 1}
                 bluez.dbus_disconnect(self.address)
                 audio.reload_bluetooth_modules(force=True)
-                time.sleep(1.5 + attempt)
+                time.sleep(1.0 + attempt)
                 continue
 
-            time.sleep(0.8)
+            time.sleep(0.5)
             result = fn(self.address)
             if result.get("ok"):
                 result["attempt"] = attempt + 1
@@ -139,7 +146,7 @@ class Device:
             last["attempt"] = attempt + 1
             audio.reload_bluetooth_modules(force=True)
             bluez.dbus_disconnect(self.address)
-            time.sleep(1.2 + attempt * 0.6)
+            time.sleep(1.0 + attempt * 0.5)
 
         err = str(last.get("error") or "Connect failed")
         return {
