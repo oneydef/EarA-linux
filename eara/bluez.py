@@ -126,13 +126,58 @@ def dbus_connect(address: str) -> None:
     except ImportError as exc:
         raise RuntimeError("python3-dbus is required") from exc
     bus = dbus.SystemBus()
-    dev = dbus.Interface(bus.get_object("org.bluez", _device_path(address)), "org.bluez.Device1")
-    props = dbus.Interface(bus.get_object("org.bluez", _device_path(address)), "org.freedesktop.DBus.Properties")
+    path = _device_path(address)
+    dev = dbus.Interface(bus.get_object("org.bluez", path), "org.bluez.Device1")
+    props = dbus.Interface(bus.get_object("org.bluez", path), "org.freedesktop.DBus.Properties")
     props.Set("org.bluez.Device1", "Trusted", dbus.Boolean(True))
-    if not bool(props.Get("org.bluez.Device1", "Connected")):
-        dev.Connect()
+
+    # Prefer A2DP Audio Sink profile. Plain Connect() often leaves Nothing buds
+    # ACL-up with ServicesResolved=no / br-connection-busy until profiles stall.
+    a2dp = "0000110b-0000-1000-8000-00805f9b34fb"
+    connected = bool(props.Get("org.bluez.Device1", "Connected"))
+    resolved = bool(props.Get("org.bluez.Device1", "ServicesResolved"))
+
+    if connected and not resolved:
+        try:
+            dev.Disconnect()
+        except Exception:
+            pass
+        time.sleep(0.8)
+        connected = False
+
     try:
-        dev.ConnectProfile("0000110b-0000-1000-8000-00805f9b34fb")  # A2DP
+        if not connected:
+            # ConnectProfile alone is enough for A2DP on many BlueZ builds.
+            try:
+                dev.ConnectProfile(a2dp)
+            except Exception:
+                dev.Connect()
+                try:
+                    dev.ConnectProfile(a2dp)
+                except Exception:
+                    pass
+        else:
+            try:
+                dev.ConnectProfile(a2dp)
+            except Exception:
+                pass
+    except Exception:
+        if not bool(props.Get("org.bluez.Device1", "Connected")):
+            try:
+                dev.Connect()
+            except Exception:
+                pass
+        try:
+            dev.ConnectProfile(a2dp)
+        except Exception:
+            pass
+
+    # Restore a friendly Alias if BlueZ cached a garbage Name (seen as "@").
+    try:
+        alias = str(props.Get("org.bluez.Device1", "Alias") or "")
+        name = str(props.Get("org.bluez.Device1", "Name") or "")
+        if alias.strip() in {"", "@"} or name.strip() == "@":
+            props.Set("org.bluez.Device1", "Alias", "Nothing Ear (a)")
     except Exception:
         pass
 
