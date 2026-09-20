@@ -207,18 +207,31 @@ def trust_and_connect(
     if is_connected(address) and has_audio_sink(address):
         return
 
+    # Connected but PulseAudio card lagging — wait before tearing the link down.
+    if is_connected(address):
+        from eara.audio import ensure_bluez_card
+
+        ensure_bluez_card(address)
+        if has_audio_sink(address):
+            return
+
     last_err = ""
-    per_round = max(12.0, timeout / max_rounds)
+    per_round = max(10.0, timeout / max_rounds)
 
     for round_num in range(max_rounds):
         if scan:
-            scan_for_device(address, dwell=5.0 if round_num == 0 else 7.0)
+            scan_for_device(address, dwell=3.5 if round_num == 0 else 5.0)
 
         if is_connected(address):
             if has_audio_sink(address):
                 return
+            from eara.audio import ensure_bluez_card
+
+            ensure_bluez_card(address)
+            if has_audio_sink(address):
+                return
             dbus_disconnect(address)
-            time.sleep(1.5)
+            time.sleep(1.0)
 
         round_deadline = time.monotonic() + per_round
         while time.monotonic() < round_deadline:
@@ -226,12 +239,12 @@ def trust_and_connect(
                 dbus_connect(address)
             except Exception as exc:
                 last_err = str(exc)
-                out = _ctl("connect", address, timeout=15)
+                out = _ctl("connect", address, timeout=12)
                 if out.strip():
                     last_err = out.strip()
-            time.sleep(1.2)
+            time.sleep(0.8)
             if is_connected(address):
-                settle_deadline = time.monotonic() + 16
+                settle_deadline = time.monotonic() + 12
                 while time.monotonic() < settle_deadline:
                     if has_audio_sink(address):
                         return
@@ -242,10 +255,10 @@ def trust_and_connect(
                         ensure_bluez_card(address)
                         if has_audio_sink(address):
                             return
-                    time.sleep(0.45)
+                    time.sleep(0.4)
                 if has_audio_sink(address):
                     return
-            time.sleep(0.8)
+            time.sleep(0.5)
 
         if round_num + 1 < max_rounds:
             try:
@@ -255,7 +268,7 @@ def trust_and_connect(
             from eara.audio import reload_bluetooth_modules
 
             reload_bluetooth_modules(force=True)
-            time.sleep(1.2 + round_num * 0.5)
+            time.sleep(1.0 + round_num * 0.4)
 
     raise TimeoutError(
         f"Bluetooth connect timed out for {address} after {max_rounds} attempts: {last_err}"
