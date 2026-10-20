@@ -1419,6 +1419,10 @@ class EarAWindow(Adw.ApplicationWindow):
         idx = int(self.device_drop.get_selected())
         if 0 <= idx < len(devices):
             d = devices[idx]
+            # Keep the same Device while the same earbuds stay selected: it remembers the
+            # last case battery reading and the model detected from the serial number.
+            if self.device is not None and self.device.address == d["address"].upper():
+                return self.device
             return Device(d["address"], d["name"])
         return None
 
