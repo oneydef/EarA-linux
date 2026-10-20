@@ -442,6 +442,28 @@ class Device:
             self.close_control()
         return result
 
+    def battery(self) -> dict[str, dict[str, object]]:
+        """Left / right / case battery only, for periodic refreshes.
+
+        Never (re)connects the earbuds: raises RuntimeError if they aren't connected.
+        The case only reports while a bud is docked; its last reading is kept (stale).
+        """
+        if not self.connected:
+            raise RuntimeError("Earbuds are not connected")
+        with self._lock:
+            if self._sock is None:
+                try:
+                    self._sock = bluez.open_rfcomm(self.address)
+                except OSError as exc:
+                    raise RuntimeError(bluez.permission_hint(exc)) from exc
+                self._parser = FrameParser()
+            try:
+                payload = self._request(CMD_BATTERY, timeout=1.0, require=True)
+            finally:
+                self.close_control()
+        battery, self._battery_cache = merge_battery_cache(parse_battery(payload), self._battery_cache)
+        return battery
+
     def set_anc(self, mode: str) -> None:
         if mode not in ANC_MODES:
             raise ValueError(f"Unknown ANC mode: {mode}")

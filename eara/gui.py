@@ -32,6 +32,7 @@ _FONT_FILES = (
     "DotGothic16-Regular.ttf",
     "Inter-Regular.ttf",
 )
+_BATTERY_REFRESH_SECONDS = 30
 
 
 def _pick_dot_font() -> str:
@@ -780,6 +781,7 @@ class EarAWindow(Adw.ApplicationWindow):
 
         self._header_active = "connect"
         self._shutting_down = False
+        self._battery_refreshing = False
         self.connect("notify::is-active", self._on_active_changed)
         self.connect("close-request", self._on_close_request)
         self._update_focus_class()
@@ -857,6 +859,7 @@ class EarAWindow(Adw.ApplicationWindow):
         self.set_content(outer)
         self._apply_lang()
         GLib.idle_add(self._bootstrap)
+        GLib.timeout_add_seconds(_BATTERY_REFRESH_SECONDS, self._refresh_battery)
 
     def _page_device(self) -> Gtk.Widget:
         box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=14)
@@ -1619,6 +1622,39 @@ class EarAWindow(Adw.ApplicationWindow):
             self._run(self._do_refresh)
         except LookupError:
             self._set_status_message(t("no_device"), offline=True)
+        return False
+
+    def _refresh_battery(self) -> bool:
+        """Re-read the battery while the window is open.
+
+        The case only reports while a bud is docked, so a single read at startup
+        usually misses it. Skipped while another action runs; never connects.
+        """
+        if self._shutting_down:
+            return False
+        device = self.device
+        if device is None or self._busy or self._battery_refreshing:
+            return True
+        self._battery_refreshing = True
+
+        def worker():
+            try:
+                battery = device.battery()
+            except (RuntimeError, OSError, TimeoutError):
+                battery = None
+            GLib.idle_add(self._show_battery, device, battery)
+
+        threading.Thread(target=worker, daemon=True).start()
+        return True
+
+    def _show_battery(self, device: Device, battery: dict | None) -> bool:
+        self._battery_refreshing = False
+        if battery is None or device is not self.device or self._busy:
+            return False
+        self._last = {**(self._last or {}), "battery": battery}
+        for key in ("left", "right", "case"):
+            item = battery.get(key)
+            self._update_battery_cell(key, item if isinstance(item, dict) else None)
         return False
 
     def _do_connect(self) -> None:

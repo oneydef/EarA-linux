@@ -1,6 +1,6 @@
 import socket
 import unittest
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, PropertyMock, patch
 
 from eara import bluez
 from eara.protocol import CMD_LISTENING_SET, DIR_SET
@@ -89,6 +89,31 @@ class SessionTests(unittest.TestCase):
                 device.set_custom_eq(0, 0, 0)
         self.assertEqual(req.call_count, 2)
         req.assert_called_with(CMD_LISTENING_SET, DIR_SET, bytes([6, 0]), require=True)
+
+
+class BatteryTests(unittest.TestCase):
+    def test_battery_keeps_last_case_reading(self):
+        device = Device("AA:BB:CC:DD:EE:FF", "Nothing Ear (a)")
+        docked = bytes.fromhex("03 02 55 03 55 04 3c")  # left 85, right 85, case 60
+        worn = bytes.fromhex("02 02 55 03 55")  # buds out of the case: no case entry
+        with patch.object(Device, "connected", new_callable=PropertyMock, return_value=True), patch.object(
+            bluez, "open_rfcomm", return_value=MagicMock()
+        ), patch.object(device, "_request", side_effect=[docked, worn]):
+            first = device.battery()
+            second = device.battery()
+        self.assertEqual((first["case"]["level"], first["case"]["stale"]), (60, False))
+        self.assertEqual((second["case"]["level"], second["case"]["stale"]), (60, True))
+        self.assertEqual(second["left"]["level"], 85)
+
+    def test_battery_never_connects(self):
+        device = Device("AA:BB:CC:DD:EE:FF", "Nothing Ear (a)")
+        with patch.object(Device, "connected", new_callable=PropertyMock, return_value=False), patch.object(
+            bluez, "open_rfcomm"
+        ) as rfcomm, patch.object(bluez, "trust_and_connect") as connect:
+            with self.assertRaises(RuntimeError):
+                device.battery()
+        rfcomm.assert_not_called()
+        connect.assert_not_called()
 
 
 if __name__ == "__main__":
