@@ -5,21 +5,20 @@ pkgrel=1
 pkgdesc="Unofficial GTK companion for Nothing/CMF earbuds on Linux"
 arch=('any')
 url="https://github.com/oneydef/EarA-linux"
-license=('GPL3')
+license=('GPL-3.0-or-later')
 depends=(
   'python'
   'python-gobject'
-  'python-dbus'
+  'dbus-python'
   'gtk4'
   'libadwaita'
   'bluez'
   'bluez-utils'
-  'pipewire-pulse'
+  'libpulse'
 )
 makedepends=()
 source=("${pkgname}-${pkgver}.tar.gz::https://github.com/oneydef/EarA-linux/releases/download/v${pkgver}/${pkgname}-${pkgver}.tar.gz")
-# scripts/submit-aur.sh replaces this with the published release tarball checksum.
-sha256sums=('SKIP')
+sha256sums=('a183746df56715e7a7919038bceae8fa8edb12362c54b3ea6837d81551ab82f1')
 
 package() {
   cd "$srcdir"
@@ -27,6 +26,7 @@ package() {
   cp -a eara "$pkgdir/usr/share/eara/"
   install -dm755 "$pkgdir/usr/bin"
   install -dm755 "$pkgdir/usr/share/applications"
+  install -dm755 "$pkgdir/usr/share/metainfo"
   install -dm755 "$pkgdir/usr/share/icons/hicolor/scalable/apps"
   install -dm755 "$pkgdir/usr/share/doc/eara"
 
