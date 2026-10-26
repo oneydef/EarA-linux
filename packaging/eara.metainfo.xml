@@ -58,6 +58,11 @@
   </keywords>
   <content_rating type="oars-1.1"/>
   <releases>
+    <release version="0.5.0" date="2026-10-26">
+      <description>
+        <p>Add persistent device state, bass-level control, periodic battery refresh, and CMF Buds 2 and PipeWire follow-up fixes contributed by Alex Vasileiou.</p>
+      </description>
+    </release>
     <release version="0.4.0" date="2026-10-26">
       <description>
         <p>Add CMF Buds 2 support, SDP RFCOMM discovery, PipeWire compatibility, and safer Bluetooth shutdown behavior.</p>
