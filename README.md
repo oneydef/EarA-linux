@@ -88,7 +88,7 @@ EarA is free community software. If it saves you time on Linux:
 
 ## Protocol
 
-RFCOMM ch. 15 · UUID `aeac4a03-dff5-498f-843a-34487cf133eb` · frames `55 60 01 | cmd | dir | len | seq | payload | CRC-16/ARC`.
+RFCOMM channel discovered through SDP (usually 15; newer CMF models may use 16) · UUID `aeac4a03-dff5-498f-843a-34487cf133eb` · frames `55 60 01 | cmd | dir | len | seq | payload | CRC-16/ARC`.
 
 ## License
 

@@ -15,6 +15,8 @@ from eara import __version__, bluez
 from eara import SUPPORT_URL
 from eara.i18n import load_lang, power_off_on_exit, set_lang, set_power_off_on_exit, t
 from eara.protocol import (
+    CMF_BUDS_2_EQ_PRESETS,
+    EQ_PRESETS,
     GESTURE_ACTIONS,
     GESTURE_TYPES,
     GRAPHIC_HZ,
@@ -1142,7 +1144,8 @@ class EarAWindow(Adw.ApplicationWindow):
         eq = Gtk.FlowBox(max_children_per_line=2, selection_mode=Gtk.SelectionMode.NONE)
         self.eq_flow = eq
         self.eq_buttons: dict[str, Gtk.Button] = {}
-        for key in ("balanced", "more_bass", "more_treble", "voice"):
+        eq_keys = list(dict.fromkeys([*EQ_PRESETS, *CMF_BUDS_2_EQ_PRESETS]))
+        for key in (key for key in eq_keys if key != "custom"):
             b = Gtk.Button()
             b.add_css_class("eara-chip")
             b.connect("clicked", lambda *_, k=key: self._run(lambda: self._require().set_eq(k)))
@@ -1530,7 +1533,6 @@ class EarAWindow(Adw.ApplicationWindow):
             self.lat_switch,
             self.adv_switch,
             self.panc_switch,
-            self.power_off_switch,
         ):
             widgets.append(switch)
         return widgets
@@ -1744,6 +1746,10 @@ class EarAWindow(Adw.ApplicationWindow):
         self.anc_flow.set_visible(bool(caps.get("anc")))
         self.lbl_eq.set_visible(bool(caps.get("eq_presets", True)))
         self.eq_flow.set_visible(bool(caps.get("eq_presets", True)))
+        family = str(caps.get("eq_preset_family") or "standard")
+        visible_presets = CMF_BUDS_2_EQ_PRESETS if family == "cmf-buds-2" else EQ_PRESETS
+        for key, button in self.eq_buttons.items():
+            button.set_visible(key in visible_presets and key != "custom")
         self.graphic_box.set_visible(bool(caps.get("custom_eq", True)))
         self.btn_apply_eq.set_visible(bool(caps.get("custom_eq", True)))
         self.lbl_custom.set_visible(bool(caps.get("custom_eq", True)))

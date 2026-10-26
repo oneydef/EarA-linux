@@ -3,14 +3,69 @@
 from __future__ import annotations
 
 import os
+import re
 import socket
 import subprocess
 import time
 from typing import Optional
 
-from eara.protocol import RFCOMM_CHANNEL
+from eara.protocol import NT_LINK_UUID, RFCOMM_CHANNEL
 
 ADDRESS_RE = __import__("re").compile(r"^[0-9A-Fa-f]{2}(?::[0-9A-Fa-f]{2}){5}$")
+_RFCOMM_CHANNEL_CACHE: dict[str, int] = {}
+
+
+def _normalized_uuid(value: str) -> str:
+    return re.sub(r"[^0-9a-f]", "", value.lower().removeprefix("0x"))
+
+
+def _rfcomm_channel_from_sdp(xml: str, service_uuid: str = NT_LINK_UUID) -> Optional[int]:
+    """Return the RFCOMM channel for one service from ``sdptool --xml`` output."""
+    target = _normalized_uuid(service_uuid)
+    records = re.findall(r"<record\b.*?</record>", xml, flags=re.I | re.S)
+    for record in records or [xml]:
+        values = re.findall(r"<uuid\b[^>]*\bvalue=[\"']([^\"']+)", record, flags=re.I)
+        if target not in {_normalized_uuid(value) for value in values}:
+            continue
+        match = re.search(
+            r"<uuid\b[^>]*\bvalue=[\"'](?:0x)?0*3[\"'][^>]*/?>"
+            r".{0,500}?<uint8\b[^>]*\bvalue=[\"']([^\"']+)",
+            record,
+            flags=re.I | re.S,
+        )
+        if not match:
+            continue
+        try:
+            channel = int(match.group(1), 0)
+        except ValueError:
+            continue
+        if 1 <= channel <= 30:
+            return channel
+    return None
+
+
+def discover_rfcomm_channel(address: str) -> int:
+    """Discover the NTAPP RFCOMM channel, falling back for older earbuds."""
+    cache_key = address.upper()
+    if cache_key in _RFCOMM_CHANNEL_CACHE:
+        return _RFCOMM_CHANNEL_CACHE[cache_key]
+    try:
+        result = subprocess.run(
+            ["sdptool", "browse", "--xml", address],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            timeout=8,
+            check=False,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return RFCOMM_CHANNEL
+    channel = _rfcomm_channel_from_sdp(result.stdout or "")
+    if channel is not None:
+        _RFCOMM_CHANNEL_CACHE[cache_key] = channel
+        return channel
+    # Do not cache a fallback caused by a sleeping device or transient SDP error.
+    return RFCOMM_CHANNEL
 
 
 def _ctl(*args: str, timeout: float = 8) -> str:
@@ -301,11 +356,12 @@ def disconnect(address: str) -> None:
 
 def open_rfcomm(address: str, timeout: float = 8) -> socket.socket:
     last: Optional[OSError] = None
+    channel = discover_rfcomm_channel(address)
     for attempt in range(8):
         sock = socket.socket(socket.AF_BLUETOOTH, socket.SOCK_STREAM, socket.BTPROTO_RFCOMM)
         sock.settimeout(timeout)
         try:
-            sock.connect((address, RFCOMM_CHANNEL))
+            sock.connect((address, channel))
             return sock
         except OSError as exc:
             last = exc

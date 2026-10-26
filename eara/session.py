@@ -44,7 +44,6 @@ from eara.protocol import (
     DIR_RESPONSE,
     DIR_ACK,
     DIR_SET,
-    EQ_PRESETS,
     GESTURE_ACTIONS,
     GESTURE_SIDES,
     GESTURE_TYPES,
@@ -53,6 +52,7 @@ from eara.protocol import (
     build_custom_eq_payload,
     build_frame,
     clamp_eq_gain,
+    eq_presets_for,
     graphic_to_three,
     merge_gestures,
     merge_battery_cache,
@@ -68,6 +68,7 @@ from eara.protocol import (
     parse_in_ear,
     parse_latency,
     parse_listening,
+    parse_named_mode,
     three_to_graphic,
     parse_serial,
 )
@@ -178,9 +179,9 @@ class Device:
             bluez.disconnect(self.address)
 
     def shutdown(self, *, power_off: bool = True) -> None:
-        """Drop RFCOMM, disconnect earbuds, and optionally power off the BT adapter."""
+        """Release control; optionally disconnect earbuds and power off Bluetooth."""
         self.close_control()
-        if self.address:
+        if power_off and self.address:
             try:
                 bluez.disconnect(self.address)
             except Exception:
@@ -386,9 +387,14 @@ class Device:
                 if anc is not None:
                     result["anc"] = parse_anc(anc)
             if self.model.eq_presets:
-                eq = self._request(CMD_EQ_GET)
+                cmf_eq = self.model.eq_preset_family == "cmf-buds-2"
+                eq = self._request(CMD_LISTENING_GET if cmf_eq else CMD_EQ_GET)
                 if eq is not None:
-                    result["eq"] = parse_eq(eq)
+                    result["eq"] = (
+                        parse_named_mode(eq, eq_presets_for(self.model.eq_preset_family))
+                        if cmf_eq
+                        else parse_eq(eq)
+                    )
             if self.model.custom_eq:
                 ceq = self._request(CMD_CUSTOM_EQ_GET)
                 if ceq is not None:
@@ -445,10 +451,12 @@ class Device:
             time.sleep(0.2)
 
     def set_eq(self, preset: str) -> None:
-        if preset not in EQ_PRESETS:
+        presets = eq_presets_for(self.model.eq_preset_family)
+        if preset not in presets:
             raise ValueError(f"Unknown EQ preset: {preset}")
         with self._session():
-            self._request(CMD_EQ_SET, DIR_SET, bytes([EQ_PRESETS[preset], 0]), require=True)
+            command = CMD_LISTENING_SET if self.model.eq_preset_family == "cmf-buds-2" else CMD_EQ_SET
+            self._request(command, DIR_SET, bytes([presets[preset], 0]), require=True)
             time.sleep(0.2)
 
     def set_custom_eq(self, bass: float, mid: float, treble: float) -> None:
@@ -458,6 +466,13 @@ class Device:
         with self._session():
             payload = build_custom_eq_payload(bass, mid, treble)
             self._request(CMD_CUSTOM_EQ_SET, DIR_SET, payload, require=True)
+            if self.model.eq_preset_family == "cmf-buds-2":
+                self._request(
+                    CMD_LISTENING_SET,
+                    DIR_SET,
+                    bytes([eq_presets_for(self.model.eq_preset_family)["custom"], 0]),
+                    require=True,
+                )
             time.sleep(0.2)
 
     def set_graphic_eq(self, gains: list[float]) -> None:
@@ -471,6 +486,13 @@ class Device:
                 build_custom_eq_payload(bass, mid, treble),
                 require=True,
             )
+            if self.model.eq_preset_family == "cmf-buds-2":
+                self._request(
+                    CMD_LISTENING_SET,
+                    DIR_SET,
+                    bytes([eq_presets_for(self.model.eq_preset_family)["custom"], 0]),
+                    require=True,
+                )
             time.sleep(0.2)
 
     def set_codec(self, name: str) -> dict[str, object]:

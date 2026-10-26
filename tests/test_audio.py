@@ -7,6 +7,22 @@ from eara import audio
 
 
 class AudioTests(unittest.TestCase):
+    def test_find_sink_accepts_pipewire_colon_mac(self):
+        sinks = "42\tbluez_output.3C:B0:ED:D3:DC:40.1\tPipeWire\n"
+        with patch.object(audio, "_pactl", return_value=sinks):
+            self.assertEqual(
+                audio.find_sink("3C:B0:ED:D3:DC:40"),
+                "bluez_output.3C:B0:ED:D3:DC:40.1",
+            )
+
+    def test_find_sink_accepts_pulseaudio_underscore_mac(self):
+        sinks = "42\tbluez_output.3C_B0_ED_D3_DC_40.a2dp-sink\tPipeWire\n"
+        with patch.object(audio, "_pactl", return_value=sinks):
+            self.assertEqual(
+                audio.find_sink("3C:B0:ED:D3:DC:40"),
+                "bluez_output.3C_B0_ED_D3_DC_40.a2dp-sink",
+            )
+
     def test_reload_skipped_without_force(self):
         with patch("eara.audio.subprocess.run") as run:
             audio.reload_bluetooth_modules(force=False)
