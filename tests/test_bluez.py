@@ -1,10 +1,22 @@
 import unittest
+from types import SimpleNamespace
 from unittest.mock import patch
 
 from eara import bluez
 
 
 class BluezTests(unittest.TestCase):
+    SDP_CHANNEL_16 = """
+    <record>
+      <attribute id="0x0001"><sequence>
+        <uuid value="aeac4a03-dff5-498f-843a-34487cf133eb" />
+      </sequence></attribute>
+      <attribute id="0x0004"><sequence><sequence>
+        <uuid value="0x0003" /><uint8 value="0x10" />
+      </sequence></sequence></attribute>
+    </record>
+    """
+
     def test_find_nothing_rejects_unpaired_mac(self):
         with patch.object(bluez, "paired_devices", return_value=[]):
             self.assertIsNone(bluez.find_nothing_device("AA:BB:CC:DD:EE:FF"))
@@ -29,6 +41,28 @@ class BluezTests(unittest.TestCase):
     def test_power_off_when_on(self):
         with patch.object(bluez, "_ctl", side_effect=["Powered: yes", ""]):
             bluez.power_off()
+
+    def test_parses_ntapp_rfcomm_channel_from_sdp(self):
+        self.assertEqual(bluez._rfcomm_channel_from_sdp(self.SDP_CHANNEL_16), 16)
+
+    def test_ignores_channel_from_unrelated_sdp_record(self):
+        xml = self.SDP_CHANNEL_16.replace(
+            "aeac4a03-dff5-498f-843a-34487cf133eb",
+            "0000110b-0000-1000-8000-00805f9b34fb",
+        )
+        self.assertIsNone(bluez._rfcomm_channel_from_sdp(xml))
+
+    def test_rfcomm_channel_falls_back_to_15(self):
+        bluez._RFCOMM_CHANNEL_CACHE.clear()
+        result = SimpleNamespace(stdout="<record></record>", stderr="", returncode=0)
+        with patch.object(bluez.subprocess, "run", return_value=result):
+            self.assertEqual(bluez.discover_rfcomm_channel("AA:BB:CC:DD:EE:FF"), 15)
+
+    def test_rfcomm_channel_uses_sdp_channel_16(self):
+        bluez._RFCOMM_CHANNEL_CACHE.clear()
+        result = SimpleNamespace(stdout=self.SDP_CHANNEL_16, stderr="", returncode=0)
+        with patch.object(bluez.subprocess, "run", return_value=result):
+            self.assertEqual(bluez.discover_rfcomm_channel("AA:BB:CC:DD:EE:FF"), 16)
 
 
 if __name__ == "__main__":

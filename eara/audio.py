@@ -84,10 +84,10 @@ def set_profile(address: str, profile: str) -> bool:
 
 
 def find_sink(address: str) -> Optional[str]:
-    needle = address.replace(":", "_")
+    needles = {address.lower(), address.replace(":", "_").lower()}
     for line in _pactl("list", "short", "sinks").splitlines():
         parts = line.split()
-        if len(parts) >= 2 and needle in parts[1]:
+        if len(parts) >= 2 and any(needle in parts[1].lower() for needle in needles):
             return parts[1]
     return None
 
@@ -103,13 +103,13 @@ def wait_for_sink(address: str, timeout: float = 18) -> Optional[str]:
 
 
 def find_source(address: str) -> Optional[str]:
-    needle = address.replace(":", "_")
+    needles = {address.lower(), address.replace(":", "_").lower()}
     for line in _pactl("list", "short", "sources").splitlines():
         parts = line.split()
         if len(parts) < 2:
             continue
         name = parts[1]
-        if needle not in name:
+        if not any(needle in name.lower() for needle in needles):
             continue
         if ".monitor" in name:
             continue

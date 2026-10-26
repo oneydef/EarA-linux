@@ -13,6 +13,7 @@ depends=(
   'gtk4'
   'libadwaita'
   'bluez'
+  'bluez-utils'
   'pipewire-pulse'
 )
 makedepends=()

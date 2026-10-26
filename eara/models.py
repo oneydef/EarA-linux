@@ -19,6 +19,7 @@ class Model:
     anc: bool = True
     adaptive_anc: bool = True
     eq_presets: bool = True
+    eq_preset_family: str = "standard"
     custom_eq: bool = True
     advanced_eq: bool = True
     bass_enhance: bool = False
@@ -39,6 +40,7 @@ class Model:
                 "anc": self.anc,
                 "adaptive_anc": self.adaptive_anc,
                 "eq_presets": self.eq_presets,
+                "eq_preset_family": self.eq_preset_family,
                 "custom_eq": self.custom_eq,
                 "advanced_eq": self.advanced_eq,
                 "bass_enhance": self.bass_enhance,
@@ -120,6 +122,13 @@ MODELS_BY_BASE: dict[str, Model] = {
         bass_enhance=True,
         ear_tip_fit=True,
     ),
+    "B179": Model(
+        name="CMF Buds 2",
+        base="B179",
+        family="cmf-buds-2",
+        eq_preset_family="cmf-buds-2",
+        bass_enhance=True,
+    ),
     "B164": Model(
         name="CMF Neckband Pro",
         base="B164",
@@ -190,6 +199,8 @@ def model_from_name(name: str) -> Model:
         ("ear (1)", "B181"),
         ("ear (2)", "B155"),
         ("buds pro 2", "B172"),
+        ("buds 2 plus", "B168"),  # Provisional until a Buds 2 Plus protocol dump is available.
+        ("buds 2", "B179"),
         ("buds pro", "B163"),
         ("cmf buds", "B168"),
         ("neckband", "B164"),

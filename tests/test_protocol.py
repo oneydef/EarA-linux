@@ -69,17 +69,25 @@ class ProtocolTests(unittest.TestCase):
     def test_model_from_bt_name(self):
         self.assertEqual(model_from_name("Nothing Ear (a)").base, "B162")
         self.assertEqual(model_from_name("CMF Buds Pro 2").base, "B172")
+        self.assertEqual(model_from_name("CMF Buds 2").base, "B179")
+        self.assertEqual(model_from_name("CMF Buds 2 Plus").base, "B168")
 
     def test_i18n_english_default(self):
-        from eara.i18n import STRINGS, t, set_lang
+        from tempfile import TemporaryDirectory
+        from pathlib import Path
+        from unittest.mock import patch
 
-        set_lang("en")
-        self.assertEqual(t("connect"), "Connect")
-        set_lang("uk")
-        self.assertEqual(t("connect"), "Підключити")
-        set_lang("en")
-        self.assertIn("connect", STRINGS["en"])
-        self.assertEqual(set(STRINGS["en"]), set(STRINGS["uk"]))
+        from eara import i18n
+
+        with TemporaryDirectory() as tmp, patch.object(i18n, "_CONFIG", Path(tmp) / "config.json"):
+            self.assertFalse(i18n.power_off_on_exit())
+            i18n.set_lang("en")
+            self.assertEqual(i18n.t("connect"), "Connect")
+            i18n.set_lang("uk")
+            self.assertEqual(i18n.t("connect"), "Підключити")
+            i18n.set_lang("en")
+        self.assertIn("connect", i18n.STRINGS["en"])
+        self.assertEqual(set(i18n.STRINGS["en"]), set(i18n.STRINGS["uk"]))
 
     def test_custom_eq_payload_length(self):
         payload = build_custom_eq_payload(2.0, 0.0, -1.0)

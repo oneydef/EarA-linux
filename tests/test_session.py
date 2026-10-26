@@ -3,6 +3,7 @@ import unittest
 from unittest.mock import MagicMock, patch
 
 from eara import bluez
+from eara.protocol import CMD_LISTENING_SET, DIR_SET
 from eara.models import model_from_name, model_from_serial
 from eara.session import Device
 
@@ -67,8 +68,27 @@ class SessionTests(unittest.TestCase):
             with patch.object(bluez, "disconnect") as disconnect:
                 with patch.object(bluez, "power_off") as power_off:
                     device.shutdown(power_off=False)
-        disconnect.assert_called_once_with("AA:BB:CC:DD:EE:FF")
+        disconnect.assert_not_called()
         power_off.assert_not_called()
+
+    def test_cmf_buds_2_eq_uses_listening_command(self):
+        device = Device("AA:BB:CC:DD:EE:FF", "CMF Buds 2")
+        with patch.object(device, "_session") as session_ctx:
+            session_ctx.return_value.__enter__ = MagicMock(return_value=device)
+            session_ctx.return_value.__exit__ = MagicMock(return_value=False)
+            with patch.object(device, "_request", return_value=b"\x00") as req:
+                device.set_eq("rock")
+        req.assert_called_once_with(CMD_LISTENING_SET, DIR_SET, bytes([1, 0]), require=True)
+
+    def test_cmf_buds_2_custom_eq_selects_custom_preset(self):
+        device = Device("AA:BB:CC:DD:EE:FF", "CMF Buds 2")
+        with patch.object(device, "_session") as session_ctx:
+            session_ctx.return_value.__enter__ = MagicMock(return_value=device)
+            session_ctx.return_value.__exit__ = MagicMock(return_value=False)
+            with patch.object(device, "_request", return_value=b"\x00") as req:
+                device.set_custom_eq(0, 0, 0)
+        self.assertEqual(req.call_count, 2)
+        req.assert_called_with(CMD_LISTENING_SET, DIR_SET, bytes([6, 0]), require=True)
 
 
 if __name__ == "__main__":

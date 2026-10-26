@@ -52,6 +52,7 @@ modules:
     config-opts:
       - --enable-library
       - --enable-client
+      - --enable-deprecated
       - --disable-systemd
       - --disable-udev
       - --disable-cups
@@ -70,7 +71,9 @@ modules:
       cxxflags: -O2 -g
     build-commands:
       - make -C client bluetoothctl
+      - make tools/sdptool
       - install -Dm755 client/bluetoothctl ${FLATPAK_DEST}/bin/bluetoothctl
+      - install -Dm755 tools/sdptool ${FLATPAK_DEST}/bin/sdptool
     sources:
       - type: archive
         url: https://www.kernel.org/pub/linux/bluetooth/bluez-5.79.tar.xz

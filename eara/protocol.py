@@ -1,6 +1,6 @@
 """Nothing X RFCOMM protocol used by Ear (a).
 
-Frames go over Bluetooth Classic RFCOMM channel 15
+Frames go over a Bluetooth Classic RFCOMM channel discovered through SDP
 (UUID aeac4a03-dff5-498f-843a-34487cf133eb).
 
 Layout (little-endian):
@@ -74,6 +74,30 @@ EQ_PRESETS = {
 }
 
 EQ_FROM_WIRE = {v: k for k, v in EQ_PRESETS.items()}
+
+CMF_BUDS_2_EQ_PRESETS = {
+    "balanced": 0,
+    "rock": 1,
+    "electronic": 2,
+    "pop": 3,
+    "enhance_vocals": 4,
+    "classical": 5,
+    "custom": 6,
+}
+
+
+def eq_presets_for(family: str) -> dict[str, int]:
+    return CMF_BUDS_2_EQ_PRESETS if family == "cmf-buds-2" else EQ_PRESETS
+
+
+def parse_named_mode(payload: bytes, modes: dict[str, int]) -> Optional[str]:
+    if not payload:
+        return None
+    wire = payload[0]
+    for name, code in modes.items():
+        if code == wire:
+            return name
+    return f"mode-{wire}"
 
 # Gesture action bytes (same encoding as Nothing X / ear-web).
 GESTURE_ACTIONS = {

@@ -101,6 +101,11 @@ STRINGS = {
         "more_bass": "Bass",
         "more_treble": "Treble",
         "voice": "Voice",
+        "rock": "Rock",
+        "electronic": "Electronic",
+        "pop": "Pop",
+        "enhance_vocals": "Enhance vocals",
+        "classical": "Classical",
         "fit_result": "Fit test",
         "busy": "Working…",
         "left": "Left",
@@ -209,6 +214,11 @@ STRINGS = {
         "more_bass": "Бас",
         "more_treble": "Верх",
         "voice": "Голос",
+        "rock": "Рок",
+        "electronic": "Електронна музика",
+        "pop": "Поп",
+        "enhance_vocals": "Підсилення вокалу",
+        "classical": "Класична музика",
         "fit_result": "Тест посадки",
         "busy": "Працюю…",
         "left": "Лівий",
@@ -250,7 +260,7 @@ def _write_config(data: dict) -> None:
 
 
 def power_off_on_exit() -> bool:
-    return bool(_read_config().get("power_off_on_exit", True))
+    return bool(_read_config().get("power_off_on_exit", False))
 
 
 def set_power_off_on_exit(enabled: bool) -> None:

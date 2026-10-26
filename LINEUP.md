@@ -1,7 +1,7 @@
 # Nothing / CMF lineup — support status
 
 EarA targets the **community RFCOMM family** used by compatible earbuds
-(channel 15, `0x55` frames, CRC-16/ARC). That is the same family Ear (web)
+(SDP-discovered channel, `0x55` frames, CRC-16/ARC). That is the same family Ear (web)
 uses. It is **not** a guarantee that every SKU is fully tested on Linux,
 and EarA is not an official vendor product.
 
@@ -18,6 +18,7 @@ and EarA is not an official vendor product.
 | CMF Buds | B168 | host BT | via listening mode | listening + bass | yes | — | |
 | CMF Buds Pro | B163 | host BT | yes | yes | yes | yes | |
 | CMF Buds Pro 2 | B172 | host BT | yes | listening + bass | yes | yes | |
+| CMF Buds 2 | B179 | **tested** | high/off/transparency | 7 presets + custom EQ | untested | — | RFCOMM channel 16; discover via SDP |
 | CMF Neckband Pro | B164 | host BT | yes | limited | limited | no | untested |
 | Ear (3) / newer | ? | unknown | unknown | unknown | unknown | — | add SKU when dumps exist |
 
