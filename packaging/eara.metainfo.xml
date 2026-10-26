@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <component type="desktop-application">
-  <id>eara.desktop</id>
+  <id>io.github.oneydef.eara</id>
   <name>Nothing X; Nothing Ears</name>
   <summary>Unofficial Linux companion for Nothing / CMF earbuds</summary>
   <metadata_license>CC0-1.0</metadata_license>
@@ -9,7 +9,6 @@
   <launchable type="desktop-id">eara.desktop</launchable>
   <url type="homepage">https://github.com/oneydef/EarA-linux</url>
   <url type="bugtracker">https://github.com/oneydef/EarA-linux/issues</url>
-  <url type="vcs-git">https://github.com/oneydef/EarA-linux</url>
   <url type="donation">https://buymeacoffee.com/r18fon7sj9</url>
   <description>
     <p>
@@ -58,6 +57,11 @@
   </keywords>
   <content_rating type="oars-1.1"/>
   <releases>
+    <release version="0.5.1" date="2026-10-26">
+      <description>
+        <p>Make the AppImage portable by bundling its Python, GTK4, Libadwaita, and GObject Introspection runtime dependencies.</p>
+      </description>
+    </release>
     <release version="0.5.0" date="2026-10-26">
       <description>
         <p>Add persistent device state, bass-level control, periodic battery refresh, and CMF Buds 2 and PipeWire follow-up fixes contributed by Alex Vasileiou.</p>
