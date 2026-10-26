@@ -1571,6 +1571,7 @@ class EarAWindow(Adw.ApplicationWindow):
         self._busy = busy
         for widget in self._busy_widgets():
             widget.set_sensitive(not busy)
+        self.bass_level.set_sensitive(not busy and self.bass_switch.get_active())
 
     def _run(self, fn, *, soft_timeout: float = 90.0) -> None:
         if self._busy:
@@ -1638,10 +1639,12 @@ class EarAWindow(Adw.ApplicationWindow):
         self._battery_refreshing = True
 
         def worker():
+            battery = None
             try:
                 battery = device.battery()
-            except (RuntimeError, OSError, TimeoutError):
-                battery = None
+            except Exception:
+                # A failed background refresh must never leave refreshes wedged.
+                pass
             GLib.idle_add(self._show_battery, device, battery)
 
         threading.Thread(target=worker, daemon=True).start()

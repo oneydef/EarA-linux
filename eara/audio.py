@@ -30,6 +30,13 @@ def card_name(address: str) -> str:
     return "bluez_card." + address.replace(":", "_")
 
 
+def _names_device(name: str, address: str) -> bool:
+    """Return whether a PulseAudio/PipeWire object belongs to this device."""
+    upper = name.upper()
+    mac = address.upper()
+    return mac.replace(":", "_") in upper or mac.replace("_", ":") in upper
+
+
 def reload_bluetooth_modules(*, force: bool = False) -> None:
     """Nudge PulseAudio when a BlueZ device is connected but no card appears.
 
@@ -84,10 +91,9 @@ def set_profile(address: str, profile: str) -> bool:
 
 
 def find_sink(address: str) -> Optional[str]:
-    needles = {address.lower(), address.replace(":", "_").lower()}
     for line in _pactl("list", "short", "sinks").splitlines():
         parts = line.split()
-        if len(parts) >= 2 and any(needle in parts[1].lower() for needle in needles):
+        if len(parts) >= 2 and _names_device(parts[1], address):
             return parts[1]
     return None
 
@@ -103,13 +109,12 @@ def wait_for_sink(address: str, timeout: float = 18) -> Optional[str]:
 
 
 def find_source(address: str) -> Optional[str]:
-    needles = {address.lower(), address.replace(":", "_").lower()}
     for line in _pactl("list", "short", "sources").splitlines():
         parts = line.split()
         if len(parts) < 2:
             continue
         name = parts[1]
-        if not any(needle in name.lower() for needle in needles):
+        if not _names_device(name, address):
             continue
         if ".monitor" in name:
             continue
@@ -269,9 +274,8 @@ def list_a2dp_codecs(address: str) -> list[dict[str, str]]:
 
 def active_codec(address: str) -> str:
     text = _pactl("list", "sinks")
-    needle = address.replace(":", "_")
     for block in re.split(r"(?=^Sink #)", text, flags=re.M):
-        if needle not in block:
+        if not _names_device(block, address):
             continue
         match = re.search(r"bluetooth\.codec\s*=\s*\"?([^\s\"]+)", block)
         if match:

@@ -127,6 +127,7 @@ MODELS_BY_BASE: dict[str, Model] = {
         base="B179",
         family="cmf-buds-2",
         eq_preset_family="cmf-buds-2",
+        advanced_eq=False,
         bass_enhance=True,
     ),
     "B164": Model(
