@@ -102,4 +102,4 @@ modules:
     sources:
       - type: git
         url: https://github.com/oneydef/EarA-linux.git
-        tag: v0.3.3
+        tag: v0.4.0

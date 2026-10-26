@@ -3,5 +3,5 @@
 
 """Unofficial Linux companion for compatible True Wireless earbuds."""
 
-__version__ = "0.3.3"
+__version__ = "0.4.0"
 SUPPORT_URL = "https://buymeacoffee.com/r18fon7sj9"
