@@ -45,6 +45,13 @@
 
   document.getElementById("btn-refresh")?.addEventListener("click", () => toast("Refresh (demo)"));
 
+  const bassLevel = document.getElementById("bass-level");
+  const bassLevelValue = document.getElementById("bass-level-value");
+  bassLevel?.addEventListener("input", () => {
+    bassLevelValue.textContent = bassLevel.value;
+    toast(`Bass level: ${bassLevel.value} (demo)`);
+  });
+
   ["btn-ring-l", "btn-ring-r", "btn-ring", "btn-ring-off"].forEach((id) => {
     document.getElementById(id)?.addEventListener("click", () => toast(`${id.replace("btn-ring", "Ring")} (demo)`));
   });
