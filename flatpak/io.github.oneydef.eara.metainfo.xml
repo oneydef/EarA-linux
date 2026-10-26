@@ -57,6 +57,11 @@
   </keywords>
   <content_rating type="oars-1.1"/>
   <releases>
+    <release version="0.5.2" date="2026-10-26">
+      <description>
+        <p>Fix GTK4 CSS loading so the portable AppImage starts across supported distributions.</p>
+      </description>
+    </release>
     <release version="0.5.1" date="2026-10-26">
       <description>
         <p>Make the AppImage portable by bundling its Python, GTK4, Libadwaita, and GObject Introspection runtime dependencies.</p>

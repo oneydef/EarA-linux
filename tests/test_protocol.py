@@ -143,7 +143,7 @@ class ProtocolTests(unittest.TestCase):
         from eara import __version__
 
         root = Path(__file__).resolve().parents[1]
-        self.assertEqual(__version__, "0.5.1")
+        self.assertEqual(__version__, "0.5.2")
         readme = (root / "README.md").read_text(encoding="utf-8")
         self.assertIn("GPL-3.0-or-later", readme)
         self.assertTrue((root / "LICENSE").is_file())

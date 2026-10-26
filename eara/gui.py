@@ -717,7 +717,11 @@ def _ensure_fonts() -> None:
 def _load_css() -> None:
     css = _build_css()
     provider = Gtk.CssProvider()
-    provider.load_from_data(css, len(css))
+    try:
+        provider.load_from_data(css.encode("utf-8"))
+    except TypeError:
+        # Older PyGObject bindings still expose GTK's explicit length argument.
+        provider.load_from_data(css, len(css))
     display = Gdk.Display.get_default()
     if display is not None:
         Gtk.StyleContext.add_provider_for_display(
