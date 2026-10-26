@@ -23,6 +23,16 @@ class AudioTests(unittest.TestCase):
                 "bluez_output.3C_B0_ED_D3_DC_40.a2dp-sink",
             )
 
+    def test_active_codec_accepts_pipewire_colon_mac(self):
+        sinks = (
+            "Sink #718\n"
+            "\tName: bluez_output.3C:B0:ED:D3:DC:40\n"
+            "\tProperties:\n"
+            "\t\tapi.bluez5.codec = \"aac\"\n"
+        )
+        with patch.object(audio, "_pactl", return_value=sinks):
+            self.assertEqual(audio.active_codec("3C:B0:ED:D3:DC:40"), "aac")
+
     def test_reload_skipped_without_force(self):
         with patch("eara.audio.subprocess.run") as run:
             audio.reload_bluetooth_modules(force=False)

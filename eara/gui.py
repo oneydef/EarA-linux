@@ -32,6 +32,7 @@ _FONT_FILES = (
     "DotGothic16-Regular.ttf",
     "Inter-Regular.ttf",
 )
+_BATTERY_REFRESH_SECONDS = 30
 
 
 def _pick_dot_font() -> str:
@@ -737,6 +738,24 @@ def _toggle_row(title: str) -> tuple[Gtk.Box, Gtk.Switch, Gtk.Label]:
     return row, switch, label
 
 
+def _slider_row(title: str, low: int, high: int) -> tuple[Gtk.Box, Gtk.Scale, Gtk.Label]:
+    row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=12)
+    row.add_css_class("eara-toggle-row")
+    label = _ui_text(Gtk.Label(label=title, xalign=0))
+    label.add_css_class("eara-toggle-label")
+    scale = Gtk.Scale.new_with_range(Gtk.Orientation.HORIZONTAL, low, high, 1)
+    scale.set_digits(0)
+    scale.set_round_digits(0)
+    scale.set_draw_value(True)
+    scale.set_value_pos(Gtk.PositionType.RIGHT)
+    scale.set_hexpand(True)
+    for mark in range(low, high + 1):
+        scale.add_mark(mark, Gtk.PositionType.BOTTOM, None)
+    row.append(label)
+    row.append(scale)
+    return row, scale, label
+
+
 class EarAWindow(Adw.ApplicationWindow):
     def __init__(self, app: Adw.Application) -> None:
         super().__init__(application=app)
@@ -762,6 +781,7 @@ class EarAWindow(Adw.ApplicationWindow):
 
         self._header_active = "connect"
         self._shutting_down = False
+        self._battery_refreshing = False
         self.connect("notify::is-active", self._on_active_changed)
         self.connect("close-request", self._on_close_request)
         self._update_focus_class()
@@ -839,6 +859,7 @@ class EarAWindow(Adw.ApplicationWindow):
         self.set_content(outer)
         self._apply_lang()
         GLib.idle_add(self._bootstrap)
+        GLib.timeout_add_seconds(_BATTERY_REFRESH_SECONDS, self._refresh_battery)
 
     def _page_device(self) -> Gtk.Widget:
         box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=14)
@@ -1087,6 +1108,10 @@ class EarAWindow(Adw.ApplicationWindow):
         quick_card.append(self.lbl_quick_title)
 
         self.row_bass, self.bass_switch, self.lbl_bass = _toggle_row(t("bass"))
+        self.row_bass_level, self.bass_level, self.lbl_bass_level = _slider_row(t("bass_level"), 1, 5)
+        self.bass_level.set_sensitive(False)
+        self._bass_level_timer = 0
+        self.bass_level.connect("value-changed", self._on_bass_level_changed)
         self.row_ied, self.ied_switch, self.lbl_ied = _toggle_row(t("in_ear"))
         self.row_lat, self.lat_switch, self.lbl_lat = _toggle_row(t("latency"))
         self.row_adv, self.adv_switch, self.lbl_adv = _toggle_row(t("adv_eq"))
@@ -1098,7 +1123,7 @@ class EarAWindow(Adw.ApplicationWindow):
         self.panc_switch.connect("notify::active", lambda *_: self._on_toggle("panc"))
         toggles = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
         toggles.add_css_class("eara-toggles")
-        for row in (self.row_bass, self.row_ied, self.row_lat, self.row_adv, self.row_panc):
+        for row in (self.row_bass, self.row_bass_level, self.row_ied, self.row_lat, self.row_adv, self.row_panc):
             toggles.append(row)
         quick_card.append(toggles)
 
@@ -1337,6 +1362,7 @@ class EarAWindow(Adw.ApplicationWindow):
         self.lbl_custom.set_text(t("custom_eq"))
         self.btn_apply_eq.set_label(t("apply_eq"))
         self.lbl_bass.set_text(t("bass"))
+        self.lbl_bass_level.set_text(t("bass_level"))
         self.lbl_ied.set_text(t("in_ear"))
         self.lbl_lat.set_text(t("latency"))
         self.lbl_adv.set_text(t("adv_eq"))
@@ -1419,6 +1445,10 @@ class EarAWindow(Adw.ApplicationWindow):
         idx = int(self.device_drop.get_selected())
         if 0 <= idx < len(devices):
             d = devices[idx]
+            # Keep the same Device while the same earbuds stay selected: it remembers the
+            # last case battery reading and the model detected from the serial number.
+            if self.device is not None and self.device.address == d["address"].upper():
+                return self.device
             return Device(d["address"], d["name"])
         return None
 
@@ -1541,6 +1571,7 @@ class EarAWindow(Adw.ApplicationWindow):
         self._busy = busy
         for widget in self._busy_widgets():
             widget.set_sensitive(not busy)
+        self.bass_level.set_sensitive(not busy and self.bass_switch.get_active())
 
     def _run(self, fn, *, soft_timeout: float = 90.0) -> None:
         if self._busy:
@@ -1592,6 +1623,41 @@ class EarAWindow(Adw.ApplicationWindow):
             self._run(self._do_refresh)
         except LookupError:
             self._set_status_message(t("no_device"), offline=True)
+        return False
+
+    def _refresh_battery(self) -> bool:
+        """Re-read the battery while the window is open.
+
+        The case only reports while a bud is docked, so a single read at startup
+        usually misses it. Skipped while another action runs; never connects.
+        """
+        if self._shutting_down:
+            return False
+        device = self.device
+        if device is None or self._busy or self._battery_refreshing:
+            return True
+        self._battery_refreshing = True
+
+        def worker():
+            battery = None
+            try:
+                battery = device.battery()
+            except Exception:
+                # A failed background refresh must never leave refreshes wedged.
+                pass
+            GLib.idle_add(self._show_battery, device, battery)
+
+        threading.Thread(target=worker, daemon=True).start()
+        return True
+
+    def _show_battery(self, device: Device, battery: dict | None) -> bool:
+        self._battery_refreshing = False
+        if battery is None or device is not self.device or self._busy:
+            return False
+        self._last = {**(self._last or {}), "battery": battery}
+        for key in ("left", "right", "case"):
+            item = battery.get(key)
+            self._update_battery_cell(key, item if isinstance(item, dict) else None)
         return False
 
     def _do_connect(self) -> None:
@@ -1703,12 +1769,34 @@ class EarAWindow(Adw.ApplicationWindow):
             "adv": self.adv_switch.get_active(),
             "panc": self.panc_switch.get_active(),
         }[which]
-        self._run(lambda: self._toggle(which, enabled))
+        level = round(self.bass_level.get_value())  # read here: _toggle runs off the GTK thread
+        if which == "bass":
+            self.bass_level.set_sensitive(enabled)
+        self._run(lambda: self._toggle(which, enabled, level))
 
-    def _toggle(self, which: str, enabled: bool) -> None:
+    def _on_bass_level_changed(self, *_args) -> None:
+        if self._ignore_toggle or not self.device:
+            return
+        # Apply once the slider has settled, not on every step of a drag.
+        if self._bass_level_timer:
+            GLib.source_remove(self._bass_level_timer)
+        self._bass_level_timer = GLib.timeout_add(500, self._apply_bass_level)
+
+    def _apply_bass_level(self) -> bool:
+        if self._shutting_down:
+            self._bass_level_timer = 0
+            return False
+        if self._busy:
+            return True  # try again once the running action is done
+        self._bass_level_timer = 0
+        level = round(self.bass_level.get_value())
+        self._run(lambda: self._toggle("bass", True, level))
+        return False
+
+    def _toggle(self, which: str, enabled: bool, bass_level: float = 1.0) -> None:
         ear = self._require()
         if which == "bass":
-            ear.set_bass(enabled)
+            ear.set_bass(enabled, bass_level)
         elif which == "ied":
             ear.set_in_ear_detection(enabled)
         elif which == "lat":
@@ -1737,6 +1825,7 @@ class EarAWindow(Adw.ApplicationWindow):
 
     def _apply_capabilities(self, caps: dict) -> None:
         self.row_bass.set_visible(bool(caps.get("bass_enhance")))
+        self.row_bass_level.set_visible(bool(caps.get("bass_enhance")))
         self.row_ied.set_visible(bool(caps.get("in_ear", True)))
         self.row_lat.set_visible(bool(caps.get("low_latency", True)))
         self.row_adv.set_visible(bool(caps.get("advanced_eq", True)))
@@ -1841,6 +1930,9 @@ class EarAWindow(Adw.ApplicationWindow):
             bass = status.get("bass") or {}
             if isinstance(bass, dict) and "enabled" in bass:
                 self.bass_switch.set_active(bool(bass["enabled"]))
+                self.bass_level.set_sensitive(bool(bass["enabled"]))
+                if bass.get("level"):
+                    self.bass_level.set_value(max(1.0, min(5.0, float(bass["level"]))))
             if status.get("advanced_eq") is not None:
                 self.adv_switch.set_active(bool(status["advanced_eq"]))
             if status.get("personalized_anc") is not None:

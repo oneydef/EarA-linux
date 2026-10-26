@@ -307,11 +307,19 @@ class Device:
                 self.probe = probe
 
             def __enter__(self) -> Device:
-                self.outer.open_control(probe_device=self.probe)
+                self.outer._lock.acquire()
+                try:
+                    self.outer.open_control(probe_device=self.probe)
+                except BaseException:
+                    self.outer._lock.release()
+                    raise
                 return self.outer
 
             def __exit__(self, *args) -> None:
-                self.outer.close_control()
+                try:
+                    self.outer.close_control()
+                finally:
+                    self.outer._lock.release()
 
         return _Guard(self, probe_device)
 
@@ -348,11 +356,16 @@ class Device:
         }
         if not self.connected:
             return result
+        self._lock.acquire()
         try:
             self.open_control(probe_device=True)
         except RuntimeError as exc:
+            self._lock.release()
             result["error"] = str(exc)
             return result
+        except BaseException:
+            self._lock.release()
+            raise
         try:
             info = self._request(CMD_DEVICE_INFO)
             if info is not None:
@@ -439,8 +452,33 @@ class Device:
                 else:
                     result["gestures"] = merge_gestures({"left": {}, "right": {}})
         finally:
-            self.close_control()
+            try:
+                self.close_control()
+            finally:
+                self._lock.release()
         return result
+
+    def battery(self) -> dict[str, dict[str, object]]:
+        """Left / right / case battery only, for periodic refreshes.
+
+        Never (re)connects the earbuds: raises RuntimeError if they aren't connected.
+        The case only reports while a bud is docked; its last reading is kept (stale).
+        """
+        if not self.connected:
+            raise RuntimeError("Earbuds are not connected")
+        with self._lock:
+            if self._sock is None:
+                try:
+                    self._sock = bluez.open_rfcomm(self.address)
+                except OSError as exc:
+                    raise RuntimeError(bluez.permission_hint(exc)) from exc
+                self._parser = FrameParser()
+            try:
+                payload = self._request(CMD_BATTERY, timeout=1.0, require=True)
+            finally:
+                self.close_control()
+        battery, self._battery_cache = merge_battery_cache(parse_battery(payload), self._battery_cache)
+        return battery
 
     def set_anc(self, mode: str) -> None:
         if mode not in ANC_MODES:
@@ -464,8 +502,6 @@ class Device:
         mid = clamp_eq_gain(mid)
         treble = clamp_eq_gain(treble)
         with self._session():
-            payload = build_custom_eq_payload(bass, mid, treble)
-            self._request(CMD_CUSTOM_EQ_SET, DIR_SET, payload, require=True)
             if self.model.eq_preset_family == "cmf-buds-2":
                 self._request(
                     CMD_LISTENING_SET,
@@ -473,19 +509,14 @@ class Device:
                     bytes([eq_presets_for(self.model.eq_preset_family)["custom"], 0]),
                     require=True,
                 )
+            payload = build_custom_eq_payload(bass, mid, treble)
+            self._request(CMD_CUSTOM_EQ_SET, DIR_SET, payload, require=True)
             time.sleep(0.2)
 
     def set_graphic_eq(self, gains: list[float]) -> None:
         clamped = [clamp_eq_gain(g) for g in gains]
         bass, mid, treble = graphic_to_three(clamped)
         with self._session():
-            self._request(CMD_ADVANCED_EQ_SET, DIR_SET, bytes([1, 0]), require=True)
-            self._request(
-                CMD_CUSTOM_EQ_SET,
-                DIR_SET,
-                build_custom_eq_payload(bass, mid, treble),
-                require=True,
-            )
             if self.model.eq_preset_family == "cmf-buds-2":
                 self._request(
                     CMD_LISTENING_SET,
@@ -493,6 +524,14 @@ class Device:
                     bytes([eq_presets_for(self.model.eq_preset_family)["custom"], 0]),
                     require=True,
                 )
+            else:
+                self._request(CMD_ADVANCED_EQ_SET, DIR_SET, bytes([1, 0]), require=True)
+            self._request(
+                CMD_CUSTOM_EQ_SET,
+                DIR_SET,
+                build_custom_eq_payload(bass, mid, treble),
+                require=True,
+            )
             time.sleep(0.2)
 
     def set_codec(self, name: str) -> dict[str, object]:
