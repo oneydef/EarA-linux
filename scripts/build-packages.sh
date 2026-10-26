@@ -52,28 +52,79 @@ tar -C "$ROOT" --exclude dist --exclude .git --exclude '*.pyc' \
     -czf "$DIST/eara-${VERSION}.tar.gz" eara packaging tests docs README.md LINEUP.md LICENSE NOTICE TRADEMARKS.md pyproject.toml nfpm.yaml
 echo "built $DIST/eara-${VERSION}.tar.gz"
 
-# thin AppImage (uses host python3 + GTK)
+# Portable AppImage. Bundle the Python runtime, PyGObject/DBus modules,
+# GTK4/Libadwaita typelibs and their shared-library dependencies so the image
+# does not depend on the host having the desktop development stack installed.
 APPDIR="$DIST/EarA.AppDir"
 rm -rf "$APPDIR"
-mkdir -p "$APPDIR/usr/share/eara" "$APPDIR/usr/bin" "$APPDIR/usr/share/applications"
+mkdir -p "$APPDIR/usr/share/eara" "$APPDIR/usr/bin" \
+         "$APPDIR/usr/lib/python3/dist-packages" \
+         "$APPDIR/usr/lib/x86_64-linux-gnu" \
+         "$APPDIR/usr/share/applications" "$APPDIR/usr/share/metainfo" \
+         "$APPDIR/usr/share/glib-2.0" \
+         "$APPDIR/usr/share/icons/hicolor/scalable/apps"
 cp -a "$ROOT/eara" "$APPDIR/usr/share/eara/"
 cp "$ROOT/packaging/eara.desktop" "$APPDIR/eara.desktop"
 cp "$ROOT/packaging/eara.svg" "$APPDIR/eara.svg"
+cp "$ROOT/packaging/eara.desktop" "$APPDIR/usr/share/applications/eara.desktop"
+cp "$ROOT/packaging/eara.metainfo.xml" "$APPDIR/usr/share/metainfo/io.github.oneydef.eara.appdata.xml"
+cp "$ROOT/packaging/eara.svg" "$APPDIR/usr/share/icons/hicolor/scalable/apps/eara.svg"
 sed -i 's/^Icon=.*/Icon=eara/' "$APPDIR/eara.desktop"
-cat > "$APPDIR/AppRun" <<'EOF'
+
+PYTHON_STDLIB="$(python3 -c 'import sysconfig; print(sysconfig.get_paths()["stdlib"])')"
+GI_PACKAGE="$(python3 -c 'import gi, pathlib; print(pathlib.Path(gi.__file__).parent)')"
+DBUS_PACKAGE="$(python3 -c 'import dbus, pathlib; print(pathlib.Path(dbus.__file__).parent)')"
+DIST_PACKAGES="$(dirname "$GI_PACKAGE")"
+
+cp -L "$(command -v python3)" "$APPDIR/usr/bin/python3"
+cp -a "$PYTHON_STDLIB" "$APPDIR/usr/lib/"
+cp -a "$GI_PACKAGE" "$DBUS_PACKAGE" "$APPDIR/usr/lib/python3/dist-packages/"
+find "$DIST_PACKAGES" -maxdepth 1 -name '_dbus*.so' -exec cp -a {} "$APPDIR/usr/lib/python3/dist-packages/" \;
+cp -a /usr/lib/x86_64-linux-gnu/girepository-1.0 "$APPDIR/usr/lib/x86_64-linux-gnu/"
+cp -a /usr/share/glib-2.0/schemas "$APPDIR/usr/share/glib-2.0/"
+cat > "$APPDIR/usr/bin/eara" <<'EOF'
 #!/bin/sh
 HERE="$(dirname "$(readlink -f "$0")")"
-export PYTHONPATH="$HERE/usr/share/eara${PYTHONPATH:+:$PYTHONPATH}"
-if [ "${1:-}" = "" ]; then
-  exec python3 -m eara gui
+exec "$HERE/../../AppRun" "$@"
+EOF
+chmod 0755 "$APPDIR/usr/bin/eara"
+
+LINUXDEPLOY_BIN="${LINUXDEPLOY:-$(command -v linuxdeploy || true)}"
+if [ -z "$LINUXDEPLOY_BIN" ]; then
+  echo "linuxdeploy is required to build the portable AppImage" >&2
+  exit 1
 fi
-exec python3 -m eara "$@"
+
+GTK_LIB="$(ldconfig -p | awk '$1 == "libgtk-4.so.1" && !found { found=$NF } END { print found }')"
+ADW_LIB="$(ldconfig -p | awk '$1 == "libadwaita-1.so.0" && !found { found=$NF } END { print found }')"
+GI_LIB="$(ldconfig -p | awk '$1 == "libgirepository-1.0.so.1" && !found { found=$NF } END { print found }')"
+cp -L "$GTK_LIB" "$ADW_LIB" "$GI_LIB" "$APPDIR/usr/lib/x86_64-linux-gnu/"
+
+APPIMAGE_EXTRACT_AND_RUN=1 "$LINUXDEPLOY_BIN" \
+  --appdir "$APPDIR" \
+  --deploy-deps-only "$APPDIR"
+
+cat > "$APPDIR/AppRun" <<'EOF'
+#!/bin/sh
+HERE="${APPDIR:-$(dirname "$(readlink -f "$0")")}"
+if [ "$(basename "$HERE")" = "bin" ] && [ "$(basename "$(dirname "$HERE")")" = "usr" ]; then
+  HERE="$(dirname "$(dirname "$HERE")")"
+fi
+export PATH="$HERE/usr/bin:$PATH"
+export LD_LIBRARY_PATH="$HERE/usr/lib:$HERE/usr/lib/x86_64-linux-gnu${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+export PYTHONHOME="$HERE/usr"
+export PYTHONPATH="$HERE/usr/share/eara:$HERE/usr/lib/python3/dist-packages${PYTHONPATH:+:$PYTHONPATH}"
+export GI_TYPELIB_PATH="$HERE/usr/lib/x86_64-linux-gnu/girepository-1.0${GI_TYPELIB_PATH:+:$GI_TYPELIB_PATH}"
+export XDG_DATA_DIRS="$HERE/usr/share${XDG_DATA_DIRS:+:$XDG_DATA_DIRS}"
+if [ "${1:-}" = "" ]; then
+  exec "$HERE/usr/bin/python3" -m eara gui
+fi
+exec "$HERE/usr/bin/python3" -m eara "$@"
 EOF
 chmod 0755 "$APPDIR/AppRun"
-ln -sf eara.desktop "$APPDIR/usr/share/applications/eara.desktop"
 
 if command -v appimagetool >/dev/null 2>&1; then
-          ARCH=x86_64 appimagetool --no-appstream "$APPDIR" "$DIST/EarA-${VERSION}-x86_64.AppImage"
+  ARCH=x86_64 appimagetool "$APPDIR" "$DIST/EarA-${VERSION}-x86_64.AppImage"
   echo "built AppImage"
 else
   tar -C "$DIST" -czf "$DIST/EarA-${VERSION}-AppDir.tar.gz" EarA.AppDir

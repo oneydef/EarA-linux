@@ -1,7 +1,7 @@
 name: eara
 arch: all
 platform: linux
-version: 0.5.0
+version: 0.5.1
 section: sound
 priority: optional
 maintainer: oneydef <oneydefwork@gmail.com>
