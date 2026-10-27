@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import threading
+import traceback
 from pathlib import Path
 
 import gi
@@ -1581,6 +1582,12 @@ class EarAWindow(Adw.ApplicationWindow):
                 fn()
             except (RuntimeError, ValueError, TimeoutError, OSError) as exc:
                 err = str(exc)
+            except Exception as exc:
+                # A plugin/library exception must not strand the window in its
+                # busy state. Keep the traceback for diagnostics and surface a
+                # compact error in the UI before re-enabling the controls.
+                traceback.print_exc()
+                err = f"{type(exc).__name__}: {exc}"
 
             def done():
                 if getattr(self, "_busy_generation", 0) != generation:
