@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import errno
 import os
 import re
 import socket
@@ -369,7 +370,13 @@ def open_rfcomm(address: str, timeout: float = 8) -> socket.socket:
                 sock.close()
             except OSError:
                 pass
-            if exc.errno in (16, 11, 115, 110):  # EBUSY, EAGAIN, ETIMEDOUT
+            if exc.errno in (
+                errno.EBUSY,
+                errno.EAGAIN,
+                errno.EINPROGRESS,
+                errno.EALREADY,
+                errno.ETIMEDOUT,
+            ):
                 if attempt in (2, 5):
                     scan_for_device(address, dwell=4.0)
                 time.sleep(0.7 + attempt * 0.35)
@@ -387,7 +394,7 @@ def permission_hint(exc: OSError) -> str:
             f"  sudo usermod -aG bluetooth {user}\n"
             "then log out and back in."
         )
-    if exc.errno == 16:
+    if exc.errno in (errno.EBUSY, errno.EALREADY):
         return "Control channel busy (PulseAudio). Retry in a second."
     if exc.errno in (111, 112):
         return "Earbuds asleep or out of range. Take them out of the case."
