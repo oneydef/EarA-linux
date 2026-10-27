@@ -18,7 +18,7 @@ depends=(
 )
 makedepends=()
 source=("${pkgname}-${pkgver}.tar.gz::https://github.com/oneydef/EarA-linux/releases/download/v${pkgver}/${pkgname}-${pkgver}.tar.gz")
-sha256sums=('a02ba96c8ce256eff38c4392e82eda9cfb883f7748add6ceb1dc7b04d66156b3')
+sha256sums=('d865f0cf05142740d23d4bfa090f0abc93cce0bcfd95945b4b4ee85e425c0022')
 
 package() {
   cd "$srcdir"
