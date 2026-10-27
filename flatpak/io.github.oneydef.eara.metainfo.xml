@@ -57,6 +57,11 @@
   </keywords>
   <content_rating type="oars-1.1"/>
   <releases>
+    <release version="0.5.3" date="2026-10-27">
+      <description>
+        <p>Improve Bluetooth recovery, prevent overlapping GUI connection attempts, and fix GTK CSS warnings.</p>
+      </description>
+    </release>
     <release version="0.5.2" date="2026-10-26">
       <description>
         <p>Fix GTK4 CSS loading so the portable AppImage starts across supported distributions.</p>

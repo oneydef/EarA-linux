@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import threading
+import traceback
 from pathlib import Path
 
 import gi
@@ -26,8 +27,6 @@ from eara.protocol import (
 )
 from eara.session import Device
 
-_FONT_DOT_FALLBACK = "DotGothic16, VT323, monospace"
-_FONT_UI_FALLBACK = "Inter, NType 82, Roboto, Cantarell, sans-serif"
 _FONT_FILES = (
     "DotGothic16-Regular.ttf",
     "Inter-Regular.ttf",
@@ -84,8 +83,10 @@ def _pick_ui_font() -> str:
 
 
 def _build_css() -> str:
-    dot = _pick_dot_font()
-    ui = _pick_ui_font()
+    # GTK CSS accepts one family here, not the browser-style comma-separated
+    # fallback lists used by web CSS. Quote names such as "NType 82".
+    dot = f'"{_pick_dot_font()}"'
+    ui = f'"{_pick_ui_font()}"'
     return f"""
 window.eara-window {{
   background-color: #0a0a0a;
@@ -95,7 +96,7 @@ window.eara-window {{
   background-color: #000000;
   background-image: radial-gradient(circle, #252525 0.65px, transparent 0.65px);
   background-size: 16px 16px;
-  font-family: {ui}, {_FONT_UI_FALLBACK};
+  font-family: {ui};
 }}
 .eara-hero {{
   background-color: #000000;
@@ -103,7 +104,7 @@ window.eara-window {{
   padding: 12px 18px 8px 18px;
 }}
 .eara-brand {{
-  font-family: {dot}, {_FONT_DOT_FALLBACK};
+  font-family: {dot};
   font-size: 22px;
   font-weight: 800;
   letter-spacing: 6px;
@@ -112,7 +113,7 @@ window.eara-window {{
   margin-bottom: 0;
 }}
 .eara-tag {{
-  font-family: {ui}, {_FONT_UI_FALLBACK};
+  font-family: {ui};
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 2px;
@@ -121,7 +122,7 @@ window.eara-window {{
   line-height: 1.1;
 }}
 .eara-ui-text, .eara-status, .eara-battery, .eara-meta, .dim-label {{
-  font-family: {ui}, {_FONT_UI_FALLBACK};
+  font-family: {ui};
 }}
 .eara-status-card {{
   background: linear-gradient(180deg, #171717 0%, #101010 100%);
@@ -286,7 +287,7 @@ button.eara-header-btn {{
   border-radius: 999px;
   min-height: 34px;
   padding: 0 18px;
-  font-family: {ui}, {_FONT_UI_FALLBACK};
+  font-family: {ui};
   font-weight: 600;
   background-color: #1a1a1a;
   color: #888888;
@@ -319,12 +320,12 @@ window.eara-window.eara-focused button.eara-header-btn.eara-header-reset.eara-he
   color: #d71921;
 }}
 .eara-panel label {{
-  font-family: {ui}, {_FONT_UI_FALLBACK};
+  font-family: {ui};
   font-size: 11px;
   color: #aaaaaa;
 }}
 .eara-card listview label, .eara-card row label {{
-  font-family: {ui}, {_FONT_UI_FALLBACK};
+  font-family: {ui};
 }}
 .eara-card {{
   background-color: #141414;
@@ -342,7 +343,7 @@ window.eara-window.eara-focused button.eara-header-btn.eara-header-reset.eara-he
   min-height: 140px;
 }}
 .eara-card-title {{
-  font-family: {ui}, {_FONT_UI_FALLBACK};
+  font-family: {ui};
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 2px;
@@ -350,7 +351,7 @@ window.eara-window.eara-focused button.eara-header-btn.eara-header-reset.eara-he
   text-transform: uppercase;
 }}
 .eara-header-title {{
-  font-family: {ui}, {_FONT_UI_FALLBACK};
+  font-family: {ui};
   font-weight: 600;
   font-size: 14px;
 }}
@@ -370,7 +371,7 @@ button.eara-tab {{
   background-color: transparent;
   color: #888888;
   border: 1px solid transparent;
-  font-family: {ui}, {_FONT_UI_FALLBACK};
+  font-family: {ui};
   font-size: 13px;
   font-weight: 600;
   opacity: 0.82;
@@ -440,7 +441,7 @@ headerbar button.flat:hover {{
   background-color: #1a1a1a;
   color: #c8c8c8;
   border: 1px solid #333333;
-  font-family: {ui}, {_FONT_UI_FALLBACK};
+  font-family: {ui};
   font-weight: 500;
   opacity: 0.78;
 }}
@@ -460,7 +461,7 @@ window.eara-window.eara-focused .eara-content button:not(.flat):not(.eara-header
   color: #ffffff;
   border: 1px solid #444444;
   min-height: 36px;
-  font-family: {ui}, {_FONT_UI_FALLBACK};
+  font-family: {ui};
   font-weight: 500;
   font-size: 13px;
 }}
@@ -530,7 +531,7 @@ window.eara-window.eara-focused .eara-chip-disconnect {{
   padding: 18px;
 }}
 .eara-about-brand {{
-  font-family: {dot}, {_FONT_DOT_FALLBACK};
+  font-family: {dot};
   font-size: 20px;
   font-weight: 800;
   letter-spacing: 5px;
@@ -636,22 +637,13 @@ window.eara-window.eara-focused switch.eara-switch:checked slider {{
 .eara-anc-list {{
   margin-top: 4px;
 }}
-.eara-anc-list button {{
-  width: 100%;
-}}
-.eara-anc-list flowboxchild {{
-  width: 100%;
-}}
-.eara-anc-list flowboxchild button {{
-  width: 100%;
-}}
 switch.eara-switch:focus {{
   outline: none;
   box-shadow: none;
 }}
 .eara-content dropdown {{
   border-radius: 12px;
-  font-family: {ui}, {_FONT_UI_FALLBACK};
+  font-family: {ui};
   font-size: 13px;
 }}
 """
@@ -1590,6 +1582,12 @@ class EarAWindow(Adw.ApplicationWindow):
                 fn()
             except (RuntimeError, ValueError, TimeoutError, OSError) as exc:
                 err = str(exc)
+            except Exception as exc:
+                # A plugin/library exception must not strand the window in its
+                # busy state. Keep the traceback for diagnostics and surface a
+                # compact error in the UI before re-enabling the controls.
+                traceback.print_exc()
+                err = f"{type(exc).__name__}: {exc}"
 
             def done():
                 if getattr(self, "_busy_generation", 0) != generation:
@@ -1606,8 +1604,11 @@ class EarAWindow(Adw.ApplicationWindow):
         def watchdog():
             if getattr(self, "_busy_generation", 0) != generation or not self._busy:
                 return False
-            self._busy_generation = generation + 1
-            self._set_busy(False)
+            # The worker cannot be cancelled safely: it may still be inside BlueZ
+            # while the UI timeout fires.  Unlocking the controls here allowed a
+            # second connect/reset to run concurrently and repeatedly reload the
+            # Bluetooth audio modules.  Keep the operation exclusive until its
+            # bounded lower-level timeouts finish, but tell the user it is slow.
             self._show(t("connect_timeout") if fn == self._do_connect else t("busy_timeout"))
             return False
 

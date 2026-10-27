@@ -1,6 +1,7 @@
+import errno
 import unittest
 from types import SimpleNamespace
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 from eara import bluez
 
@@ -63,6 +64,22 @@ class BluezTests(unittest.TestCase):
         result = SimpleNamespace(stdout=self.SDP_CHANNEL_16, stderr="", returncode=0)
         with patch.object(bluez.subprocess, "run", return_value=result):
             self.assertEqual(bluez.discover_rfcomm_channel("AA:BB:CC:DD:EE:FF"), 16)
+
+    def test_open_rfcomm_retries_connection_already_in_progress(self):
+        first = MagicMock()
+        first.connect.side_effect = OSError(errno.EALREADY, "Operation already in progress")
+        second = MagicMock()
+        with (
+            patch.object(bluez, "discover_rfcomm_channel", return_value=15),
+            patch.object(bluez.socket, "AF_BLUETOOTH", 31, create=True),
+            patch.object(bluez.socket, "BTPROTO_RFCOMM", 3, create=True),
+            patch.object(bluez.socket, "socket", side_effect=[first, second]),
+            patch.object(bluez.time, "sleep"),
+        ):
+            result = bluez.open_rfcomm("AA:BB:CC:DD:EE:FF")
+        self.assertIs(result, second)
+        first.close.assert_called_once()
+        second.connect.assert_called_once_with(("AA:BB:CC:DD:EE:FF", 15))
 
 
 if __name__ == "__main__":
