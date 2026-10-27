@@ -4,6 +4,13 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 VERSION="${VERSION:-$(PYTHONPATH="$ROOT" python3 -c 'from eara import __version__; print(__version__)')}"
 DIST="$ROOT/dist"
 STAGE="$DIST/pkgroot"
+
+clean_python_cache() {
+  local target="$1"
+  find "$target" -type f \( -name '*.pyc' -o -name '*.pyo' \) -delete
+  find "$target" -depth -type d -name __pycache__ -empty -delete
+}
+
 rm -rf "$DIST"
 mkdir -p "$STAGE/usr/bin" "$STAGE/usr/share/eara" "$STAGE/usr/share/applications" \
          "$STAGE/usr/share/metainfo" "$STAGE/usr/share/eara/screenshots" \
@@ -13,6 +20,7 @@ mkdir -p "$STAGE/usr/bin" "$STAGE/usr/share/eara" "$STAGE/usr/share/applications
 export PYTHONPATH="$ROOT${PYTHONPATH:+:$PYTHONPATH}"
 cp -a "$ROOT/eara" "$STAGE/usr/share/eara/"
 cp -a "$ROOT/packaging" "$STAGE/usr/share/eara/"
+clean_python_cache "$STAGE/usr/share/eara/eara"
 install -m 0755 "$ROOT/packaging/eara" "$STAGE/usr/bin/eara"
 # launcher uses installed package path
 cat > "$STAGE/usr/bin/eara" <<'EOF'
@@ -48,7 +56,7 @@ dpkg-deb --build --root-owner-group "$STAGE" "$DEB"
 echo "built $DEB"
 
 # source tarball
-tar -C "$ROOT" --exclude dist --exclude .git --exclude '*.pyc' \
+tar -C "$ROOT" --exclude dist --exclude .git --exclude '*/__pycache__' --exclude '*.py[co]' \
     -czf "$DIST/eara-${VERSION}.tar.gz" eara packaging tests docs README.md LINEUP.md LICENSE NOTICE TRADEMARKS.md pyproject.toml nfpm.yaml
 echo "built $DIST/eara-${VERSION}.tar.gz"
 
@@ -64,6 +72,7 @@ mkdir -p "$APPDIR/usr/share/eara" "$APPDIR/usr/bin" \
          "$APPDIR/usr/share/glib-2.0" \
          "$APPDIR/usr/share/icons/hicolor/scalable/apps"
 cp -a "$ROOT/eara" "$APPDIR/usr/share/eara/"
+clean_python_cache "$APPDIR/usr/share/eara/eara"
 cp "$ROOT/packaging/eara.desktop" "$APPDIR/eara.desktop"
 cp "$ROOT/packaging/eara.svg" "$APPDIR/eara.svg"
 cp "$ROOT/packaging/eara.desktop" "$APPDIR/usr/share/applications/eara.desktop"
