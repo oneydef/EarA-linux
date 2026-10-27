@@ -71,6 +71,8 @@ class BluezTests(unittest.TestCase):
         second = MagicMock()
         with (
             patch.object(bluez, "discover_rfcomm_channel", return_value=15),
+            patch.object(bluez.socket, "AF_BLUETOOTH", 31, create=True),
+            patch.object(bluez.socket, "BTPROTO_RFCOMM", 3, create=True),
             patch.object(bluez.socket, "socket", side_effect=[first, second]),
             patch.object(bluez.time, "sleep"),
         ):
