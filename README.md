@@ -55,12 +55,21 @@ Adds `~/.local/bin/eara` and a **Nothing X; Nothing Ears** entry in the app menu
 
 ### Packages
 
-Download `.deb`, `.rpm`, or AppImage from [GitHub Releases](https://github.com/oneydef/EarA-linux/releases).
+Download `.deb`, `.rpm`, AppImage, or the standalone Flatpak bundle from [GitHub Releases](https://github.com/oneydef/EarA-linux/releases).
 
 ```bash
 sudo dpkg -i eara_*_all.deb
 eara gui
 ```
+
+For Flatpak, download the `.flatpak` file from the release and install it locally:
+
+```bash
+flatpak install --user ./EarA-0.5.3-x86_64.flatpak
+flatpak run io.github.oneydef.eara
+```
+
+Flatpak will offer to install the required GNOME runtime if it is not already available.
 
 ## CLI
 
