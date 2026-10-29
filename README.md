@@ -12,7 +12,7 @@ BlueZ · PulseAudio / PipeWire · RFCOMM control · CLI + GUI
 [![Python 3.10+](https://img.shields.io/badge/Python-3.10+-white?style=for-the-badge&logo=python&logoColor=black)](https://www.python.org/)
 [![GTK4](https://img.shields.io/badge/GTK4-libadwaita-black?style=for-the-badge)](https://gitlab.gnome.org/GNOME/libadwaita)
 
-[Install](#install) · [Live demo](https://oneydef.github.io/EarA-linux/) · [Features](#features) · [CLI](#cli) · [Lineup](LINEUP.md) · [Support](#support) · [Contributing](CONTRIBUTING.md)
+[Install](#install) · [Live demo](https://oneydef.github.io/EarA-linux/) · [Features](#features) · [CLI](#cli) · [Lineup](LINEUP.md) · [Roadmap](ROADMAP.md) · [Support](#support) · [Contributing](CONTRIBUTING.md)
 
 </div>
 
@@ -79,6 +79,10 @@ eara doctor
 ## Dual connection
 
 If Linux has no A2DP sink, disconnect Bluetooth on the phone so the PC can take audio.
+
+## Roadmap
+
+Linux remains the primary platform. Native **macOS** and **Windows** support is planned after the shared device protocol and platform-independent core are ready. See [ROADMAP.md](ROADMAP.md) for the current direction and contribution opportunities.
 
 ## Support
 
