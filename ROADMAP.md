@@ -2,12 +2,27 @@
 
 This roadmap describes the project's direction, not fixed release dates. Priorities may change as new devices are tested and contributors join the project.
 
+## Primary focus: interface and UI/UX refresh
+
+The main near-term goal is to make EarA feel simpler, clearer, and more polished without hiding its advanced controls. Planned exploration and improvements include:
+
+- Rework the information architecture and navigation around the most common tasks.
+- Establish a more consistent visual hierarchy, spacing system, and component style.
+- Make connection, battery, audio-profile, and device states easier to understand at a glance.
+- Improve pairing, reconnection, error, and recovery flows with clearer guidance.
+- Reduce friction in ANC, EQ, gesture, and device-management workflows.
+- Refine responsive behavior for different window sizes and display densities.
+- Improve keyboard navigation, focus states, contrast, labels, and screen-reader support.
+- Validate design changes with real users and iterate before treating the refresh as complete.
+
+The exact visual direction is still open. UI changes will be developed incrementally so that device reliability and feature access remain intact.
+
 ## Near term: strengthen the Linux release
 
 - Expand real-hardware testing across Nothing and CMF models.
 - Improve Bluetooth reconnection, diagnostics, and recovery.
 - Complete distribution work, including Flatpak and easier package updates.
-- Improve accessibility, translations, documentation, and automated tests.
+- Improve translations, documentation, and automated tests.
 - Keep the GUI and CLI aligned as new controls are added.
 
 ## Cross-platform foundation
