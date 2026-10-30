@@ -15,6 +15,7 @@ rm -rf "$DIST"
 mkdir -p "$STAGE/usr/bin" "$STAGE/usr/share/eara" "$STAGE/usr/share/applications" \
          "$STAGE/usr/share/metainfo" "$STAGE/usr/share/eara/screenshots" \
          "$STAGE/usr/share/doc/eara" "$STAGE/usr/share/icons/hicolor/scalable/apps" \
+         "$STAGE/usr/share/icons/hicolor/256x256/apps" \
          "$STAGE/DEBIAN"
 
 export PYTHONPATH="$ROOT${PYTHONPATH:+:$PYTHONPATH}"
@@ -36,6 +37,7 @@ install -m 0644 "$ROOT/packaging/eara.desktop" "$STAGE/usr/share/applications/ea
 install -m 0644 "$ROOT/packaging/eara.metainfo.xml" "$STAGE/usr/share/metainfo/eara.metainfo.xml"
 install -m 0644 "$ROOT/packaging/screenshots/"*.png "$STAGE/usr/share/eara/screenshots/"
 install -m 0644 "$ROOT/packaging/eara.svg" "$STAGE/usr/share/icons/hicolor/scalable/apps/eara.svg"
+install -m 0644 "$ROOT/packaging/eara.png" "$STAGE/usr/share/icons/hicolor/256x256/apps/eara.png"
 cp "$ROOT/README.md" "$ROOT/LINEUP.md" "$ROOT/LICENSE" "$ROOT/NOTICE" "$STAGE/usr/share/doc/eara/" 2>/dev/null || true
 
 cat > "$STAGE/DEBIAN/control" <<EOF
@@ -70,14 +72,18 @@ mkdir -p "$APPDIR/usr/share/eara" "$APPDIR/usr/bin" \
          "$APPDIR/usr/lib/x86_64-linux-gnu" \
          "$APPDIR/usr/share/applications" "$APPDIR/usr/share/metainfo" \
          "$APPDIR/usr/share/glib-2.0" \
-         "$APPDIR/usr/share/icons/hicolor/scalable/apps"
+         "$APPDIR/usr/share/icons/hicolor/scalable/apps" \
+         "$APPDIR/usr/share/icons/hicolor/256x256/apps"
 cp -a "$ROOT/eara" "$APPDIR/usr/share/eara/"
 clean_python_cache "$APPDIR/usr/share/eara/eara"
 cp "$ROOT/packaging/eara.desktop" "$APPDIR/eara.desktop"
 cp "$ROOT/packaging/eara.svg" "$APPDIR/eara.svg"
+cp "$ROOT/packaging/eara.png" "$APPDIR/eara.png"
+cp "$ROOT/packaging/eara.png" "$APPDIR/.DirIcon"
 cp "$ROOT/packaging/eara.desktop" "$APPDIR/usr/share/applications/eara.desktop"
 cp "$ROOT/packaging/eara.metainfo.xml" "$APPDIR/usr/share/metainfo/io.github.oneydef.eara.appdata.xml"
 cp "$ROOT/packaging/eara.svg" "$APPDIR/usr/share/icons/hicolor/scalable/apps/eara.svg"
+cp "$ROOT/packaging/eara.png" "$APPDIR/usr/share/icons/hicolor/256x256/apps/eara.png"
 sed -i 's/^Icon=.*/Icon=eara/' "$APPDIR/eara.desktop"
 
 PYTHON_STDLIB="$(python3 -c 'import sysconfig; print(sysconfig.get_paths()["stdlib"])')"
