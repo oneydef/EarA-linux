@@ -82,6 +82,18 @@ def _pick_ui_font() -> str:
     return "Inter"
 
 
+def _asset_path(name: str) -> Path | None:
+    """Find a UI asset in a source checkout or an installed package."""
+    for path in (
+        Path(__file__).resolve().parents[1] / "packaging" / name,
+        Path.home() / ".local/share/eara/packaging" / name,
+        Path("/usr/share/eara/packaging") / name,
+    ):
+        if path.is_file():
+            return path
+    return None
+
+
 def _build_css() -> str:
     # GTK CSS accepts one family here, not the browser-style comma-separated
     # fallback lists used by web CSS. Quote names such as "NType 82".
@@ -135,6 +147,12 @@ window.eara-window.eara-focused .eara-status-card {{
 }}
 .eara-status-head {{
   margin-bottom: 4px;
+}}
+.eara-device-art {{
+  min-width: 148px;
+  min-height: 82px;
+  margin-right: 4px;
+  opacity: 0.92;
 }}
 .eara-status-dot {{
   min-width: 11px;
@@ -752,6 +770,34 @@ switch.eara-switch:focus {{
   font-size: 10px;
   padding: 10px 4px;
 }}
+.eara-system-strip {{
+  min-height: 38px;
+  padding: 0 16px;
+  background-color: #0b0b0b;
+  border-top: 1px solid #242424;
+}}
+.eara-system-item {{
+  color: #8d8d8d;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}}
+.eara-system-dot {{
+  min-width: 7px;
+  min-height: 7px;
+  border-radius: 999px;
+  background-color: #5f5f5f;
+}}
+.eara-system-dot-ok {{
+  background-color: #22c55e;
+  box-shadow: 0 0 7px alpha(#22c55e, 0.45);
+}}
+.eara-system-dot-warn {{
+  background-color: #f59e0b;
+}}
+.eara-system-dot-off {{
+  background-color: #5f5f5f;
+}}
 """
 
 
@@ -965,13 +1011,34 @@ class EarAWindow(Adw.ApplicationWindow):
         self.toast.set_child(self.stack)
         body = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
         body.add_css_class("eara-body")
+        body.set_vexpand(True)
         body.append(self.buttons)
         body.append(self.toast)
         self.toast.set_hexpand(True)
         self.toast.set_vexpand(True)
+
+        system_strip = Gtk.Box(spacing=14)
+        system_strip.add_css_class("eara-system-strip")
+        self._service_dots: dict[str, Gtk.Box] = {}
+        for key, label in (
+            ("bluetooth", "Bluetooth"),
+            ("rfcomm", "RFCOMM"),
+            ("pipewire", "PipeWire"),
+        ):
+            item = Gtk.Box(spacing=6)
+            item.add_css_class("eara-system-item")
+            dot = Gtk.Box()
+            dot.add_css_class("eara-system-dot")
+            dot.add_css_class("eara-system-dot-off")
+            item.append(dot)
+            item.append(Gtk.Label(label=label))
+            system_strip.append(item)
+            self._service_dots[key] = dot
+
         outer = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         outer.append(self.header)
         outer.append(body)
+        outer.append(system_strip)
         self.set_content(outer)
         self._apply_lang()
         GLib.idle_add(self._bootstrap)
@@ -1017,6 +1084,13 @@ class EarAWindow(Adw.ApplicationWindow):
 
         head = Gtk.Box(spacing=10)
         head.add_css_class("eara-status-head")
+        hero_asset = _asset_path("earbuds-hero.svg")
+        if hero_asset is not None:
+            device_art = Gtk.Picture.new_for_filename(str(hero_asset))
+            device_art.add_css_class("eara-device-art")
+            device_art.set_can_shrink(True)
+            device_art.set_size_request(148, 82)
+            head.append(device_art)
         self.status_dot = Gtk.Box()
         self.status_dot.add_css_class("eara-status-dot")
         self.status_dot.add_css_class("eara-dot-off")
@@ -1314,6 +1388,15 @@ class EarAWindow(Adw.ApplicationWindow):
         if kind:
             label.add_css_class(f"eara-status-badge-{kind}")
 
+    def _set_service_health(self, key: str, state: str) -> None:
+        dots = getattr(self, "_service_dots", {})
+        dot = dots.get(key)
+        if dot is None:
+            return
+        for css in ("eara-system-dot-ok", "eara-system-dot-warn", "eara-system-dot-off"):
+            dot.remove_css_class(css)
+        dot.add_css_class(f"eara-system-dot-{state}")
+
     def _set_status_message(self, message: str, *, offline: bool = False) -> None:
         self.status_name.set_text(message)
         self.status_meta.set_text("")
@@ -1335,6 +1418,9 @@ class EarAWindow(Adw.ApplicationWindow):
             for css in ("eara-dot-ok", "eara-dot-warn", "eara-dot-off"):
                 self.header_status_dot.remove_css_class(css)
             self.header_status_dot.add_css_class("eara-dot-off" if offline else "eara-dot-warn")
+        self._set_service_health("bluetooth", "off" if offline else "warn")
+        self._set_service_health("rfcomm", "off")
+        self._set_service_health("pipewire", "off")
 
     def _update_battery_cell(self, key: str, item: dict | None) -> None:
         cell = self._batt_cells[key]
@@ -2213,6 +2299,8 @@ class EarAWindow(Adw.ApplicationWindow):
         model = (status.get("model") or {}).get("name") or name
         bt_ok = bool(status.get("bt_connected"))
         proto_ok = bool(status.get("protocol"))
+        self._set_service_health("bluetooth", "ok" if bt_ok else "off")
+        self._set_service_health("rfcomm", "ok" if proto_ok else ("warn" if bt_ok else "off"))
         self.status_name.set_text(name)
         if bt_ok and proto_ok:
             headline = t("status_ready")
@@ -2301,6 +2389,8 @@ class EarAWindow(Adw.ApplicationWindow):
             for scale, value in zip(self.eq_bands, graphic):
                 scale.set_value(float(value))
         audio_info = status.get("audio") or {}
+        audio_ok = bool(audio_info.get("sink") or audio_info.get("profile") or audio_info.get("codec"))
+        self._set_service_health("pipewire", "ok" if audio_ok else ("warn" if bt_ok else "off"))
         options = list(audio_info.get("codecs") or [])
         keys = [str(item.get("key") or "sbc") for item in options] or ["sbc"]
         advertised = {str(item.get("key") or "") for item in options}

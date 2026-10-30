@@ -17,7 +17,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DotGothic16&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="demo.css?v=20261030-2">
+  <link rel="stylesheet" href="demo.css?v=20261030-3">
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -133,6 +133,7 @@
 
               <div class="eara-status-card">
                 <div class="eara-status-head">
+                  <img class="eara-device-art" src="assets/earbuds-hero.svg" alt="" width="168" height="88">
                   <span class="eara-status-dot eara-dot-ok" id="status-dot"></span>
                   <div class="eara-status-titlecol">
                     <div class="eara-status-name" id="status-name">Nothing Ear (a)</div>
@@ -286,6 +287,11 @@
             </div>
             </div>
           </div>
+          <div class="eara-system-strip" aria-label="System service status">
+            <span><i class="is-ok"></i>Bluetooth</span>
+            <span><i class="is-ok"></i>RFCOMM</span>
+            <span><i class="is-ok"></i>PipeWire</span>
+          </div>
         </div>
       </div>
       <div class="demo__lock" role="status">
@@ -331,6 +337,6 @@ eara gui</code></pre>
   </footer>
 
   <div class="toast" id="toast" hidden></div>
-  <script src="demo.js?v=20261030-2"></script>
+  <script src="demo.js?v=20261030-3"></script>
 </body>
 </html>

@@ -24,6 +24,8 @@ package() {
   cd "$srcdir"
   install -dm755 "$pkgdir/usr/share/eara"
   cp -a eara "$pkgdir/usr/share/eara/"
+  install -dm755 "$pkgdir/usr/share/eara/packaging"
+  install -m644 packaging/earbuds-hero.svg "$pkgdir/usr/share/eara/packaging/earbuds-hero.svg"
   install -dm755 "$pkgdir/usr/bin"
   install -dm755 "$pkgdir/usr/share/applications"
   install -dm755 "$pkgdir/usr/share/metainfo"

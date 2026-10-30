@@ -67,7 +67,7 @@ echo "built $DIST/eara-${VERSION}.tar.gz"
 # does not depend on the host having the desktop development stack installed.
 APPDIR="$DIST/EarA.AppDir"
 rm -rf "$APPDIR"
-mkdir -p "$APPDIR/usr/share/eara" "$APPDIR/usr/bin" \
+mkdir -p "$APPDIR/usr/share/eara/packaging" "$APPDIR/usr/bin" \
          "$APPDIR/usr/lib/python3/dist-packages" \
          "$APPDIR/usr/lib/x86_64-linux-gnu" \
          "$APPDIR/usr/share/applications" "$APPDIR/usr/share/metainfo" \
@@ -75,6 +75,7 @@ mkdir -p "$APPDIR/usr/share/eara" "$APPDIR/usr/bin" \
          "$APPDIR/usr/share/icons/hicolor/scalable/apps" \
          "$APPDIR/usr/share/icons/hicolor/256x256/apps"
 cp -a "$ROOT/eara" "$APPDIR/usr/share/eara/"
+cp "$ROOT/packaging/earbuds-hero.svg" "$APPDIR/usr/share/eara/packaging/"
 clean_python_cache "$APPDIR/usr/share/eara/eara"
 cp "$ROOT/packaging/eara.desktop" "$APPDIR/eara.desktop"
 cp "$ROOT/packaging/eara.svg" "$APPDIR/eara.svg"
