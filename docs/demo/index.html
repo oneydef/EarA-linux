@@ -45,6 +45,7 @@
     </a>
     <nav class="topbar__nav">
       <a href="#demo">Demo</a>
+      <a href="#release">Next release</a>
       <a href="#shots">Screenshots</a>
       <a href="https://github.com/oneydef/EarA-linux#install" target="_blank" rel="noopener">Install</a>
       <a class="topbar__cta" href="https://github.com/oneydef/EarA-linux" target="_blank" rel="noopener">GitHub</a>
@@ -71,16 +72,42 @@
       </div>
     </section>
 
+    <section class="release" id="release" data-release-at="2026-11-15T18:00:00Z">
+      <div class="release__copy">
+        <p class="release__eyebrow">NEXT MILESTONE</p>
+        <h2>v0.6 UI Preview</h2>
+        <p>A first hands-on build of the clearer dashboard, Sound workspace, and connection recovery flow.</p>
+        <div class="release__meta">
+          <span>Target · 15 Nov 2026</span>
+          <span>18:00 GMT</span>
+          <span>Linux preview</span>
+        </div>
+      </div>
+      <div class="countdown" aria-live="polite" aria-label="Time until the v0.6 UI preview">
+        <div class="countdown__unit"><strong id="count-days">00</strong><span>Days</span></div>
+        <div class="countdown__separator" aria-hidden="true">:</div>
+        <div class="countdown__unit"><strong id="count-hours">00</strong><span>Hours</span></div>
+        <div class="countdown__separator" aria-hidden="true">:</div>
+        <div class="countdown__unit"><strong id="count-minutes">00</strong><span>Minutes</span></div>
+        <div class="countdown__separator" aria-hidden="true">:</div>
+        <div class="countdown__unit"><strong id="count-seconds">00</strong><span>Seconds</span></div>
+      </div>
+    </section>
+
     <section class="demo" id="demo">
-      <div class="demo__frame">
+      <div class="demo__teaser">
+      <div class="demo__frame" inert aria-hidden="true">
         <div class="eara-window eara-focused" id="eara-app">
           <header class="eara-headerbar">
             <div class="eara-headerbar__start">
-              <button type="button" class="eara-header-btn eara-header-connect eara-header-active" id="hdr-connect">Connect</button>
-              <button type="button" class="eara-header-btn eara-header-reset" id="hdr-reset">Reset</button>
+              <span class="eara-header-mark">EarA</span>
             </div>
-            <div class="eara-headerbar__title">EarA</div>
+            <button type="button" class="eara-device-status" id="hdr-connect">
+              <span class="eara-status-dot eara-dot-ok" aria-hidden="true"></span>
+              <span>Nothing Ear (a)</span>
+            </button>
             <div class="eara-headerbar__end">
+              <button type="button" class="eara-header-about" id="btn-refresh" title="Refresh" aria-label="Refresh">↻</button>
               <button type="button" class="eara-header-about" title="About">?</button>
               <span class="wc wc-min" aria-hidden="true"></span>
               <span class="wc wc-max" aria-hidden="true"></span>
@@ -88,21 +115,16 @@
             </div>
           </header>
 
-          <div class="eara-hero">
-            <div class="eara-brand">E A R A</div>
-            <div class="eara-tag">UNOFFICIAL · NOTHING / CMF COMPANION</div>
-          </div>
+          <div class="eara-body">
+            <nav class="eara-buttons" role="tablist" aria-label="EarA sections">
+              <button type="button" class="eara-tab eara-tab-active" data-tab="device" role="tab"><span aria-hidden="true">◫</span>Device</button>
+              <button type="button" class="eara-tab" data-tab="sound" role="tab"><span aria-hidden="true">≋</span>Sound</button>
+              <button type="button" class="eara-tab" data-tab="gestures" role="tab"><span aria-hidden="true">◇</span>Gestures</button>
+              <button type="button" class="eara-tab" data-tab="tools" role="tab"><span aria-hidden="true">＋</span>Tools</button>
+              <div class="eara-rail-status"><span></span>Bluetooth · RFCOMM</div>
+            </nav>
 
-          <nav class="eara-buttons" role="tablist">
-            <button type="button" class="eara-tab eara-tab-active" data-tab="device" role="tab">Device</button>
-            <button type="button" class="eara-tab" data-tab="sound" role="tab">Sound</button>
-            <button type="button" class="eara-tab" data-tab="gestures" role="tab">Gestures</button>
-            <button type="button" class="eara-tab" data-tab="tools" role="tab">Tools</button>
-            <span class="eara-buttons-spacer"></span>
-            <button type="button" class="eara-tab eara-tab-refresh" id="btn-refresh">Refresh</button>
-          </nav>
-
-          <div class="eara-stack">
+            <div class="eara-stack">
             <div class="eara-panel-page is-active" data-panel="device" role="tabpanel">
               <div class="eara-lang">
                 <span class="dim-label">Language</span>
@@ -263,10 +285,19 @@
               </div>
               <p class="dim-label dim-label--legal">Unofficial community app. Not affiliated with Nothing Technology.</p>
             </div>
+            </div>
           </div>
         </div>
       </div>
-      <p class="demo__hint">EarA v0.5.3 browser preview — install <a href="https://github.com/oneydef/EarA-linux#install">EarA</a> for real Bluetooth.</p>
+      <div class="demo__lock" role="status">
+        <span class="demo__lock-mark" aria-hidden="true">•••</span>
+        <p class="demo__lock-eyebrow">UI REFRESH IN PROGRESS</p>
+        <h2>Interactive preview unlocks with v0.6</h2>
+        <p>The new dashboard, Sound workspace, and recovery flow are being polished now.</p>
+        <a class="btn btn--primary" href="#release">View countdown</a>
+      </div>
+      </div>
+      <p class="demo__hint">A blurred preview of the new EarA interface. The live controls return with the v0.6 UI preview.</p>
     </section>
 
     <section class="shots" id="shots">

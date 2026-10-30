@@ -351,23 +351,24 @@ window.eara-window.eara-focused button.eara-header-btn.eara-header-reset.eara-he
   text-transform: uppercase;
 }}
 .eara-header-title {{
-  font-family: {ui};
-  font-weight: 600;
-  font-size: 14px;
+  font-family: {dot};
+  font-weight: 800;
+  font-size: 20px;
+  letter-spacing: 2px;
 }}
 .eara-meta, .dim-label {{
   color: #b8b8b8;
   font-size: 13px;
 }}
 .eara-buttons {{
-  background-color: #000000;
-  border-bottom: 1px solid #1f1f1f;
-  padding: 10px 16px;
+  background-color: #0b0b0b;
+  border-right: 1px solid #1f1f1f;
+  padding: 16px 12px;
 }}
 button.eara-tab {{
-  border-radius: 999px;
-  min-height: 34px;
-  padding: 0 16px;
+  border-radius: 14px;
+  min-height: 46px;
+  padding: 0 14px;
   background-color: transparent;
   color: #888888;
   border: 1px solid transparent;
@@ -386,15 +387,16 @@ button.eara-tab:hover {{
   border-color: #2a2a2a;
 }}
 button.eara-tab.eara-tab-active {{
-  background-color: #ffffff;
-  color: #000000;
-  border-color: #ffffff;
+  background-color: #1b1516;
+  color: #ffffff;
+  border-color: #d71921;
   font-weight: 700;
   opacity: 1;
 }}
 window.eara-window.eara-focused button.eara-tab.eara-tab-active {{
-  background-color: #ffffff;
-  color: #000000;
+  background-color: #1b1516;
+  color: #ffffff;
+  border-color: #d71921;
 }}
 .eara-button-row {{
   padding: 4px 0;
@@ -646,6 +648,110 @@ switch.eara-switch:focus {{
   font-family: {ui};
   font-size: 13px;
 }}
+.eara-header-device {{
+  background-color: #121212;
+  border: 1px solid #2c2c2c;
+  border-radius: 999px;
+  padding: 7px 13px;
+  margin-left: 12px;
+}}
+.eara-header-device label {{
+  color: #f2f2f2;
+  font-size: 13px;
+  font-weight: 600;
+}}
+.eara-page-title {{
+  font-family: {ui};
+  color: #ffffff;
+  font-size: 28px;
+  font-weight: 800;
+}}
+.eara-dashboard-title {{
+  font-family: {ui};
+  color: #f5f5f5;
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 6px;
+}}
+.eara-dashboard .eara-status-card,
+.eara-dashboard .eara-card {{
+  min-height: 230px;
+}}
+.eara-segmented {{
+  background-color: #101010;
+  border: 1px solid #333333;
+  border-radius: 16px;
+}}
+.eara-content button.eara-segment {{
+  min-height: 64px;
+  border-radius: 14px;
+  border: none;
+  background-color: transparent;
+  color: #d0d0d0;
+  font-size: 13px;
+  font-weight: 600;
+}}
+.eara-content button.eara-segment:hover {{
+  background-color: #202020;
+  color: #ffffff;
+}}
+.eara-content button.eara-segment.eara-chip-active,
+.eara-content button.eara-dashboard-primary {{
+  background-color: #d71921;
+  color: #ffffff;
+}}
+.eara-advanced {{
+  background-color: #101010;
+  border: 1px solid #262626;
+  border-radius: 16px;
+  padding: 8px 12px;
+}}
+.eara-advanced title {{
+  color: #aaaaaa;
+  font-size: 12px;
+}}
+.eara-recovery-title {{
+  color: #ffffff;
+  font-size: 34px;
+  font-weight: 800;
+}}
+.eara-recovery-device {{
+  background-color: #101010;
+  border: 1px solid #303030;
+  border-radius: 16px;
+  padding: 14px;
+}}
+.eara-recovery-step {{
+  background-color: #101010;
+  border: 1px solid #282828;
+  border-radius: 14px;
+  padding: 12px 8px;
+}}
+.eara-recovery-step label {{
+  color: #d5d5d5;
+  font-size: 12px;
+}}
+.eara-recovery-icon {{
+  color: #d71921;
+  font-size: 28px;
+  font-weight: 700;
+}}
+.eara-help-dot {{
+  min-width: 9px;
+  min-height: 9px;
+  border-radius: 999px;
+}}
+.eara-help-dot-ok {{
+  background-color: #22c55e;
+}}
+.eara-help-dot-wait {{
+  background-color: #777777;
+}}
+.eara-rail-status {{
+  color: #777777;
+  font-size: 10px;
+  padding: 10px 4px;
+}}
 """
 
 
@@ -756,8 +862,8 @@ class EarAWindow(Adw.ApplicationWindow):
     def __init__(self, app: Adw.Application) -> None:
         super().__init__(application=app)
         self.add_css_class("eara-window")
-        self.set_default_size(611, 868)
-        self.set_size_request(480, 640)
+        self.set_default_size(980, 760)
+        self.set_size_request(720, 600)
         self.device: Device | None = None
         self._busy = False
         self._last: dict = {}
@@ -792,17 +898,26 @@ class EarAWindow(Adw.ApplicationWindow):
         self.btn_reset.add_css_class("eara-header-btn")
         self.btn_reset.add_css_class("eara-header-reset")
         self.btn_reset.connect("clicked", self._on_reset_clicked)
-        self.btn_refresh = Gtk.Button()
-        self.btn_refresh.add_css_class("eara-tab")
+        self.btn_refresh = Gtk.Button.new_from_icon_name("view-refresh-symbolic")
+        self.btn_refresh.add_css_class("flat")
         self.btn_refresh.connect("clicked", lambda *_: self._run(self._do_refresh))
         self.btn_about = Gtk.Button(label="?")
         self.btn_about.add_css_class("flat")
         self.btn_about.connect("clicked", lambda *_: self._about())
-        self.header.pack_start(self.btn_connect)
-        self.header.pack_start(self.btn_reset)
-        title = _ui_text(Gtk.Label(label="EarA"))
-        title.add_css_class("eara-header-title")
-        self.header.set_title_widget(title)
+
+        self.header_brand = Gtk.Label(label="EarA")
+        self.header_brand.add_css_class("eara-header-title")
+        self.header.pack_start(self.header_brand)
+        self.header_status = Gtk.Box(spacing=8)
+        self.header_status.add_css_class("eara-header-device")
+        self.header_status_dot = Gtk.Box()
+        self.header_status_dot.add_css_class("eara-status-dot")
+        self.header_status_dot.add_css_class("eara-dot-off")
+        self.header_device_label = _ui_text(Gtk.Label(label=t("status_offline")))
+        self.header_status.append(self.header_status_dot)
+        self.header_status.append(self.header_device_label)
+        self.header.pack_start(self.header_status)
+        self.header.pack_end(self.btn_refresh)
         self.header.pack_end(self.btn_about)
 
         self.stack = Adw.ViewStack()
@@ -831,27 +946,32 @@ class EarAWindow(Adw.ApplicationWindow):
             self.stack.add_titled(self.page_tools, "tools", t("tab_tools")),
         ]
 
-        self.buttons = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
+        self.buttons = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
         self.buttons.add_css_class("eara-buttons")
+        self.buttons.set_size_request(176, -1)
         for key in self._tab_keys:
             btn = Gtk.Button()
             btn.add_css_class("eara-tab")
             btn.connect("clicked", lambda *_, k=key: self._show_tab(k))
             self._tab_buttons[key] = btn
             self.buttons.append(btn)
-        spacer = Gtk.Box()
-        spacer.set_hexpand(True)
+        spacer = Gtk.Box(vexpand=True)
         self.buttons.append(spacer)
-        self.buttons.append(self.btn_refresh)
+        rail_status = _ui_text(Gtk.Label(label="●  Bluetooth · RFCOMM", xalign=0, wrap=True))
+        rail_status.add_css_class("eara-rail-status")
+        self.buttons.append(rail_status)
         self._show_tab("device")
 
         self.toast.set_child(self.stack)
+        body = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+        body.add_css_class("eara-body")
+        body.append(self.buttons)
+        body.append(self.toast)
+        self.toast.set_hexpand(True)
+        self.toast.set_vexpand(True)
         outer = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         outer.append(self.header)
-        outer.append(hero)
-        outer.append(self.buttons)
-        outer.append(self.toast)
-        self.toast.set_vexpand(True)
+        outer.append(body)
         self.set_content(outer)
         self._apply_lang()
         GLib.idle_add(self._bootstrap)
@@ -860,12 +980,14 @@ class EarAWindow(Adw.ApplicationWindow):
     def _page_device(self) -> Gtk.Widget:
         box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=14)
         box.add_css_class("eara-content")
-        box.set_margin_top(12)
+        box.set_margin_top(16)
         box.set_margin_bottom(16)
-        box.set_margin_start(20)
-        box.set_margin_end(20)
+        box.set_margin_start(16)
+        box.set_margin_end(16)
 
-        lang_row = Gtk.Box(spacing=8, halign=Gtk.Align.END)
+        toolbar = Gtk.Box(spacing=8)
+        page_title = Gtk.Label(label=t("tab_device"), xalign=0, hexpand=True)
+        page_title.add_css_class("eara-page-title")
         self.lbl_language = _ui_text(Gtk.Label())
         self.btn_en = Gtk.Button(label="EN")
         self.btn_uk = Gtk.Button(label="UA")
@@ -874,13 +996,24 @@ class EarAWindow(Adw.ApplicationWindow):
         self.btn_en.connect("clicked", lambda *_: self._set_lang("en"))
         self.btn_uk.connect("clicked", lambda *_: self._set_lang("uk"))
         self._update_lang_buttons()
-        lang_row.append(self.lbl_language)
-        lang_row.append(self.btn_en)
-        lang_row.append(self.btn_uk)
-        box.append(lang_row)
+        toolbar.append(page_title)
+        toolbar.append(self.lbl_language)
+        toolbar.append(self.btn_en)
+        toolbar.append(self.btn_uk)
+        box.append(toolbar)
+
+        self.device_state_stack = Gtk.Stack()
+        self.device_state_stack.set_transition_type(Gtk.StackTransitionType.CROSSFADE)
+        self.device_state_stack.set_transition_duration(180)
+
+        dashboard = Gtk.Grid(column_spacing=14, row_spacing=14)
+        dashboard.add_css_class("eara-dashboard")
+        dashboard.set_column_homogeneous(True)
 
         self.status_card = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
         self.status_card.add_css_class("eara-status-card")
+        self.status_card.set_hexpand(True)
+        self.status_card.set_vexpand(True)
 
         head = Gtk.Box(spacing=10)
         head.add_css_class("eara-status-head")
@@ -928,24 +1061,51 @@ class EarAWindow(Adw.ApplicationWindow):
         modes.append(self.chip_eq)
         self.status_card.append(modes)
 
-        box.append(self.status_card)
-        self._set_status_message(t("looking"), offline=True)
+        dashboard.attach(self.status_card, 0, 0, 1, 1)
 
-        pick_row = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=4)
-        self.lbl_pick = _ui_text(Gtk.Label(xalign=0))
-        self.device_drop = Gtk.DropDown.new_from_strings(["—"])
-        self.device_drop.connect("notify::selected-item", self._on_device_changed)
-        pick_row.append(self.lbl_pick)
-        pick_row.append(self.device_drop)
-        box.append(pick_row)
+        noise_card = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
+        noise_card.add_css_class("eara-card")
+        noise_card.set_hexpand(True)
+        noise_card.set_vexpand(True)
+        self.lbl_dashboard_noise = Gtk.Label(label=t("noise"), xalign=0)
+        self.lbl_dashboard_noise.add_css_class("eara-dashboard-title")
+        noise_card.append(self.lbl_dashboard_noise)
+        noise_modes = Gtk.Box(spacing=0, homogeneous=True)
+        noise_modes.add_css_class("eara-segmented")
+        self.dashboard_anc_buttons: dict[str, Gtk.Button] = {}
+        for mode in ("off", "transparency", "high"):
+            button = Gtk.Button(label=t(mode))
+            button.add_css_class("eara-segment")
+            button.connect("clicked", lambda *_, m=mode: self._run(lambda: self._require().set_anc(m)))
+            self.dashboard_anc_buttons[mode] = button
+            noise_modes.append(button)
+        noise_card.append(noise_modes)
+        strength = Gtk.Box(spacing=0, homogeneous=True)
+        strength.add_css_class("eara-segmented")
+        self.dashboard_strength_buttons: dict[str, Gtk.Button] = {}
+        for mode in ("low", "mid", "high"):
+            button = Gtk.Button(label=t(mode).replace("ANC ", ""))
+            button.add_css_class("eara-segment")
+            button.connect("clicked", lambda *_, m=mode: self._run(lambda: self._require().set_anc(m)))
+            self.dashboard_strength_buttons[mode] = button
+            strength.append(button)
+        noise_card.append(strength)
+        dashboard.attach(noise_card, 1, 0, 1, 1)
 
-        self.audio_box = Gtk.Box(spacing=8, halign=Gtk.Align.CENTER)
-        self.audio_box.add_css_class("eara-button-row")
+        audio_card = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
+        audio_card.add_css_class("eara-card")
+        audio_card.set_hexpand(True)
+        self.lbl_audio_profile = Gtk.Label(label=t("audio_profile"), xalign=0)
+        self.lbl_audio_profile.add_css_class("eara-dashboard-title")
+        audio_card.append(self.lbl_audio_profile)
+        self.audio_box = Gtk.Box(spacing=0, homogeneous=True)
+        self.audio_box.add_css_class("eara-segmented")
         self.btn_music = Gtk.Button()
         self.btn_calls = Gtk.Button()
         self.btn_disconnect = Gtk.Button()
-        for b in (self.btn_music, self.btn_calls):
-            b.add_css_class("eara-chip")
+        self.btn_music.add_css_class("eara-segment")
+        self.btn_music.add_css_class("eara-dashboard-primary")
+        self.btn_calls.add_css_class("eara-segment")
         self.btn_disconnect.add_css_class("eara-chip")
         self.btn_disconnect.add_css_class("eara-chip-disconnect")
         self.btn_music.connect("clicked", lambda *_: self._run(lambda: self._do_audio(False)))
@@ -953,8 +1113,40 @@ class EarAWindow(Adw.ApplicationWindow):
         self.btn_disconnect.connect("clicked", lambda *_: self._run(self._do_disconnect))
         self.audio_box.append(self.btn_music)
         self.audio_box.append(self.btn_calls)
-        self.audio_box.append(self.btn_disconnect)
-        box.append(self.audio_box)
+        audio_card.append(self.audio_box)
+        audio_card.append(self.btn_disconnect)
+        dashboard.attach(audio_card, 0, 1, 1, 1)
+
+        quick_card = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
+        quick_card.add_css_class("eara-card")
+        quick_card.set_hexpand(True)
+        self.lbl_dashboard_quick = Gtk.Label(label=t("quick"), xalign=0)
+        self.lbl_dashboard_quick.add_css_class("eara-dashboard-title")
+        quick_card.append(self.lbl_dashboard_quick)
+        self.dashboard_switches: dict[str, Gtk.Switch] = {}
+        for key, label_key in (("ied", "in_ear"), ("lat", "latency"), ("bass", "bass")):
+            row, switch, _label = _toggle_row(t(label_key))
+            switch.connect("notify::active", lambda sw, _pspec, k=key: self._on_dashboard_toggle(k, sw))
+            self.dashboard_switches[key] = switch
+            quick_card.append(row)
+        dashboard.attach(quick_card, 1, 1, 1, 1)
+
+        connected = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=14)
+        connected.append(dashboard)
+
+        self.advanced = Gtk.Expander(label=t("device_details"))
+        advanced = self.advanced
+        advanced.add_css_class("eara-advanced")
+        advanced_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
+        advanced_box.set_margin_top(10)
+
+        pick_row = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=4)
+        self.lbl_pick = _ui_text(Gtk.Label(xalign=0))
+        self.device_drop = Gtk.DropDown.new_from_strings(["—"])
+        self.device_drop.connect("notify::selected-item", self._on_device_changed)
+        pick_row.append(self.lbl_pick)
+        pick_row.append(self.device_drop)
+        advanced_box.append(pick_row)
 
         exit_card = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=4)
         exit_card.add_css_class("eara-card")
@@ -966,7 +1158,7 @@ class EarAWindow(Adw.ApplicationWindow):
         self.lbl_power_off_hint.add_css_class("dim-label")
         self.lbl_power_off_hint.set_text(t("power_off_exit_hint"))
         exit_card.append(self.lbl_power_off_hint)
-        box.append(exit_card)
+        advanced_box.append(exit_card)
 
         codec_card = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
         codec_card.add_css_class("eara-card")
@@ -984,12 +1176,112 @@ class EarAWindow(Adw.ApplicationWindow):
         codec_card.append(self.lbl_codec)
         codec_card.append(codec_row)
         codec_card.append(self.lbl_codec_hint)
-        box.append(codec_card)
+        advanced_box.append(codec_card)
+        advanced.set_child(advanced_box)
+        connected.append(advanced)
 
         self.lbl_legal_dev = Gtk.Label(wrap=True, xalign=0.5, justify=Gtk.Justification.CENTER)
         self.lbl_legal_dev.add_css_class("dim-label")
-        box.append(self.lbl_legal_dev)
+        connected.append(self.lbl_legal_dev)
+
+        recovery = Gtk.Grid(column_spacing=14, row_spacing=14)
+        recovery.add_css_class("eara-recovery")
+        recovery_main = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=14)
+        recovery_main.add_css_class("eara-card")
+        recovery_main.set_hexpand(True)
+        recovery_main.set_vexpand(True)
+        self.recovery_eyebrow = Gtk.Label(label=t("tab_device").upper(), xalign=0)
+        self.recovery_eyebrow.add_css_class("eara-card-title")
+        self.recovery_title = Gtk.Label(label=t("connect_title"), xalign=0, wrap=True)
+        self.recovery_title.add_css_class("eara-recovery-title")
+        self.recovery_hint = Gtk.Label(
+            label=t("connect_hint"),
+            xalign=0,
+            wrap=True,
+        )
+        self.recovery_hint.add_css_class("dim-label")
+        recovery_main.append(self.recovery_eyebrow)
+        recovery_main.append(self.recovery_title)
+        recovery_main.append(self.recovery_hint)
+        recovery_device = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
+        recovery_device.add_css_class("eara-recovery-device")
+        self.found_label = Gtk.Label(label=t("found_devices"), xalign=0)
+        self.found_label.add_css_class("eara-card-title")
+        recovery_device.append(self.found_label)
+        self.recovery_device_drop = Gtk.DropDown.new_from_strings(["—"])
+        self.recovery_device_drop.connect("notify::selected-item", self._on_recovery_device_changed)
+        recovery_device.append(self.recovery_device_drop)
+        connect_row = Gtk.Box(spacing=8)
+        connect_row.append(self.btn_connect)
+        connect_row.append(self.btn_reset)
+        recovery_device.append(connect_row)
+        recovery_main.append(recovery_device)
+        self.steps_title = Gtk.Label(label=t("recovery_steps"), xalign=0)
+        self.steps_title.add_css_class("eara-card-title")
+        recovery_main.append(self.steps_title)
+        steps = Gtk.Box(spacing=10, homogeneous=True)
+        self.recovery_step_labels: list[Gtk.Label] = []
+        for icon, text in (("①", t("recovery_case")), ("②", t("recovery_button")), ("③", t("recovery_refresh"))):
+            step = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
+            step.add_css_class("eara-recovery-step")
+            icon_label = Gtk.Label(label=icon)
+            icon_label.add_css_class("eara-recovery-icon")
+            step.append(icon_label)
+            step_label = Gtk.Label(label=text, wrap=True, justify=Gtk.Justification.CENTER)
+            self.recovery_step_labels.append(step_label)
+            step.append(step_label)
+            steps.append(step)
+        recovery_main.append(steps)
+        self.btn_recovery_refresh = Gtk.Button(label=t("refresh"))
+        self.btn_recovery_refresh.add_css_class("eara-chip")
+        self.btn_recovery_refresh.connect("clicked", lambda *_: self._fill_devices())
+        recovery_main.append(self.btn_recovery_refresh)
+        recovery.attach(recovery_main, 0, 0, 2, 1)
+
+        help_card = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
+        help_card.add_css_class("eara-card")
+        self.help_title = Gtk.Label(label=t("connection_help"), xalign=0)
+        self.help_title.add_css_class("eara-dashboard-title")
+        help_card.append(self.help_title)
+        self.help_status_labels: list[Gtk.Label] = []
+        for kind, text in (("ok", t("bt_service_ready")), ("ok", t("audio_service_ready")), ("wait", t("controls_waiting"))):
+            row = Gtk.Box(spacing=9)
+            dot = Gtk.Box()
+            dot.add_css_class("eara-help-dot")
+            dot.add_css_class(f"eara-help-dot-{kind}")
+            row.append(dot)
+            status_label = Gtk.Label(label=text, xalign=0, hexpand=True)
+            self.help_status_labels.append(status_label)
+            row.append(status_label)
+            help_card.append(row)
+        self.btn_diagnostics = Gtk.Button(label=t("run_diagnostics"))
+        self.btn_diagnostics.add_css_class("eara-chip")
+        self.btn_diagnostics.connect("clicked", lambda *_: self._run(self._do_reset))
+        help_card.append(self.btn_diagnostics)
+        recovery.attach(help_card, 2, 0, 1, 1)
+
+        self.device_state_stack.add_named(connected, "connected")
+        self.device_state_stack.add_named(recovery, "recovery")
+        box.append(self.device_state_stack)
+        self._set_status_message(t("looking"), offline=True)
         return Gtk.ScrolledWindow(child=box)
+
+    def _on_dashboard_toggle(self, which: str, switch: Gtk.Switch) -> None:
+        if self._busy or self._ignore_toggle or not self.device:
+            return
+        target = {
+            "bass": self.bass_switch,
+            "ied": self.ied_switch,
+            "lat": self.lat_switch,
+        }.get(which)
+        if target is None:
+            return
+        self._ignore_toggle = True
+        try:
+            target.set_active(switch.get_active())
+        finally:
+            self._ignore_toggle = False
+        self._on_toggle(which)
 
     def _battery_cell(self, key: str, short: str) -> Gtk.Box:
         cell = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=5)
@@ -1036,6 +1328,13 @@ class EarAWindow(Adw.ApplicationWindow):
         self.chip_eq.set_text("")
         self.chip_anc.set_visible(False)
         self.chip_eq.set_visible(False)
+        if hasattr(self, "device_state_stack"):
+            self.device_state_stack.set_visible_child_name("recovery")
+        if hasattr(self, "header_device_label"):
+            self.header_device_label.set_text(t("status_offline") if offline else message)
+            for css in ("eara-dot-ok", "eara-dot-warn", "eara-dot-off"):
+                self.header_status_dot.remove_css_class(css)
+            self.header_status_dot.add_css_class("eara-dot-off" if offline else "eara-dot-warn")
 
     def _update_battery_cell(self, key: str, item: dict | None) -> None:
         cell = self._batt_cells[key]
@@ -1085,14 +1384,16 @@ class EarAWindow(Adw.ApplicationWindow):
         outer.set_margin_start(16)
         outer.set_margin_end(16)
 
-        cards = Gtk.FlowBox()
+        sound_title = Gtk.Label(label=t("tab_sound"), xalign=0)
+        sound_title.add_css_class("eara-page-title")
+        sound_subtitle = Gtk.Label(label=t("tune_earbuds"), xalign=0)
+        sound_subtitle.add_css_class("dim-label")
+        outer.append(sound_title)
+        outer.append(sound_subtitle)
+
+        cards = Gtk.Grid(column_spacing=12, row_spacing=12)
         cards.add_css_class("eara-sound-cards")
-        cards.set_selection_mode(Gtk.SelectionMode.NONE)
-        cards.set_max_children_per_line(1)
-        cards.set_min_children_per_line(1)
-        cards.set_column_spacing(12)
-        cards.set_row_spacing(12)
-        cards.set_homogeneous(True)
+        cards.set_column_homogeneous(True)
 
         quick_card = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
         quick_card.add_css_class("eara-card")
@@ -1147,11 +1448,6 @@ class EarAWindow(Adw.ApplicationWindow):
             self.anc_buttons[mode] = btn
             self.anc_flow.append(btn)
         quick_card.append(self.anc_flow)
-        quick_wrap = Gtk.FlowBoxChild()
-        quick_wrap.set_can_focus(False)
-        quick_wrap.set_child(quick_card)
-        cards.append(quick_wrap)
-
         eq_card = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
         eq_card.add_css_class("eara-card")
         eq_card.add_css_class("eara-sound-card")
@@ -1200,10 +1496,8 @@ class EarAWindow(Adw.ApplicationWindow):
         self.btn_apply_eq.add_css_class("eara-chip")
         self.btn_apply_eq.connect("clicked", lambda *_: self._apply_eq())
         eq_card.append(self.btn_apply_eq)
-        eq_wrap = Gtk.FlowBoxChild()
-        eq_wrap.set_can_focus(False)
-        eq_wrap.set_child(eq_card)
-        cards.append(eq_wrap)
+        cards.attach(eq_card, 0, 0, 2, 1)
+        cards.attach(quick_card, 2, 0, 1, 1)
 
         outer.append(cards)
         scroll = Gtk.ScrolledWindow()
@@ -1333,7 +1627,7 @@ class EarAWindow(Adw.ApplicationWindow):
         self.set_title(t("app_title"))
         self.btn_connect.set_label(t("connect"))
         self.btn_reset.set_label(t("reset"))
-        self.btn_refresh.set_label(t("refresh"))
+        self.btn_refresh.set_tooltip_text(t("refresh"))
         self.btn_about.set_tooltip_text(t("about"))
         self.lbl_tag.set_text(t("brand_tag"))
         titles = ("tab_device", "tab_sound", "tab_gestures", "tab_tools")
@@ -1354,6 +1648,32 @@ class EarAWindow(Adw.ApplicationWindow):
         self.lbl_quick_title.set_text(t("quick_settings_title"))
         self.lbl_eq_title.set_text(t("equalizer_title"))
         self.lbl_noise.set_text(t("noise"))
+        self.lbl_dashboard_noise.set_text(t("noise"))
+        self.lbl_dashboard_quick.set_text(t("quick"))
+        self.lbl_audio_profile.set_text(t("audio_profile"))
+        self.advanced.set_label(t("device_details"))
+        self.recovery_eyebrow.set_text(t("tab_device").upper())
+        self.recovery_title.set_text(t("connect_title"))
+        self.recovery_hint.set_text(t("connect_hint"))
+        self.found_label.set_text(t("found_devices"))
+        self.steps_title.set_text(t("recovery_steps"))
+        for label, key in zip(
+            self.recovery_step_labels,
+            ("recovery_case", "recovery_button", "recovery_refresh"),
+        ):
+            label.set_text(t(key))
+        self.help_title.set_text(t("connection_help"))
+        for label, key in zip(
+            self.help_status_labels,
+            ("bt_service_ready", "audio_service_ready", "controls_waiting"),
+        ):
+            label.set_text(t(key))
+        self.btn_diagnostics.set_label(t("run_diagnostics"))
+        self.btn_recovery_refresh.set_label(t("refresh"))
+        for mode, button in self.dashboard_anc_buttons.items():
+            button.set_label(t(mode))
+        for mode, button in self.dashboard_strength_buttons.items():
+            button.set_label(t(mode).replace("ANC ", ""))
         self.lbl_eq.set_text(t("eq"))
         self.lbl_custom.set_text(t("custom_eq"))
         self.btn_apply_eq.set_label(t("apply_eq"))
@@ -1416,6 +1736,13 @@ class EarAWindow(Adw.ApplicationWindow):
             self.device = picked
             self._run(self._do_refresh)
 
+    def _on_recovery_device_changed(self, *_args) -> None:
+        if self._busy:
+            return
+        selected = int(self.recovery_device_drop.get_selected())
+        if selected != int(self.device_drop.get_selected()):
+            self.device_drop.set_selected(selected)
+
     def _on_listening_changed(self, *_args) -> None:
         if self._busy or self._ignore_listening:
             return
@@ -1430,10 +1757,12 @@ class EarAWindow(Adw.ApplicationWindow):
         self._device_list = devices
         model = Gtk.StringList.new(names)
         self.device_drop.set_model(model)
+        self.recovery_device_drop.set_model(Gtk.StringList.new(names))
         if self.device:
             for i, d in enumerate(devices):
                 if d["address"] == self.device.address:
                     self.device_drop.set_selected(i)
+                    self.recovery_device_drop.set_selected(i)
                     break
 
     def _selected_device(self) -> Device | None:
@@ -1542,14 +1871,19 @@ class EarAWindow(Adw.ApplicationWindow):
             self.btn_apply_eq,
             self.btn_codec,
             self.device_drop,
+            self.recovery_device_drop,
             self.btn_find_l,
             self.btn_find_r,
             self.btn_find_both,
             self.btn_stop_ring,
             self.btn_fit,
+            self.btn_diagnostics,
             self.listening_drop,
+            self.btn_recovery_refresh,
         ]
         widgets.extend(self.anc_buttons.values())
+        widgets.extend(self.dashboard_anc_buttons.values())
+        widgets.extend(self.dashboard_strength_buttons.values())
         widgets.extend(self.eq_buttons.values())
         for _side, _gtype, drop, _lab, save, _side_lab in self.gesture_rows:
             widgets.extend((drop, save))
@@ -1559,6 +1893,7 @@ class EarAWindow(Adw.ApplicationWindow):
             self.lat_switch,
             self.adv_switch,
             self.panc_switch,
+            *self.dashboard_switches.values(),
         ):
             widgets.append(switch)
         return widgets
@@ -1892,6 +2227,11 @@ class EarAWindow(Adw.ApplicationWindow):
         self.status_dot.remove_css_class("eara-dot-warn")
         self.status_dot.remove_css_class("eara-dot-off")
         self.status_dot.add_css_class(dot)
+        for css in ("eara-dot-ok", "eara-dot-warn", "eara-dot-off"):
+            self.header_status_dot.remove_css_class(css)
+        self.header_status_dot.add_css_class(dot)
+        self.header_device_label.set_text(name if bt_ok else t("status_offline"))
+        self.device_state_stack.set_visible_child_name("connected" if bt_ok and proto_ok else "recovery")
         self._set_badge(self.badge_bt, t("bt_on" if bt_ok else "bt_off").upper(), "ok" if bt_ok else "bad")
         self._set_badge(
             self.badge_proto,
@@ -1923,6 +2263,8 @@ class EarAWindow(Adw.ApplicationWindow):
             self._set_chip_active(self.eq_buttons, eq_name)
         if isinstance(anc_name, str):
             self._set_chip_active(self.anc_buttons, anc_name)
+            self._set_chip_active(self.dashboard_anc_buttons, anc_name)
+            self._set_chip_active(self.dashboard_strength_buttons, anc_name)
         gestures = status.get("gestures")
         if isinstance(gestures, dict):
             self._sync_gesture_dropdowns(gestures)
@@ -1930,11 +2272,14 @@ class EarAWindow(Adw.ApplicationWindow):
         try:
             if status.get("latency") is not None:
                 self.lat_switch.set_active(bool(status["latency"]))
+                self.dashboard_switches["lat"].set_active(bool(status["latency"]))
             if status.get("in_ear") is not None:
                 self.ied_switch.set_active(bool(status["in_ear"]))
+                self.dashboard_switches["ied"].set_active(bool(status["in_ear"]))
             bass = status.get("bass") or {}
             if isinstance(bass, dict) and "enabled" in bass:
                 self.bass_switch.set_active(bool(bass["enabled"]))
+                self.dashboard_switches["bass"].set_active(bool(bass["enabled"]))
                 self.bass_level.set_sensitive(bool(bass["enabled"]))
                 if bass.get("level"):
                     self.bass_level.set_value(max(1.0, min(5.0, float(bass["level"]))))

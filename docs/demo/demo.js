@@ -2,6 +2,37 @@
   const toastEl = document.getElementById("toast");
   let toastTimer;
 
+  const releaseEl = document.getElementById("release");
+  const releaseAt = releaseEl ? new Date(releaseEl.dataset.releaseAt) : null;
+  const countdownParts = {
+    days: document.getElementById("count-days"),
+    hours: document.getElementById("count-hours"),
+    minutes: document.getElementById("count-minutes"),
+    seconds: document.getElementById("count-seconds"),
+  };
+
+  function updateCountdown() {
+    if (!releaseAt || Number.isNaN(releaseAt.getTime())) return;
+    const remaining = Math.max(0, releaseAt.getTime() - Date.now());
+    const totalSeconds = Math.floor(remaining / 1000);
+    const values = {
+      days: Math.floor(totalSeconds / 86400),
+      hours: Math.floor((totalSeconds % 86400) / 3600),
+      minutes: Math.floor((totalSeconds % 3600) / 60),
+      seconds: totalSeconds % 60,
+    };
+    Object.entries(values).forEach(([key, value]) => {
+      if (countdownParts[key]) countdownParts[key].textContent = String(value).padStart(2, "0");
+    });
+    if (remaining === 0) {
+      releaseEl?.classList.add("release--live");
+      releaseEl?.querySelector(".release__eyebrow")?.replaceChildren("PREVIEW AVAILABLE");
+    }
+  }
+
+  updateCountdown();
+  window.setInterval(updateCountdown, 1000);
+
   function toast(msg) {
     toastEl.textContent = msg;
     toastEl.hidden = false;
@@ -16,6 +47,7 @@
       const name = tab.dataset.tab;
       document.querySelectorAll(".eara-tab[data-tab]").forEach((t) => {
         t.classList.toggle("eara-tab-active", t === tab);
+        t.setAttribute("aria-selected", t === tab ? "true" : "false");
       });
       document.querySelectorAll(".eara-panel-page").forEach((p) => {
         const active = p.dataset.panel === name;
