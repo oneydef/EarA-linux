@@ -11,6 +11,8 @@
     seconds: document.getElementById("count-seconds"),
   };
 
+  let countdownTimer;
+
   function updateCountdown() {
     if (!releaseAt || Number.isNaN(releaseAt.getTime())) return;
     const remaining = Math.max(0, releaseAt.getTime() - Date.now());
@@ -27,11 +29,12 @@
     if (remaining === 0) {
       releaseEl?.classList.add("release--live");
       releaseEl?.querySelector(".release__eyebrow")?.replaceChildren("PREVIEW AVAILABLE");
+      if (countdownTimer) window.clearInterval(countdownTimer);
     }
   }
 
   updateCountdown();
-  window.setInterval(updateCountdown, 1000);
+  countdownTimer = window.setInterval(updateCountdown, 1000);
 
   function toast(msg) {
     toastEl.textContent = msg;

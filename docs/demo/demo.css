@@ -24,6 +24,7 @@
 
 html {
   scroll-behavior: smooth;
+  scroll-padding-top: 76px;
 }
 
 body {
@@ -33,6 +34,13 @@ body {
   color: var(--text);
   background: var(--bg);
   line-height: 1.5;
+  overflow-x: clip;
+}
+
+#release,
+#demo,
+#shots {
+  scroll-margin-top: 76px;
 }
 
 a {
@@ -187,6 +195,13 @@ main {
   color: var(--text);
 }
 
+a:focus-visible,
+button:focus-visible,
+input:focus-visible {
+  outline: 2px solid #ffffff;
+  outline-offset: 3px;
+}
+
 /* ── Release countdown ── */
 
 .release {
@@ -248,12 +263,14 @@ main {
   margin-top: 1rem;
 }
 
-.release__meta span {
+.release__meta span,
+.release__meta time {
   padding: 0.35rem 0.62rem;
   border: 1px solid #303030;
   border-radius: 999px;
   color: #bcbcbc;
   font-size: 0.72rem;
+  text-decoration: none;
 }
 
 .countdown {
@@ -1205,5 +1222,19 @@ main {
 
   .eara-panel-page {
     padding-inline: 12px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
   }
 }

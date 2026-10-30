@@ -17,7 +17,6 @@
 [![v0.6 UI Preview — 15 Nov 2026, 18:00 GMT](https://img.shields.io/badge/v0.6_UI_Preview-15_Nov_2026_%C2%B7_18%3A00_GMT-d71921?style=for-the-badge)](https://oneydef.github.io/EarA-linux/#release)
 
 **[Open the live release countdown →](https://oneydef.github.io/EarA-linux/#release)**<br>
-The date is the current preview target, not a guarantee of a production release.
 
 </div>
 
