@@ -1,51 +1,53 @@
 <div align="center">
 
-<img src="docs/github-banner.svg" alt="EarA for Linux" width="720"/>
+<img src="docs/github-banner.svg" alt="EarA for Linux" width="720">
 
-**Unofficial GTK companion for Nothing / CMF earbuds on Linux**
+**Unofficial GTK4 companion for Nothing and CMF earbuds on Linux**
 
-BlueZ · PulseAudio / PipeWire · RFCOMM control · CLI + GUI
+[![Latest release](https://img.shields.io/github/v/release/oneydef/EarA-linux?style=flat-square&label=release&color=d71921)](https://github.com/oneydef/EarA-linux/releases/latest)
+[![Interactive demo](https://img.shields.io/badge/try-interactive_demo-d71921?style=flat-square)](https://oneydef.github.io/EarA-linux/)
+[![GPL-3.0-or-later](https://img.shields.io/badge/license-GPL--3.0--or--later-222?style=flat-square)](LICENSE)
 
-[![License: GPL-3.0-or-later](https://img.shields.io/badge/License-GPL--3.0--or--later-red?style=for-the-badge)](LICENSE)
-[![Live Demo](https://img.shields.io/badge/Demo-interactive-d71921?style=for-the-badge)](https://oneydef.github.io/EarA-linux/)
-[![Release](https://img.shields.io/github/v/release/oneydef/EarA-linux?style=for-the-badge&label=Release&color=d71921)](https://github.com/oneydef/EarA-linux/releases)
-[![Python 3.10+](https://img.shields.io/badge/Python-3.10+-white?style=for-the-badge&logo=python&logoColor=black)](https://www.python.org/)
-[![GTK4](https://img.shields.io/badge/GTK4-libadwaita-black?style=for-the-badge)](https://gitlab.gnome.org/GNOME/libadwaita)
-
-[Install](#install) · [Live demo](https://oneydef.github.io/EarA-linux/) · [Features](#features) · [CLI](#cli) · [Lineup](LINEUP.md) · [Roadmap](ROADMAP.md) · [Support](#support) · [Contributing](CONTRIBUTING.md)
+[Supported devices](LINEUP.md) · [Roadmap](ROADMAP.md) · [Contribute](CONTRIBUTING.md)
 
 </div>
 
----
-
-> Independent community project — **not** affiliated with Nothing Technology or CMF.
-
-EarA brings battery, ANC, EQ, gestures, find-my, and Bluetooth audio routing to Linux desktops. Tested with **Nothing Ear (a)**; other Nothing / CMF models use the same protocol family ([LINEUP.md](LINEUP.md)).
-
-**[Try the interactive demo →](https://oneydef.github.io/EarA-linux/)**
+EarA brings battery status, noise control, EQ, gestures, find-my, and Bluetooth audio controls to the Linux desktop. It includes a native GTK4 interface and a command-line client.
 
 <p align="center">
-  <img src="docs/screenshots/device.png" alt="EarA Device tab" width="305"/>
+  <img src="docs/screenshots/device.png" alt="EarA device controls" width="305">
   &nbsp;
-  <img src="docs/screenshots/sound.png" alt="EarA Sound tab" width="305"/>
+  <img src="docs/screenshots/sound.png" alt="EarA sound controls" width="305">
 </p>
 
-## In the press
+## Highlights
 
-- [OMG! Ubuntu — This app lets you manage Nothing & CMF earbuds on Linux](https://www.omgubuntu.co.uk/2026/10/cmf-nothing-earbuds-linux-companion-app)
-
-## Features
-
-| Audio | Device | Extras |
-|-------|--------|--------|
-| A2DP music & Discord | Battery L / R / case | Pinch remapping |
-| Optional HFP mic (`eara audio hfp`) | ANC + transparency | Find my earbuds |
-| Host codec list (LHDC if adapter supports) | EQ presets + 8-band UI | Ear-tip fit test |
-| | Bass / latency / in-ear | |
+- Battery levels for the left earbud, right earbud, and case
+- ANC, transparency, listening modes, bass, and EQ controls
+- Gesture remapping, in-ear detection, ear-tip fit test, and Find My Earbuds
+- A2DP music playback with optional headset-microphone mode
+- GTK4/libadwaita desktop app plus a scriptable CLI
 
 ## Install
 
-### Quick (from source)
+Download the latest **AppImage**, **DEB**, **RPM**, or standalone **Flatpak** bundle from [GitHub Releases](https://github.com/oneydef/EarA-linux/releases/latest).
+
+### Debian / Ubuntu
+
+```bash
+sudo dpkg -i eara_*_all.deb
+eara gui
+```
+
+### Flatpak bundle
+
+```bash
+flatpak install --user ./EarA-*.flatpak
+flatpak run io.github.oneydef.eara
+```
+
+<details>
+<summary>Install from source</summary>
 
 ```bash
 sudo apt install python3 python3-gi python3-dbus gir1.2-gtk-4.0 gir1.2-adw-1 bluez
@@ -55,27 +57,17 @@ cd EarA-linux
 eara gui
 ```
 
-Adds `~/.local/bin/eara` and a **Nothing X; Nothing Ears** entry in the app menu.
+This installs `eara` to `~/.local/bin` and adds EarA to the application menu.
 
-### Packages
+</details>
 
-Download `.deb`, `.rpm`, AppImage, or the standalone Flatpak bundle from [GitHub Releases](https://github.com/oneydef/EarA-linux/releases).
+## Device support
 
-```bash
-sudo dpkg -i eara_*_all.deb
-eara gui
-```
+**Nothing Ear (a)** is validated end to end. **CMF Buds 2** has tested battery reporting, listening modes, EQ, and Bluetooth audio support.
 
-For Flatpak, download the `.flatpak` file from the release and install it locally:
+EarA also includes profiles for other Nothing and CMF models that use the same RFCOMM protocol family. Their individual controls still need community testing. See the [device matrix](LINEUP.md) for the current status.
 
-```bash
-flatpak install --user ./EarA-0.5.3-x86_64.flatpak
-flatpak run io.github.oneydef.eara
-```
-
-Flatpak will offer to install the required GNOME runtime if it is not already available.
-
-## CLI
+## Command line
 
 ```bash
 eara status
@@ -83,32 +75,40 @@ eara connect
 eara anc transparency
 eara eq more_bass
 eara graphic-eq 0 0 0 0 0 0 0 0
-eara audio mic          # Discord — same A2DP as music
-eara audio hfp          # bud microphone (lower quality)
+eara audio mic
+eara audio hfp
 eara ring both
 eara doctor
 ```
 
-## Dual connection
+If Linux cannot claim the A2DP connection, disconnect the earbuds from the phone first.
 
-If Linux has no A2DP sink, disconnect Bluetooth on the phone so the PC can take audio.
+## Project
 
-## Roadmap
+- [Device support matrix](LINEUP.md)
+- [Roadmap](ROADMAP.md)
+- [Contributing guide](CONTRIBUTING.md)
+- [Interactive demo](https://oneydef.github.io/EarA-linux/)
 
-Linux remains the primary platform. Native **macOS** and **Windows** support is planned after the shared device protocol and platform-independent core are ready. See [ROADMAP.md](ROADMAP.md) for the current direction and contribution opportunities.
+Linux is the primary platform. Native macOS and Windows support is planned after the shared protocol and platform-independent core are ready.
+
+## Featured
+
+[OMG! Ubuntu — *This App Lets You Manage Nothing & CMF Earbuds on Linux*](https://www.omgubuntu.co.uk/2026/10/cmf-nothing-earbuds-linux-companion-app)
 
 ## Support
 
-EarA is free community software. If it saves you time on Linux:
-
-**[Buy me a coffee](https://buymeacoffee.com/r18fon7sj9)**
-
-## Protocol
-
-RFCOMM channel discovered through SDP (usually 15; newer CMF models may use 16) · UUID `aeac4a03-dff5-498f-843a-34487cf133eb` · frames `55 60 01 | cmd | dir | len | seq | payload | CRC-16/ARC`.
+EarA is free and open-source. If it is useful to you, you can [buy the developer a coffee](https://buymeacoffee.com/r18fon7sj9).
 
 ## License
 
-SPDX-License-Identifier: **GPL-3.0-or-later** · Copyright (C) 2026 [oneydef](https://github.com/oneydef)
+[GPL-3.0-or-later](LICENSE) · Copyright © 2026 [oneydef](https://github.com/oneydef)
 
-See [LICENSE](LICENSE) and [NOTICE](NOTICE). Product names are trademarks of their owners — see [TRADEMARKS.md](TRADEMARKS.md).
+Product names are trademarks of their owners; see [TRADEMARKS.md](TRADEMARKS.md) and [NOTICE](NOTICE).
+
+<details>
+<summary>Protocol reference</summary>
+
+RFCOMM channel discovered through SDP (usually 15; newer CMF models may use 16) · UUID `aeac4a03-dff5-498f-843a-34487cf133eb` · frames `55 60 01 | cmd | dir | len | seq | payload | CRC-16/ARC`.
+
+</details>
