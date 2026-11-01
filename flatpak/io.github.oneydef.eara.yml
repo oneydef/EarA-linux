@@ -106,5 +106,5 @@ modules:
     sources:
       - type: git
         url: https://github.com/oneydef/eara.git
-        tag: v0.6.0
-        commit: 6a2761819a3172eb66c42992f639cf2b3ae8e2ef
+        tag: v0.6.1
+        commit: 35f9bafc2d6f93d2bcd800b272945cb1d48aa3b9
