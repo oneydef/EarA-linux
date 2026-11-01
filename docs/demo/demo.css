@@ -202,7 +202,7 @@ input:focus-visible {
   outline-offset: 3px;
 }
 
-/* ── Release countdown ── */
+/* ── Release ── */
 
 .release {
   position: relative;
@@ -273,47 +273,6 @@ input:focus-visible {
   text-decoration: none;
 }
 
-.countdown {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  align-items: flex-start;
-  gap: 0.55rem;
-  padding: 1rem;
-  border: 1px solid #303030;
-  border-radius: 18px;
-  background: #0a0a0a;
-}
-
-.countdown__unit {
-  min-width: 58px;
-  text-align: center;
-}
-
-.countdown__unit strong {
-  display: block;
-  font-family: var(--font-dot);
-  font-size: clamp(1.5rem, 3vw, 2.2rem);
-  line-height: 1;
-  font-variant-numeric: tabular-nums;
-}
-
-.countdown__unit span {
-  display: block;
-  margin-top: 0.4rem;
-  color: var(--muted);
-  font-size: 0.62rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.countdown__separator {
-  color: var(--red);
-  font-family: var(--font-dot);
-  font-size: 1.7rem;
-  line-height: 1;
-}
-
 /* ── EarA window (matches gui.py) ── */
 
 .demo__frame {
@@ -338,57 +297,15 @@ input:focus-visible {
 
 .demo__teaser .demo__frame {
   margin: 0;
-  opacity: 0.52;
-  filter: blur(9px) saturate(0.7);
-  transform: scale(1.025);
-  pointer-events: none;
-  user-select: none;
+  opacity: 1;
+  filter: none;
+  transform: none;
 }
 
-.demo__lock {
-  position: absolute;
-  inset: 0;
-  z-index: 4;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 2rem;
-  text-align: center;
-  background: radial-gradient(circle at center, rgba(8, 8, 8, 0.5), rgba(8, 8, 8, 0.82));
-}
-
-.demo__lock-mark {
-  display: grid;
-  place-items: center;
-  width: 54px;
-  height: 54px;
-  margin-bottom: 1rem;
-  border: 1px solid rgba(215, 25, 33, 0.65);
-  border-radius: 50%;
-  color: var(--red);
-  font-family: var(--font-dot);
-  letter-spacing: 0.12em;
-}
-
-.demo__lock-eyebrow {
-  margin: 0 0 0.45rem;
-  color: var(--red);
-  font-family: var(--font-dot);
-  font-size: 0.76rem;
-  letter-spacing: 0.18em;
-}
-
-.demo__lock h2 {
-  max-width: 560px;
-  margin: 0;
-  font-size: clamp(1.5rem, 4vw, 2.4rem);
-}
-
-.demo__lock p:not(.demo__lock-eyebrow) {
-  max-width: 520px;
-  margin: 0.65rem 0 1.35rem;
-  color: #b4b4b4;
+.release__download {
+  position: relative;
+  z-index: 1;
+  white-space: nowrap;
 }
 
 .eara-window {
@@ -681,11 +598,11 @@ input:focus-visible {
 }
 
 .eara-device-art {
-  width: 168px;
-  height: 88px;
-  flex: 0 1 168px;
+  width: 190px;
+  height: 112px;
+  flex: 0 1 190px;
   object-fit: contain;
-  opacity: 0.92;
+  opacity: 0.98;
 }
 
 .eara-status-dot {
@@ -1211,10 +1128,6 @@ input:focus-visible {
     grid-template-columns: 1fr;
   }
 
-  .countdown {
-    justify-content: center;
-  }
-
   .eara-body {
     grid-template-columns: 1fr;
   }
@@ -1243,19 +1156,6 @@ input:focus-visible {
   .release {
     padding: 1rem;
     border-radius: 18px;
-  }
-
-  .countdown {
-    gap: 0.2rem;
-    padding: 0.8rem 0.45rem;
-  }
-
-  .countdown__unit {
-    min-width: 48px;
-  }
-
-  .countdown__separator {
-    font-size: 1.3rem;
   }
 
   .eara-headerbar {

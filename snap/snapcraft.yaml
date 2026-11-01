@@ -7,7 +7,7 @@ description: |
 
   Independent community project — not affiliated with Nothing Technology or CMF.
 
-adopt-info: eara
+version: "0.6.0"
 license: GPL-3.0-or-later
 base: core24
 grade: stable
@@ -31,6 +31,9 @@ parts:
     source: .
     organize:
       eara: usr/share/eara/eara
+      packaging/fonts: usr/share/eara/packaging/fonts
+      packaging/ui: usr/share/eara/packaging/ui
+      packaging/earbuds-hero.svg: usr/share/eara/packaging/earbuds-hero.svg
       packaging/eara.svg: meta/gui/eara.svg
       packaging/eara.desktop: meta/gui/eara.desktop
     override-build: |
@@ -45,6 +48,8 @@ parts:
     stage-packages:
       - python3
       - python3-gi
+      - python3-gi-cairo
+      - python3-cairo
       - python3-dbus
       - gir1.2-gtk-4.0
       - gir1.2-adw-1

@@ -95,6 +95,10 @@ modules:
         ${FLATPAK_DEST}/share/metainfo/io.github.oneydef.eara.metainfo.xml
       - install -Dm644 packaging/eara.svg
         ${FLATPAK_DEST}/share/icons/hicolor/scalable/apps/io.github.oneydef.eara.svg
+      - install -dm755 ${FLATPAK_DEST}/share/eara/packaging/fonts
+      - install -m644 packaging/fonts/*.ttf -t ${FLATPAK_DEST}/share/eara/packaging/fonts/
+      - install -dm755 ${FLATPAK_DEST}/share/eara/packaging/ui
+      - cp -a packaging/ui/. ${FLATPAK_DEST}/share/eara/packaging/ui/
       - install -dm755 ${FLATPAK_DEST}/share/eara/screenshots
       - install -m644 packaging/screenshots/device.png packaging/screenshots/sound.png
         -t ${FLATPAK_DEST}/share/eara/screenshots/
@@ -102,4 +106,4 @@ modules:
     sources:
       - type: git
         url: https://github.com/oneydef/EarA-linux.git
-        tag: v0.5.3
+        tag: v0.6.0

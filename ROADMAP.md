@@ -2,20 +2,22 @@
 
 This roadmap describes the project's direction, not fixed release dates. Priorities may change as new devices are tested and contributors join the project.
 
-## Primary focus: interface and UI/UX refresh
+## Shipped in EarA 0.6: interface and UI/UX refresh
 
-The main near-term goal is to make EarA feel simpler, clearer, and more polished without hiding its advanced controls. Planned exploration and improvements include:
+EarA 0.6 delivers the first complete interface refresh: a fixed 1200×720 layout, consistent navigation and component styling, screen-aware themes, separate device details, real connection diagnostics, synchronized quick controls, corrected equalizer behavior, and simplified motion and feedback.
 
-- Rework the information architecture and navigation around the most common tasks.
-- Establish a more consistent visual hierarchy, spacing system, and component style.
-- Make connection, battery, audio-profile, and device states easier to understand at a glance.
-- Improve pairing, reconnection, error, and recovery flows with clearer guidance.
+UI and UX remain a core project priority. Follow-up work includes:
+
+- Validate the new navigation and recovery flows with real users and more device models.
+- Refine the visual hierarchy, spacing system, and component style where testing exposes friction.
+- Make connection, battery, audio-profile, and device states even easier to understand at a glance.
+- Continue improving pairing, reconnection, error, and recovery guidance.
 - Reduce friction in ANC, EQ, gesture, and device-management workflows.
-- Refine responsive behavior for different window sizes and display densities.
+- Improve behavior across display densities while preserving the verified 1200×720 workspace.
 - Improve keyboard navigation, focus states, contrast, labels, and screen-reader support.
 - Validate design changes with real users and iterate before treating the refresh as complete.
 
-The exact visual direction is still open. UI changes will be developed incrementally so that device reliability and feature access remain intact.
+Future UI changes will be developed incrementally so device reliability and feature access remain intact.
 
 ## Near term: strengthen the Linux release
 

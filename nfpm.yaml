@@ -1,7 +1,7 @@
 name: eara
 arch: all
 platform: linux
-version: 0.5.3
+version: 0.6.0
 section: sound
 priority: optional
 maintainer: oneydef <oneydefwork@gmail.com>
@@ -19,6 +19,10 @@ contents:
     dst: /usr/share/metainfo/eara.metainfo.xml
   - src: packaging/screenshots
     dst: /usr/share/eara/screenshots
+  - src: packaging/fonts
+    dst: /usr/share/eara/packaging/fonts
+  - src: packaging/ui
+    dst: /usr/share/eara/packaging/ui
   - src: packaging/eara.svg
     dst: /usr/share/icons/hicolor/scalable/apps/eara.svg
   - src: LICENSE
@@ -30,6 +34,8 @@ overrides:
     depends:
       - python3
       - python3-gi
+      - python3-gi-cairo
+      - python3-cairo
       - python3-dbus
       - gir1.2-gtk-4.0
       - gir1.2-adw-1
@@ -38,6 +44,7 @@ overrides:
     depends:
       - python3
       - python3-gobject
+      - python3-cairo
       - gtk4
       - libadwaita
       - bluez

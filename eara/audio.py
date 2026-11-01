@@ -38,28 +38,12 @@ def _names_device(name: str, address: str) -> bool:
 
 
 def reload_bluetooth_modules(*, force: bool = False) -> None:
-    """Nudge PulseAudio when a BlueZ device is connected but no card appears.
+    """Compatibility hook: never reload global Bluetooth modules from EarA.
 
-    Unloads/reloads Bluetooth discover modules — may briefly interrupt other BT
-    devices. Pass force=True only after a failed connect/recovery attempt.
+    Reloading discovery can crash PulseAudio through duplicate MediaEndpoint
+    registration and disrupt unrelated devices. Recovery is per-device only.
     """
-    if not force:
-        return
-    for name in ("module-bluetooth-discover", "module-bluez5-discover"):
-        subprocess.run(
-            ["pactl", "unload-module", name],
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-            check=False,
-        )
-    time.sleep(0.4)
-    subprocess.run(
-        ["pactl", "load-module", "module-bluetooth-discover"],
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
-        check=False,
-    )
-    time.sleep(0.8)
+    return
 
 
 def wait_for_card(address: str, timeout: float = 28) -> bool:
@@ -138,6 +122,7 @@ def set_default_source(source: str) -> bool:
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
         check=False,
+        timeout=6,
     ).returncode == 0
 
 
@@ -150,6 +135,7 @@ def move_record_streams(source: str) -> None:
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
                 check=False,
+                timeout=6,
             )
 
 
@@ -159,6 +145,7 @@ def set_default_sink(sink: str) -> bool:
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
         check=False,
+        timeout=6,
     ).returncode == 0
 
 
@@ -178,6 +165,7 @@ def move_streams_to_default() -> None:
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
                 check=False,
+                timeout=6,
             )
 
 
@@ -197,17 +185,8 @@ def active_profile(address: str) -> str:
 
 
 def ensure_bluez_card(address: str) -> bool:
-    """Wait for PulseAudio card; force-load module-bluez5-device if needed."""
-    if wait_for_card(address, timeout=14):
-        return True
-    path = bluez._device_path(address)
-    subprocess.run(
-        ["pactl", "load-module", "module-bluez5-device", f"path={path}"],
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
-        check=False,
-    )
-    return wait_for_card(address, timeout=12)
+    """Wait for the audio server to publish its card; never force-load modules."""
+    return wait_for_card(address, timeout=14)
 
 
 def ensure_music_audio(address: str) -> dict[str, object]:
@@ -326,12 +305,14 @@ def keep_a2dp_in_calls() -> None:
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
             check=False,
+            timeout=6,
         )
     subprocess.run(
         ["pactl", "load-module", "module-bluetooth-policy", "auto_switch=0"],
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
         check=False,
+        timeout=6,
     )
     _write_pulse_override()
 

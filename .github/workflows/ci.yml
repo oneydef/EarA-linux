@@ -47,7 +47,7 @@ jobs:
       - name: appimagetool
         run: |
           sudo apt-get update
-          sudo apt-get install -y python3-gi python3-dbus gir1.2-gtk-4.0 gir1.2-adw-1
+          sudo apt-get install -y python3-gi python3-gi-cairo python3-cairo python3-dbus gir1.2-gtk-4.0 gir1.2-adw-1
           curl -fsSL -o appimagetool "https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage"
           chmod +x appimagetool
           sudo mv appimagetool /usr/local/bin/appimagetool

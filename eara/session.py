@@ -137,7 +137,9 @@ class Device:
                 time.sleep(1.0 + attempt)
                 continue
 
-            time.sleep(0.5)
+            # trust_and_connect only returns with the A2DP sink already up;
+            # a short beat before the profile check is enough.
+            time.sleep(0.1)
             result = fn(self.address)
             if result.get("ok"):
                 result["attempt"] = attempt + 1

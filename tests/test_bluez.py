@@ -29,8 +29,58 @@ class BluezTests(unittest.TestCase):
         self.assertIsNotNone(found)
         self.assertEqual(found["address"], "AA:BB:CC:DD:EE:FF")
 
-    def test_trust_and_connect_requires_pairing(self):
-        with patch.object(bluez, "_is_paired", return_value=False):
+    def test_scan_for_device_exits_early_when_connected(self):
+        with (
+            patch.object(bluez, "start_discovery") as start,
+            patch.object(bluez, "stop_discovery") as stop,
+            patch.object(bluez, "is_connected", return_value=True),
+            patch.object(bluez, "device_properties", return_value={}),
+            patch.object(bluez, "_ctl", return_value="") as ctl,
+            patch.object(bluez.time, "sleep") as sleep,
+        ):
+            self.assertTrue(bluez.scan_for_device("AA:BB:CC:DD:EE:FF", dwell=6.0))
+        start.assert_called_once()
+        stop.assert_called_once()
+        sleep.assert_not_called()
+        ctl.assert_not_called()
+
+    def test_scan_for_device_keeps_window_until_advertisement(self):
+        # Absent buds (no RSSI) keep the dwell running; discovery must stay on.
+        props = [{"Connected": False, "RSSI": None}, {"Connected": False, "RSSI": -60}]
+        with (
+            patch.object(bluez, "start_discovery"),
+            patch.object(bluez, "stop_discovery") as stop,
+            patch.object(bluez, "is_connected", return_value=False),
+            patch.object(bluez, "device_properties", side_effect=props),
+            patch.object(bluez, "_ctl", return_value="") as ctl,
+            patch.object(bluez.time, "sleep") as sleep,
+        ):
+            self.assertTrue(bluez.scan_for_device("AA:BB:CC:DD:EE:FF", dwell=6.0))
+        sleep.assert_called_once_with(0.8)
+        stop.assert_called_once()
+        ctl.assert_not_called()
+
+    def test_trust_and_connect_auto_pairs_unpaired_device(self):
+        with (
+            patch.object(bluez, "power_on"),
+            patch.object(bluez, "_is_paired", return_value=False),
+            patch.object(bluez, "pair_device") as pair,
+            patch.object(bluez, "_ctl", return_value=""),
+            patch.object(bluez, "is_connected", return_value=True),
+            patch.object(bluez, "has_audio_sink", return_value=True),
+        ):
+            bluez.trust_and_connect("AA:BB:CC:DD:EE:FF", scan=False)
+        pair.assert_called_once_with("AA:BB:CC:DD:EE:FF")
+
+    def test_trust_and_connect_surfaces_invisible_device(self):
+        # Unpaired and not visible (device_properties is None without D-Bus):
+        # pair_device raises and the error must reach the caller.
+        with (
+            patch.object(bluez, "power_on"),
+            patch.object(bluez, "_is_paired", return_value=False),
+            patch.object(bluez, "_ctl", return_value=""),
+            patch.object(bluez, "is_connected", return_value=False),
+        ):
             with self.assertRaises(RuntimeError):
                 bluez.trust_and_connect("AA:BB:CC:DD:EE:FF", timeout=1, scan=False, max_rounds=1)
 

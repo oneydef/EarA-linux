@@ -9,7 +9,7 @@
   <link rel="canonical" href="https://oneydef.github.io/EarA-linux/">
   <meta name="theme-color" content="#0a0a0a">
   <meta property="og:title" content="EarA — Nothing X / CMF on Linux">
-  <meta property="og:description" content="Try EarA 0.5.3: reliable Bluetooth recovery, battery, ANC, EQ, bass, and gestures on Linux.">
+  <meta property="og:description" content="Try EarA 0.6: a redesigned GTK4 companion for Nothing and CMF earbuds on Linux.">
   <meta property="og:image" content="https://oneydef.github.io/EarA-linux/assets/device.png">
   <meta property="og:url" content="https://oneydef.github.io/EarA-linux/">
   <title>EarA — Live Demo | Nothing X / CMF on Linux</title>
@@ -17,7 +17,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DotGothic16&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="demo.css?v=20261030-3">
+  <link rel="stylesheet" href="demo.css?v=20261101">
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -30,7 +30,7 @@
     "description": "Unofficial GTK4 companion for Nothing and CMF earbuds on Linux.",
     "url": "https://github.com/oneydef/EarA-linux",
     "downloadUrl": "https://github.com/oneydef/EarA-linux/releases",
-    "softwareVersion": "0.5.3",
+    "softwareVersion": "0.6.0",
     "author": { "@type": "Person", "name": "oneydef" }
   }
   </script>
@@ -45,7 +45,7 @@
     </a>
     <nav class="topbar__nav">
       <a href="#demo">Demo</a>
-      <a href="#release">Next release</a>
+      <a href="#release">Release</a>
       <a href="#shots">Screenshots</a>
       <a href="https://github.com/oneydef/EarA-linux#install" target="_blank" rel="noopener">Install</a>
       <a class="topbar__cta" href="https://github.com/oneydef/EarA-linux" target="_blank" rel="noopener">GitHub</a>
@@ -55,47 +55,39 @@
   <main>
     <section class="intro">
       <p class="intro__tag">Interactive demo · not affiliated with Nothing / CMF</p>
-      <a class="intro__release" href="https://github.com/oneydef/EarA-linux/releases/tag/v0.5.3" target="_blank" rel="noopener">NEW · EARA v0.5.3</a>
+      <a class="intro__release" href="https://github.com/oneydef/EarA-linux/releases/tag/v0.6.0" target="_blank" rel="noopener">NEW · EARA v0.6.0</a>
       <h1>Nothing X &amp; CMF earbuds on Linux</h1>
       <p class="intro__lead">
-        Pixel-accurate preview of the GTK4 app. Now with more reliable Bluetooth recovery and safer connection retries.
+        Explore the redesigned GTK4 interface with clearer navigation, real connection diagnostics, synchronized controls, and a corrected equalizer.
       </p>
-      <div class="intro__highlights" aria-label="EarA 0.5.3 highlights">
-        <span>Bluetooth recovery</span>
-        <span>Safe GUI retries</span>
-        <span>Cleaner GTK styling</span>
-        <span>Hardware tested</span>
+      <div class="intro__highlights" aria-label="EarA 0.6 highlights">
+        <span>Redesigned UI</span>
+        <span>Connection diagnostics</span>
+        <span>Corrected EQ</span>
+        <span>104 tests</span>
       </div>
       <div class="intro__actions">
         <a class="btn btn--primary" href="#demo">Try demo</a>
-        <a class="btn btn--ghost" href="https://github.com/oneydef/EarA-linux/releases/tag/v0.5.3" target="_blank" rel="noopener">Download v0.5.3</a>
+        <a class="btn btn--ghost" href="https://github.com/oneydef/EarA-linux/releases/tag/v0.6.0" target="_blank" rel="noopener">Download v0.6.0</a>
       </div>
     </section>
 
-    <section class="release" id="release" data-release-at="2026-11-15T18:00:00Z">
+    <section class="release release--live" id="release">
       <div class="release__copy">
-        <p class="release__eyebrow">NEXT MILESTONE</p>
-        <h2>v0.6 UI Preview</h2>
-        <p>A first hands-on build of the clearer dashboard, Sound workspace, and connection recovery flow.</p>
+        <p class="release__eyebrow">AVAILABLE NOW</p>
+        <h2>EarA v0.6.0</h2>
+        <p>The redesigned Linux companion is ready with a clearer dashboard, Sound workspace, connection recovery, and diagnostics.</p>
         <div class="release__meta">
-          <time datetime="2026-11-15T18:00:00Z">15 Nov 2026 · 18:00 GMT</time>
-          <span>Linux preview</span>
+          <time datetime="2026-11-01">1 Nov 2026</time>
+          <span>Stable Linux release</span>
         </div>
       </div>
-      <div class="countdown" aria-live="polite" aria-label="Time until the v0.6 UI preview">
-        <div class="countdown__unit"><strong id="count-days">00</strong><span>Days</span></div>
-        <div class="countdown__separator" aria-hidden="true">:</div>
-        <div class="countdown__unit"><strong id="count-hours">00</strong><span>Hours</span></div>
-        <div class="countdown__separator" aria-hidden="true">:</div>
-        <div class="countdown__unit"><strong id="count-minutes">00</strong><span>Minutes</span></div>
-        <div class="countdown__separator" aria-hidden="true">:</div>
-        <div class="countdown__unit"><strong id="count-seconds">00</strong><span>Seconds</span></div>
-      </div>
+      <a class="btn btn--primary release__download" href="https://github.com/oneydef/EarA-linux/releases/tag/v0.6.0" target="_blank" rel="noopener">Download v0.6.0</a>
     </section>
 
     <section class="demo" id="demo">
       <div class="demo__teaser">
-      <div class="demo__frame" inert aria-hidden="true">
+      <div class="demo__frame">
         <div class="eara-window eara-focused" id="eara-app">
           <header class="eara-headerbar">
             <div class="eara-headerbar__start">
@@ -133,7 +125,7 @@
 
               <div class="eara-status-card">
                 <div class="eara-status-head">
-                  <img class="eara-device-art" src="assets/earbuds-hero.svg" alt="" width="168" height="88">
+                  <img class="eara-device-art" src="assets/earbuds-dashboard.png" alt="" width="190" height="112">
                   <span class="eara-status-dot eara-dot-ok" id="status-dot"></span>
                   <div class="eara-status-titlecol">
                     <div class="eara-status-name" id="status-name">Nothing Ear (a)</div>
@@ -143,7 +135,7 @@
                     </div>
                   </div>
                 </div>
-                <div class="eara-status-meta" id="status-meta">Connected · Nothing Ear (a) · fw 1.0.1.51 · SN10832421008835</div>
+                <div class="eara-status-meta" id="status-meta">Connected · Nothing Ear (a) · fw 1.0.1.51</div>
                 <div class="eara-batteries">
                   <div class="eara-batt-cell">
                     <div class="eara-batt-head"><span class="eara-batt-side">L</span><span class="eara-batt-pct">35%</span></div>
@@ -169,7 +161,7 @@
 
               <div class="eara-field">
                 <label class="dim-label">Bluetooth device</label>
-                <div class="eara-dropdown">Nothing Ear (a) (2C:BE:EB:D0:3A:3A)</div>
+                <div class="eara-dropdown">Nothing Ear (a) (address hidden)</div>
               </div>
 
               <div class="eara-button-row">
@@ -294,27 +286,20 @@
           </div>
         </div>
       </div>
-      <div class="demo__lock" role="status">
-        <span class="demo__lock-mark" aria-hidden="true">•••</span>
-        <p class="demo__lock-eyebrow">UI REFRESH IN PROGRESS</p>
-        <h2>Interactive preview unlocks with v0.6</h2>
-        <p>The new dashboard, Sound workspace, and recovery flow are being polished now.</p>
-        <a class="btn btn--primary" href="#release">View countdown</a>
       </div>
-      </div>
-      <p class="demo__hint">A blurred preview of the new EarA interface. The live controls return with the v0.6 UI preview.</p>
+      <p class="demo__hint">Interactive browser demo of the EarA v0.6 interface. Demo controls do not access Bluetooth hardware.</p>
     </section>
 
     <section class="shots" id="shots">
       <h2>Real app screenshots</h2>
-      <p class="shots__note">Native 611×868 captures — 1:1 scale</p>
+      <p class="shots__note">Native 1200×720 captures from the verified GTK application</p>
       <div class="shots__grid">
         <figure class="shots__figure">
-          <img src="assets/device.png" alt="EarA Device tab" width="611" height="868" decoding="async">
+          <img src="assets/device.png" alt="EarA v0.6 Device workspace" width="1200" height="720" decoding="async">
           <figcaption>Device</figcaption>
         </figure>
         <figure class="shots__figure">
-          <img src="assets/sound.png" alt="EarA Sound tab" width="611" height="868" decoding="async">
+          <img src="assets/sound.png" alt="EarA v0.6 Sound workspace" width="1200" height="720" decoding="async">
           <figcaption>Sound</figcaption>
         </figure>
       </div>
@@ -326,7 +311,7 @@
 cd EarA-linux && ./scripts/install-user.sh
 eara gui</code></pre>
       <div class="intro__actions">
-        <a class="btn btn--primary" href="https://github.com/oneydef/EarA-linux/releases/tag/v0.5.3" target="_blank" rel="noopener">Download v0.5.3</a>
+        <a class="btn btn--primary" href="https://github.com/oneydef/EarA-linux/releases/tag/v0.6.0" target="_blank" rel="noopener">Download v0.6.0</a>
         <a class="btn btn--ghost" href="https://github.com/oneydef/EarA-linux" target="_blank" rel="noopener">GitHub</a>
       </div>
     </section>
@@ -337,6 +322,6 @@ eara gui</code></pre>
   </footer>
 
   <div class="toast" id="toast" hidden></div>
-  <script src="demo.js?v=20261030-3"></script>
+  <script src="demo.js?v=20261101"></script>
 </body>
 </html>

@@ -14,9 +14,9 @@
 
 <div align="center">
 
-[![v0.6 UI Preview — 15 Nov 2026, 18:00 GMT](https://img.shields.io/badge/v0.6_UI_Preview-15_Nov_2026_%C2%B7_18%3A00_GMT-d71921?style=for-the-badge)](https://oneydef.github.io/EarA-linux/#release)
+[![EarA v0.6.0](https://img.shields.io/badge/EarA-v0.6.0-d71921?style=for-the-badge)](https://github.com/oneydef/EarA-linux/releases/tag/v0.6.0)
 
-**[Open the live release countdown →](https://oneydef.github.io/EarA-linux/#release)**<br>
+**[Explore the redesigned interface →](https://oneydef.github.io/EarA-linux/#demo)**<br>
 
 </div>
 
@@ -30,6 +30,10 @@ EarA brings battery status, noise control, EQ, gestures, find-my, and Bluetooth 
 
 ## Highlights
 
+- Redesigned fixed 1200×720 interface with consistent typography, spacing, icons, and navigation
+- Light connection and recovery screens with dark Device, Sound, Gestures, and Tools workspaces
+- More reliable discovery, reconnection, service diagnostics, and state restoration
+- Corrected equalizer presets and synchronized quick controls across Device and Sound
 - Battery levels for the left earbud, right earbud, and case
 - ANC, transparency, listening modes, bass, and EQ controls
 - Gesture remapping, in-ear detection, ear-tip fit test, and Find My Earbuds
@@ -58,7 +62,7 @@ flatpak run io.github.oneydef.eara
 <summary>Install from source</summary>
 
 ```bash
-sudo apt install python3 python3-gi python3-dbus gir1.2-gtk-4.0 gir1.2-adw-1 bluez
+sudo apt install python3 python3-gi python3-gi-cairo python3-cairo python3-dbus gir1.2-gtk-4.0 gir1.2-adw-1 bluez
 git clone https://github.com/oneydef/EarA-linux.git
 cd EarA-linux
 ./scripts/install-user.sh

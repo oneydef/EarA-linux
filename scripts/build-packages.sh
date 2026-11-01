@@ -47,7 +47,7 @@ Section: sound
 Priority: optional
 Architecture: all
 Maintainer: oneydef <oneydefwork@gmail.com>
-Depends: python3 (>= 3.10), python3-gi, python3-dbus, gir1.2-gtk-4.0, gir1.2-adw-1, bluez, pulseaudio-utils | pipewire-bin
+Depends: python3 (>= 3.10), python3-gi, python3-gi-cairo, python3-cairo, python3-dbus, gir1.2-gtk-4.0, gir1.2-adw-1, bluez, pulseaudio-utils | pipewire-bin
 Description: Unofficial Linux companion for compatible True Wireless earbuds
  Controls ANC, EQ, gestures, battery and Bluetooth audio for compatible
  earbuds over a community RFCOMM protocol. Independent of the hardware vendor.
@@ -76,6 +76,8 @@ mkdir -p "$APPDIR/usr/share/eara/packaging" "$APPDIR/usr/bin" \
          "$APPDIR/usr/share/icons/hicolor/256x256/apps"
 cp -a "$ROOT/eara" "$APPDIR/usr/share/eara/"
 cp "$ROOT/packaging/earbuds-hero.svg" "$APPDIR/usr/share/eara/packaging/"
+cp -a "$ROOT/packaging/fonts" "$APPDIR/usr/share/eara/packaging/"
+cp -a "$ROOT/packaging/ui" "$APPDIR/usr/share/eara/packaging/"
 clean_python_cache "$APPDIR/usr/share/eara/eara"
 cp "$ROOT/packaging/eara.desktop" "$APPDIR/eara.desktop"
 cp "$ROOT/packaging/eara.svg" "$APPDIR/eara.svg"

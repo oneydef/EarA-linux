@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <component type="desktop-application">
   <id>io.github.oneydef.eara</id>
-  <name>Nothing X; Nothing Ears</name>
+  <name>EarA</name>
   <summary>Unofficial Linux companion for Nothing / CMF earbuds</summary>
   <metadata_license>CC0-1.0</metadata_license>
   <project_license>GPL-3.0-or-later</project_license>
@@ -57,6 +57,11 @@
   </keywords>
   <content_rating type="oars-1.1"/>
   <releases>
+    <release version="0.6.0" date="2026-11-01">
+      <description>
+        <p>Introduce the redesigned 1200×720 interface, screen-aware light and dark styling, reliable discovery and state recovery, service diagnostics, synchronized quick controls, and corrected equalizer behavior.</p>
+      </description>
+    </release>
     <release version="0.5.3" date="2026-10-27">
       <description>
         <p>Improve Bluetooth recovery, prevent overlapping GUI connection attempts, and fix GTK CSS warnings.</p>

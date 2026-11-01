@@ -1,6 +1,6 @@
 # Maintainer: oneydef <oneydefwork@gmail.com>
 pkgname=eara
-pkgver=0.5.3
+pkgver=0.6.0
 pkgrel=1
 pkgdesc="Unofficial GTK companion for Nothing/CMF earbuds on Linux"
 arch=('any')
@@ -9,6 +9,7 @@ license=('GPL-3.0-or-later')
 depends=(
   'python'
   'python-gobject'
+  'python-cairo'
   'dbus-python'
   'gtk4'
   'libadwaita'
@@ -18,7 +19,7 @@ depends=(
 )
 makedepends=()
 source=("${pkgname}-${pkgver}.tar.gz::https://github.com/oneydef/EarA-linux/releases/download/v${pkgver}/${pkgname}-${pkgver}.tar.gz")
-sha256sums=('d865f0cf05142740d23d4bfa090f0abc93cce0bcfd95945b4b4ee85e425c0022')
+sha256sums=('SKIP') # Replaced with the release tarball checksum after publishing.
 
 package() {
   cd "$srcdir"
@@ -26,6 +27,8 @@ package() {
   cp -a eara "$pkgdir/usr/share/eara/"
   install -dm755 "$pkgdir/usr/share/eara/packaging"
   install -m644 packaging/earbuds-hero.svg "$pkgdir/usr/share/eara/packaging/earbuds-hero.svg"
+  cp -a packaging/fonts "$pkgdir/usr/share/eara/packaging/"
+  cp -a packaging/ui "$pkgdir/usr/share/eara/packaging/"
   install -dm755 "$pkgdir/usr/bin"
   install -dm755 "$pkgdir/usr/share/applications"
   install -dm755 "$pkgdir/usr/share/metainfo"

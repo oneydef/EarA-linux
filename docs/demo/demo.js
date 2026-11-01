@@ -2,40 +2,6 @@
   const toastEl = document.getElementById("toast");
   let toastTimer;
 
-  const releaseEl = document.getElementById("release");
-  const releaseAt = releaseEl ? new Date(releaseEl.dataset.releaseAt) : null;
-  const countdownParts = {
-    days: document.getElementById("count-days"),
-    hours: document.getElementById("count-hours"),
-    minutes: document.getElementById("count-minutes"),
-    seconds: document.getElementById("count-seconds"),
-  };
-
-  let countdownTimer;
-
-  function updateCountdown() {
-    if (!releaseAt || Number.isNaN(releaseAt.getTime())) return;
-    const remaining = Math.max(0, releaseAt.getTime() - Date.now());
-    const totalSeconds = Math.floor(remaining / 1000);
-    const values = {
-      days: Math.floor(totalSeconds / 86400),
-      hours: Math.floor((totalSeconds % 86400) / 3600),
-      minutes: Math.floor((totalSeconds % 3600) / 60),
-      seconds: totalSeconds % 60,
-    };
-    Object.entries(values).forEach(([key, value]) => {
-      if (countdownParts[key]) countdownParts[key].textContent = String(value).padStart(2, "0");
-    });
-    if (remaining === 0) {
-      releaseEl?.classList.add("release--live");
-      releaseEl?.querySelector(".release__eyebrow")?.replaceChildren("PREVIEW AVAILABLE");
-      if (countdownTimer) window.clearInterval(countdownTimer);
-    }
-  }
-
-  updateCountdown();
-  countdownTimer = window.setInterval(updateCountdown, 1000);
-
   function toast(msg) {
     toastEl.textContent = msg;
     toastEl.hidden = false;
@@ -102,7 +68,7 @@
     document.getElementById("status-dot")?.classList.replace("eara-dot-off", "eara-dot-ok");
     document.getElementById("status-name").textContent = "Nothing Ear (a)";
     document.getElementById("status-meta").textContent =
-      "Connected · Nothing Ear (a) · fw 1.0.1.51 · SN10832421008835";
+      "Connected · Nothing Ear (a) · fw 1.0.1.51";
     toast("Connected (demo)");
   });
 

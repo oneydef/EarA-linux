@@ -26,6 +26,7 @@ FONT_DIR="$ASSET_DIR/fonts"
 USER_FONT_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/fonts/eara"
 mkdir -p "$ASSET_DIR" "$FONT_DIR" "$USER_FONT_DIR"
 install -m 0644 "$ROOT/packaging/"*.svg "$ASSET_DIR/"
+cp -a "$ROOT/packaging/ui" "$ASSET_DIR/"
 for font in "$ROOT/packaging/fonts/"*.ttf; do
   [ -f "$font" ] || continue
   install -m 0644 "$font" "$FONT_DIR/"
