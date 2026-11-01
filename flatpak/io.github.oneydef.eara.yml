@@ -105,6 +105,6 @@ modules:
       - install -Dm644 LICENSE -t ${FLATPAK_DEST}/share/licenses/${FLATPAK_ID}/upstream
     sources:
       - type: git
-        url: https://github.com/oneydef/EarA-linux.git
+        url: https://github.com/oneydef/eara.git
         tag: v0.6.0
         commit: 6a2761819a3172eb66c42992f639cf2b3ae8e2ef
