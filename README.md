@@ -4,29 +4,24 @@
 
 **Unofficial GTK4 companion for Nothing and CMF earbuds on Linux**
 
-[![Latest release](https://img.shields.io/github/v/release/oneydef/EarA-linux?style=flat-square&label=release&color=d71921)](https://github.com/oneydef/EarA-linux/releases/latest)
-[![Interactive demo](https://img.shields.io/badge/try-interactive_demo-d71921?style=flat-square)](https://oneydef.github.io/EarA-linux/)
+[![CI](https://github.com/oneydef/EarA-linux/actions/workflows/ci.yml/badge.svg)](https://github.com/oneydef/EarA-linux/actions/workflows/ci.yml)
 [![GPL-3.0-or-later](https://img.shields.io/badge/license-GPL--3.0--or--later-222?style=flat-square)](LICENSE)
 
-[Supported devices](LINEUP.md) · [Roadmap](ROADMAP.md) · [Contribute](CONTRIBUTING.md)
+[Website](https://oneydef.github.io/EarA-linux/) · [Downloads](https://github.com/oneydef/EarA-linux/releases/latest) · [Supported devices](LINEUP.md) · [Roadmap](ROADMAP.md) · [Contribute](CONTRIBUTING.md)
 
 </div>
 
-<div align="center">
-
-[![EarA v0.6.0](https://img.shields.io/badge/EarA-v0.6.0-d71921?style=for-the-badge)](https://github.com/oneydef/EarA-linux/releases/tag/v0.6.0)
-
-**[Explore the redesigned interface →](https://oneydef.github.io/EarA-linux/#demo)**<br>
-
-</div>
-
-EarA brings battery status, noise control, EQ, gestures, find-my, and Bluetooth audio controls to the Linux desktop. It includes a native GTK4 interface and a command-line client.
+EarA brings battery status, noise control, EQ, gestures, Find My Earbuds, and Bluetooth audio controls to the Linux desktop through a native GTK4 interface and a scriptable command-line client.
 
 <p align="center">
-  <img src="docs/screenshots/device.png" alt="EarA device controls" width="305">
-  &nbsp;
-  <img src="docs/screenshots/sound.png" alt="EarA sound controls" width="305">
+  <img src="docs/screenshots/device.png" alt="EarA Device workspace" width="100%">
 </p>
+<p align="center"><sub><strong>Device</strong> — connection, battery, audio profiles, noise control, and quick settings</sub></p>
+
+<p align="center">
+  <img src="docs/screenshots/sound.png" alt="EarA Sound workspace" width="100%">
+</p>
+<p align="center"><sub><strong>Sound</strong> — equalizer, listening controls, and synchronized settings</sub></p>
 
 ## Highlights
 
@@ -34,11 +29,14 @@ EarA brings battery status, noise control, EQ, gestures, find-my, and Bluetooth 
 - Light connection and recovery screens with dark Device, Sound, Gestures, and Tools workspaces
 - More reliable discovery, reconnection, service diagnostics, and state restoration
 - Corrected equalizer presets and synchronized quick controls across Device and Sound
+
+## Features
+
 - Battery levels for the left earbud, right earbud, and case
-- ANC, transparency, listening modes, bass, and EQ controls
+- ANC, transparency, listening modes, bass, and equalizer controls
 - Gesture remapping, in-ear detection, ear-tip fit test, and Find My Earbuds
 - A2DP music playback with optional headset-microphone mode
-- GTK4/libadwaita desktop app plus a scriptable CLI
+- GTK4/libadwaita desktop app and a scriptable CLI
 
 ## Install
 
@@ -100,7 +98,7 @@ If Linux cannot claim the A2DP connection, disconnect the earbuds from the phone
 - [Device support matrix](LINEUP.md)
 - [Roadmap](ROADMAP.md)
 - [Contributing guide](CONTRIBUTING.md)
-- [Interactive demo](https://oneydef.github.io/EarA-linux/)
+- [Project website](https://oneydef.github.io/EarA-linux/)
 
 Linux is the primary platform. Native macOS and Windows support is planned after the shared protocol and platform-independent core are ready.
 
