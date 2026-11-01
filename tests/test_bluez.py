@@ -78,6 +78,7 @@ class BluezTests(unittest.TestCase):
         with (
             patch.object(bluez, "power_on"),
             patch.object(bluez, "_is_paired", return_value=False),
+            patch.object(bluez, "pair_device", side_effect=RuntimeError("Device is not visible")),
             patch.object(bluez, "_ctl", return_value=""),
             patch.object(bluez, "is_connected", return_value=False),
         ):

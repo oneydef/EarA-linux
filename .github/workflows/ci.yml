@@ -12,11 +12,12 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
+      - name: Test dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python3-gi python3-gi-cairo python3-cairo python3-dbus gir1.2-gtk-4.0 gir1.2-adw-1 xvfb
       - name: Tests
-        run: python3 -m unittest discover -s tests -v
+        run: xvfb-run -a python3 -m unittest discover -s tests -v
       - name: i18n key parity (en / uk)
         run: |
           PYTHONPATH=. python3 - <<'PY'
