@@ -34,11 +34,11 @@
   </description>
   <screenshots>
     <screenshot type="default">
-      <image type="source">https://raw.githubusercontent.com/oneydef/EarA-linux/v0.6.0/packaging/screenshots/device.png</image>
+      <image type="source">https://raw.githubusercontent.com/oneydef/EarA-linux/v0.6.1/packaging/screenshots/device.png</image>
       <caption>Device status — battery, ANC, and Bluetooth routing</caption>
     </screenshot>
     <screenshot>
-      <image type="source">https://raw.githubusercontent.com/oneydef/EarA-linux/v0.6.0/packaging/screenshots/sound.png</image>
+      <image type="source">https://raw.githubusercontent.com/oneydef/EarA-linux/v0.6.1/packaging/screenshots/sound.png</image>
       <caption>Sound — ANC modes, EQ presets, and quick settings</caption>
     </screenshot>
   </screenshots>
@@ -60,6 +60,11 @@
   </keywords>
   <content_rating type="oars-1.1"/>
   <releases>
+    <release version="0.6.1" date="2026-11-01">
+      <description>
+        <p>Refresh AppStream metadata and prepare the Flatpak package for Flathub with the GNOME 51 runtime.</p>
+      </description>
+    </release>
     <release version="0.6.0" date="2026-11-01">
       <description>
         <p>Introduce the redesigned 1200×720 interface, screen-aware light and dark styling, reliable discovery and state recovery, service diagnostics, synchronized quick controls, and corrected equalizer behavior.</p>
