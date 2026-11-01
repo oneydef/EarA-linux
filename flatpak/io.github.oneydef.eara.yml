@@ -107,3 +107,4 @@ modules:
       - type: git
         url: https://github.com/oneydef/EarA-linux.git
         tag: v0.6.0
+        commit: 6a2761819a3172eb66c42992f639cf2b3ae8e2ef

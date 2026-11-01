@@ -1,13 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!-- Copyright 2026 oneydef -->
 <component type="desktop-application">
   <id>io.github.oneydef.eara</id>
   <name>EarA</name>
   <summary>Unofficial Linux companion for Nothing / CMF earbuds</summary>
   <metadata_license>CC0-1.0</metadata_license>
   <project_license>GPL-3.0-or-later</project_license>
-  <developer_name>oneydef</developer_name>
+  <developer id="io.github.oneydef">
+    <name>oneydef</name>
+  </developer>
   <launchable type="desktop-id">io.github.oneydef.eara.desktop</launchable>
-  <url type="homepage">https://github.com/oneydef/EarA-linux</url>
+  <url type="homepage">https://oneydef.github.io/EarA-linux/</url>
   <url type="bugtracker">https://github.com/oneydef/EarA-linux/issues</url>
   <url type="donation">https://buymeacoffee.com/r18fon7sj9</url>
   <description>
@@ -31,11 +34,11 @@
   </description>
   <screenshots>
     <screenshot type="default">
-      <image type="source">https://raw.githubusercontent.com/oneydef/EarA-linux/main/packaging/screenshots/device.png</image>
+      <image type="source">https://raw.githubusercontent.com/oneydef/EarA-linux/v0.6.0/packaging/screenshots/device.png</image>
       <caption>Device status — battery, ANC, and Bluetooth routing</caption>
     </screenshot>
     <screenshot>
-      <image type="source">https://raw.githubusercontent.com/oneydef/EarA-linux/main/packaging/screenshots/sound.png</image>
+      <image type="source">https://raw.githubusercontent.com/oneydef/EarA-linux/v0.6.0/packaging/screenshots/sound.png</image>
       <caption>Sound — ANC modes, EQ presets, and quick settings</caption>
     </screenshot>
   </screenshots>
