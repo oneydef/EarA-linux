@@ -225,8 +225,7 @@ footer {
   font-weight: 600;
 }
 
-.screenshots,
-.features {
+.screenshots {
   padding: 100px 0;
 }
 
@@ -236,13 +235,7 @@ footer {
   text-align: center;
 }
 
-.section-heading--left {
-  margin-inline: 0;
-  text-align: left;
-}
-
-.section-heading h2,
-.install h2 {
+.section-heading h2 {
   margin: 0;
   font-size: clamp(2.1rem, 5vw, 4.4rem);
   letter-spacing: -0.055em;
@@ -295,76 +288,6 @@ footer {
   color: var(--text);
 }
 
-.feature-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
-}
-
-.feature-grid article {
-  min-height: 300px;
-  padding: 28px;
-  border: 1px solid var(--line);
-  border-radius: 20px;
-  background: linear-gradient(145deg, rgba(24, 24, 24, 0.92), rgba(13, 13, 13, 0.92));
-}
-
-.feature-number {
-  display: block;
-  margin-bottom: 80px;
-  color: var(--red);
-  font-family: var(--font-dot);
-  font-size: 0.82rem;
-}
-
-.feature-grid h3 {
-  margin: 0;
-  font-size: 1.3rem;
-}
-
-.feature-grid p {
-  margin-bottom: 0;
-  color: var(--muted);
-  font-size: 0.91rem;
-}
-
-.install {
-  display: grid;
-  grid-template-columns: 1.25fr 0.75fr;
-  align-items: end;
-  gap: 40px;
-  margin: 50px 0 120px;
-  padding: clamp(28px, 6vw, 70px);
-  border: 1px solid rgba(228, 30, 43, 0.35);
-  border-radius: 24px;
-  background:
-    radial-gradient(circle at 100% 0, rgba(228, 30, 43, 0.18), transparent 40%),
-    #101010;
-}
-
-.install p:not(.eyebrow) {
-  max-width: 620px;
-  margin-bottom: 0;
-}
-
-.install__actions {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 18px;
-}
-
-.text-link {
-  color: #c6c6c2;
-  font-size: 0.9rem;
-  font-weight: 600;
-  text-decoration: none;
-}
-
-.text-link:hover {
-  color: var(--text);
-}
-
 footer {
   display: grid;
   grid-template-columns: auto 1fr auto;
@@ -413,8 +336,7 @@ footer > a:last-child {
     display: none;
   }
 
-  .screenshots,
-  .features {
+  .screenshots {
     padding: 72px 0;
   }
 
@@ -434,23 +356,6 @@ footer > a:last-child {
     grid-template-columns: 1fr;
     gap: 2px;
     padding-inline: 4px;
-  }
-
-  .feature-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .feature-grid article {
-    min-height: auto;
-  }
-
-  .feature-number {
-    margin-bottom: 42px;
-  }
-
-  .install {
-    grid-template-columns: 1fr;
-    margin-bottom: 80px;
   }
 
   footer {
