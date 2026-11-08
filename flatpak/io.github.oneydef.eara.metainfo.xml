@@ -3,12 +3,16 @@
 <component type="desktop-application">
   <id>io.github.oneydef.eara</id>
   <name>EarA</name>
-  <summary>Unofficial Linux companion for Nothing / CMF earbuds</summary>
+  <summary>Control Nothing and CMF earbuds</summary>
   <metadata_license>CC0-1.0</metadata_license>
   <project_license>GPL-3.0-or-later</project_license>
   <developer id="io.github.oneydef">
     <name>oneydef</name>
   </developer>
+  <branding>
+    <color type="primary" scheme_preference="light">#e88b96</color>
+    <color type="primary" scheme_preference="dark">#71343b</color>
+  </branding>
   <launchable type="desktop-id">io.github.oneydef.eara.desktop</launchable>
   <url type="homepage">https://oneydef.github.io/EarA-linux/</url>
   <url type="bugtracker">https://github.com/oneydef/EarA-linux/issues</url>
