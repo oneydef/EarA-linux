@@ -7,6 +7,23 @@ from eara import audio
 
 
 class AudioTests(unittest.TestCase):
+    def test_headset_profiles_support_pipewire_and_legacy_pulse(self):
+        address = "3C:B0:ED:D3:DC:40"
+        for supported in ("headset-head-unit-msbc", "headset-head-unit", "handsfree-head-unit",
+                          "handsfree_head_unit", "headset_head_unit"):
+            with self.subTest(supported=supported), \
+                 patch.object(audio, "ensure_bluez_card", return_value=True), \
+                 patch.object(audio.bluez, "dbus_connect_profile"), \
+                 patch.object(audio, "set_profile", side_effect=lambda addr, name: name == supported) as profiles, \
+                 patch.object(audio, "wait_for_sink", return_value="earbud-output"), \
+                 patch.object(audio, "wait_for_source", return_value="earbud-mic"), \
+                 patch.object(audio, "set_default_sink"), patch.object(audio, "move_streams_to_default"), \
+                 patch.object(audio, "set_default_source"), patch.object(audio, "move_record_streams"):
+                result = audio.ensure_hfp_audio(address)
+            self.assertTrue(result["ok"])
+            self.assertEqual(result["profile"], supported)
+            self.assertEqual(profiles.call_args.args, (address, supported))
+
     def test_find_sink_accepts_pipewire_colon_mac(self):
         sinks = "42\tbluez_output.3C:B0:ED:D3:DC:40.1\tPipeWire\n"
         with patch.object(audio, "_pactl", return_value=sinks):

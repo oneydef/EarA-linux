@@ -363,7 +363,10 @@ def ensure_hfp_audio(address: str) -> dict[str, object]:
     except Exception:
         pass
     last_err = "Headset profile is not available"
-    for profile in ("handsfree_head_unit", "headset_head_unit"):
+    # PipeWire uses hyphenated names; legacy PulseAudio uses underscores.
+    # Prefer wideband speech when advertised, then try the backend defaults.
+    for profile in ("headset-head-unit-msbc", "headset-head-unit", "handsfree-head-unit",
+                    "handsfree_head_unit", "headset_head_unit"):
         if not set_profile(address, profile):
             continue
         sink = wait_for_sink(address, timeout=8)
