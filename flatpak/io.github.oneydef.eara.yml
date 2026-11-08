@@ -26,14 +26,15 @@ cleanup:
 
 modules:
   - name: python3-dbus-python
-    buildsystem: simple
-    build-commands:
-      - pip3 install --verbose --exists-action=i --no-index --find-links="file://${PWD}"
-        --prefix=${FLATPAK_DEST} "dbus-python==1.2.18" --no-build-isolation
+    buildsystem: meson
+    config-opts:
+      - -Dtests=disabled
+      - -Ddoc=disabled
+      - -Dinstalled_tests=false
     sources:
-      - type: file
-        url: https://files.pythonhosted.org/packages/b1/5c/ccfc167485806c1936f7d3ba97db6c448d0089c5746ba105b6eb22dba60e/dbus-python-1.2.18.tar.gz
-        sha256: 92bdd1e68b45596c833307a5ff4b217ee6929a1502f5341bae28fd120acf7260
+      - type: archive
+        url: https://files.pythonhosted.org/packages/f3/cc/23f24bc7cbfec3a0ab508b7e11bc98837d77a91445d5f666a8545353a147/dbus_python-1.5.1.tar.gz
+        sha256: 57423cf87d09b7d084f420b55b737fe654c33339b06df77945620d97795c6ac4
 
   - name: python3-docutils
     buildsystem: simple
