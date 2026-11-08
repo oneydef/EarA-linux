@@ -1468,14 +1468,10 @@ class EarAWindow(Adw.ApplicationWindow):
 
     def _sync_reference_layout(self) -> None:
         page = self.stack.get_visible_child_name()
-        connected = bool((getattr(self, "_last", None) or {}).get("protocol"))
         self.buttons.set_size_request(GEOMETRY["rail"], -1)
         (self.add_css_class if page == "device" else self.remove_css_class)("eara-device-page")
         icon = self._nav_icons["device"]
         icon.set_from_icon_name("eara-device-symbolic")
-        recovery = page == "device" and not (connected and self._last.get("bt_connected"))
-        Adw.StyleManager.get_default().set_color_scheme(
-            Adw.ColorScheme.FORCE_LIGHT if recovery else Adw.ColorScheme.FORCE_DARK)
 
     def _show_connection_help(self) -> None:
         dialog = Adw.MessageDialog(transient_for=self, modal=True,
