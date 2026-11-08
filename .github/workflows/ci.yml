@@ -67,7 +67,7 @@ jobs:
           curl -fsSL -o /tmp/nfpm.deb https://github.com/goreleaser/nfpm/releases/download/v2.41.3/nfpm_2.41.3_amd64.deb
           sudo dpkg -i /tmp/nfpm.deb
           VER=$(PYTHONPATH=. python3 -c 'from eara import __version__; print(__version__)')
-          nfpm pkg --packager rpm --target "dist/eara-${VER}-1.noarch.rpm"
+          VERSION="$VER" nfpm pkg --packager rpm --target "dist/eara-${VER}-1.noarch.rpm"
       - uses: actions/upload-artifact@v4
         with:
           name: linux-packages

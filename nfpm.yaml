@@ -1,7 +1,7 @@
 name: eara
 arch: all
 platform: linux
-version: 0.6.0
+version: ${VERSION}
 section: sound
 priority: optional
 maintainer: oneydef <oneydefwork@gmail.com>
@@ -43,6 +43,7 @@ overrides:
   rpm:
     depends:
       - python3
+      - python3-dbus
       - python3-gobject
       - python3-cairo
       - gtk4

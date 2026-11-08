@@ -13,6 +13,16 @@ It is not affiliated with Nothing Technology or CMF.
 3. Keep changes focused — match existing style in `eara/`.
 4. If you add i18n keys, update **both** `en` and `uk` in `eara/i18n.py` (CI checks key parity).
 
+## Native packages
+
+When building with nFPM, supply the version from the Python package so the
+package metadata matches the application (CI does the same):
+
+```bash
+VERSION=$(PYTHONPATH=. python3 -c 'from eara import __version__; print(__version__)') \
+  nfpm pkg --packager rpm
+```
+
 ## Reporting issues
 
 | Channel | Use for |
