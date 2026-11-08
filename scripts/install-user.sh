@@ -35,6 +35,7 @@ done
 fc-cache -f "$USER_FONT_DIR" 2>/dev/null || true
 
 sed "s|^Exec=.*|Exec=$BIN/eara gui|" "$ROOT/packaging/eara.desktop" > "$APP/eara.desktop"
+sed "s|^Exec=.*|Exec=$BIN/eara indicator|" "$ROOT/packaging/eara-indicator.desktop" > "$APP/eara-indicator.desktop"
 install -m 0644 "$ROOT/packaging/eara.metainfo.xml" "$META/eara.metainfo.xml"
 install -m 0644 "$ROOT/packaging/screenshots/"*.png "$SHOT/"
 

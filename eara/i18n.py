@@ -12,6 +12,14 @@ _CONFIG = Path.home() / ".config" / "eara" / "config.json"
 
 STRINGS = {
     "en": {
+        "indicator_open": "Open EarA",
+        "indicator_quit": "Quit indicator",
+        "indicator_high": "ANC High",
+        "indicator_mid": "ANC Mid",
+        "indicator_low": "ANC Low",
+        "indicator_adaptive": "ANC Auto",
+        "indicator_off": "ANC Off",
+        "indicator_transparency": "Transparency",
         "find_earbuds": "Find earbuds",
         "fit_test": "Ear-tip fit test",
         "service_bluetooth": "Bluetooth service",
@@ -178,6 +186,14 @@ STRINGS = {
         "tune_earbuds": "Tune your earbuds",
     },
     "uk": {
+        "indicator_open": "Відкрити EarA",
+        "indicator_quit": "Закрити індикатор",
+        "indicator_high": "ANC Вис.",
+        "indicator_mid": "ANC Сер.",
+        "indicator_low": "ANC Низ.",
+        "indicator_adaptive": "ANC Авто",
+        "indicator_off": "ANC Вимк.",
+        "indicator_transparency": "Прозорість",
         "find_earbuds": "Пошук навушників",
         "fit_test": "Перевірка посадки",
         "service_bluetooth": "Служба Bluetooth",

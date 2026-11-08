@@ -466,6 +466,10 @@ class Device:
         Never (re)connects the earbuds: raises RuntimeError if they aren't connected.
         The case only reports while a bud is docked; its last reading is kept (stale).
         """
+        return self.monitor(noise=False)["battery"]
+
+    def monitor(self, *, noise: bool = True) -> dict[str, object]:
+        """Read battery and noise control without reconnecting or changing audio."""
         if not self.connected:
             raise RuntimeError("Earbuds are not connected")
         with self._lock:
@@ -477,10 +481,18 @@ class Device:
                 self._parser = FrameParser()
             try:
                 payload = self._request(CMD_BATTERY, timeout=1.0, require=True)
+                anc = self._request(CMD_ANC_GET) if noise and self.model.anc else None
             finally:
                 self.close_control()
-        battery, self._battery_cache = merge_battery_cache(parse_battery(payload), self._battery_cache)
-        return battery
+            battery, self._battery_cache = merge_battery_cache(parse_battery(payload), self._battery_cache)
+        return {
+            "name": self.name,
+            "bt_connected": True,
+            "protocol": True,
+            "battery": battery,
+            "anc": parse_anc(anc) if anc is not None else None,
+            "model": self.model.as_dict(),
+        }
 
     def set_anc(self, mode: str) -> None:
         if mode not in ANC_MODES:

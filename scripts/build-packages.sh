@@ -34,6 +34,7 @@ raise SystemExit(main())
 EOF
 chmod 0755 "$STAGE/usr/bin/eara"
 install -m 0644 "$ROOT/packaging/eara.desktop" "$STAGE/usr/share/applications/eara.desktop"
+install -m 0644 "$ROOT/packaging/eara-indicator.desktop" "$STAGE/usr/share/applications/eara-indicator.desktop"
 install -m 0644 "$ROOT/packaging/eara.metainfo.xml" "$STAGE/usr/share/metainfo/eara.metainfo.xml"
 install -m 0644 "$ROOT/packaging/screenshots/"*.png "$STAGE/usr/share/eara/screenshots/"
 install -m 0644 "$ROOT/packaging/eara.svg" "$STAGE/usr/share/icons/hicolor/scalable/apps/eara.svg"
@@ -48,6 +49,7 @@ Priority: optional
 Architecture: all
 Maintainer: oneydef <oneydefwork@gmail.com>
 Depends: python3 (>= 3.10), python3-gi, python3-gi-cairo, python3-cairo, python3-dbus, gir1.2-gtk-4.0, gir1.2-adw-1, bluez, pulseaudio-utils | pipewire-bin
+Recommends: gir1.2-dbusmenu-glib-0.4
 Description: Unofficial Linux companion for compatible True Wireless earbuds
  Controls ANC, EQ, gestures, battery and Bluetooth audio for compatible
  earbuds over a community RFCOMM protocol. Independent of the hardware vendor.

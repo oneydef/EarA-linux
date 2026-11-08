@@ -303,6 +303,9 @@ def build_parser() -> argparse.ArgumentParser:
     au.add_argument("mode", choices=["music", "headset", "mic", "hfp"])
     au.set_defaults(func=cmd_audio)
     sub.add_parser("gui").set_defaults(func=lambda args: __import__("eara.gui", fromlist=["run"]).run())
+    sub.add_parser("indicator", help="Show battery and noise control in the desktop panel").set_defaults(
+        func=lambda args: __import__("eara.indicator", fromlist=["run"]).run(args.device)
+    )
     sub.add_parser("doctor").set_defaults(func=cmd_doctor)
     return p
 
