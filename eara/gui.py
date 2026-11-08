@@ -2178,6 +2178,8 @@ class EarAWindow(Adw.ApplicationWindow):
 
     def _render_found_options(self, candidates: list) -> None:
         """Show extra scan candidates as compact rows under the main device row."""
+        from eara.ui_widgets import reference_art
+
         if getattr(self, "_syncing_devices", False):
             return
         for child in list(self.found_options):
