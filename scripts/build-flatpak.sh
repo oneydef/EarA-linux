@@ -5,8 +5,20 @@ MANIFEST="$ROOT/flatpak/io.github.oneydef.eara.yml"
 BUILD_DIR="$ROOT/dist/flatpak-build"
 REPO_DIR="$ROOT/dist/flatpak-repo"
 LOCAL_MANIFEST="$ROOT/dist/flatpak-local.yml"
-RUNTIME="${FLATPAK_RUNTIME:-org.gnome.Platform//49}"
-SDK="${FLATPAK_SDK:-org.gnome.Sdk//49}"
+SOURCE_DIR="$ROOT/dist/flatpak-source"
+INSTALL=1
+OFFLINE=0
+for arg in "$@"; do
+  case "$arg" in
+    --no-install) INSTALL=0 ;;
+    --offline) OFFLINE=1 ;;
+    *) echo "Usage: $0 [--no-install] [--offline]" >&2; exit 2 ;;
+  esac
+done
+RUNTIME_VERSION="$(sed -n 's/^runtime-version: "\([^"]*\)"/\1/p' "$MANIFEST")"
+test -n "$RUNTIME_VERSION"
+RUNTIME="org.gnome.Platform//$RUNTIME_VERSION"
+SDK="org.gnome.Sdk//$RUNTIME_VERSION"
 
 need() {
   command -v "$1" >/dev/null 2>&1 || {
@@ -18,18 +30,33 @@ need() {
 need flatpak
 need flatpak-builder
 
-flatpak --user remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
-flatpak --user install -y flathub "$RUNTIME" "$SDK" 2>/dev/null || flatpak install -y flathub "$RUNTIME" "$SDK"
+if (( ! OFFLINE )); then
+  flatpak --user remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
+  flatpak --user install -y flathub "$RUNTIME" "$SDK"
+fi
+mkdir -p "$ROOT/dist"
 
-python3 - "$MANIFEST" "$LOCAL_MANIFEST" "$ROOT" <<'PY'
+python3 - "$MANIFEST" "$LOCAL_MANIFEST" "$ROOT" "$SOURCE_DIR" <<'PY'
+import json
+import shutil
 import sys
 from pathlib import Path
 
-src, dst, root = sys.argv[1:4]
+src, dst, root, source = sys.argv[1:5]
+snapshot = Path(source)
+if snapshot.exists():
+    shutil.rmtree(snapshot)
+snapshot.mkdir()
+# Only package inputs: never recursively copy dist, git state or other projects.
+for name in ('eara', 'packaging', 'flatpak'):
+    shutil.copytree(Path(root) / name, snapshot / name,
+                    ignore=shutil.ignore_patterns('__pycache__', '*.pyc', 'root'))
+for name in ('LICENSE', 'meson.build'):
+    shutil.copy2(Path(root) / name, snapshot / name)
 text = Path(src).read_text()
 block = f"""    sources:
       - type: dir
-        path: {root}
+        path: {json.dumps(source)}
 """
 # Replace git source block in eara module only (last module).
 marker = "  - name: eara\n"
@@ -48,9 +75,15 @@ Path(dst).write_text(text[:idx] + new_tail)
 print(f"Wrote {dst}")
 PY
 
-rm -rf "$BUILD_DIR" "$REPO_DIR"
-flatpak-builder --user --install --force-clean --repo="$REPO_DIR" "$BUILD_DIR" "$LOCAL_MANIFEST"
+options=(--user --force-clean --state-dir="$ROOT/.flatpak-builder" --repo="$REPO_DIR")
+if (( INSTALL )); then options+=(--install); fi
+if (( OFFLINE )); then options+=(--disable-download); fi
+flatpak-builder "${options[@]}" "$BUILD_DIR" "$LOCAL_MANIFEST"
 
 echo ""
-echo "Installed: io.github.oneydef.eara"
-echo "Run:       flatpak run io.github.oneydef.eara"
+if (( INSTALL )); then
+  echo "Installed: io.github.oneydef.eara"
+  echo "Run:       flatpak run io.github.oneydef.eara"
+else
+  echo "Built without installation: $BUILD_DIR"
+fi

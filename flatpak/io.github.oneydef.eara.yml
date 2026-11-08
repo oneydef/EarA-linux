@@ -6,7 +6,6 @@ sdk: org.gnome.Sdk
 command: io.github.oneydef.eara
 
 finish-args:
-  - --share=network
   - --share=ipc
   - --socket=wayland
   - --socket=fallback-x11
@@ -84,25 +83,7 @@ modules:
           url-template: https://www.kernel.org/pub/linux/bluetooth/bluez-${version}.tar.xz
 
   - name: eara
-    buildsystem: simple
-    build-commands:
-      - install -d ${FLATPAK_DEST}/share/eara
-      - cp -a eara ${FLATPAK_DEST}/share/eara/
-      - install -Dm755 flatpak/io.github.oneydef.eara ${FLATPAK_DEST}/bin/io.github.oneydef.eara
-      - install -Dm644 flatpak/io.github.oneydef.eara.desktop
-        ${FLATPAK_DEST}/share/applications/io.github.oneydef.eara.desktop
-      - install -Dm644 flatpak/io.github.oneydef.eara.metainfo.xml
-        ${FLATPAK_DEST}/share/metainfo/io.github.oneydef.eara.metainfo.xml
-      - install -Dm644 packaging/eara.svg
-        ${FLATPAK_DEST}/share/icons/hicolor/scalable/apps/io.github.oneydef.eara.svg
-      - install -dm755 ${FLATPAK_DEST}/share/eara/packaging/fonts
-      - install -m644 packaging/fonts/*.ttf -t ${FLATPAK_DEST}/share/eara/packaging/fonts/
-      - install -dm755 ${FLATPAK_DEST}/share/eara/packaging/ui
-      - cp -a packaging/ui/. ${FLATPAK_DEST}/share/eara/packaging/ui/
-      - install -dm755 ${FLATPAK_DEST}/share/eara/screenshots
-      - install -m644 packaging/screenshots/device.png packaging/screenshots/sound.png
-        -t ${FLATPAK_DEST}/share/eara/screenshots/
-      - install -Dm644 LICENSE -t ${FLATPAK_DEST}/share/licenses/${FLATPAK_ID}/upstream
+    buildsystem: meson
     sources:
       - type: git
         url: https://github.com/oneydef/eara.git
