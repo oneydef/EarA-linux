@@ -10,6 +10,7 @@ from __future__ import annotations
 import sys
 import threading
 from pathlib import Path
+from tempfile import NamedTemporaryFile, TemporaryDirectory
 
 import gi
 
@@ -35,12 +36,10 @@ ITEM_XML = """
   <property name="IconName" type="s" access="read"/>
   <property name="ItemIsMenu" type="b" access="read"/>
   <property name="Menu" type="o" access="read"/>
-  <property name="XAyatanaLabel" type="s" access="read"/>
-  <property name="XAyatanaLabelGuide" type="s" access="read"/>
   <property name="ToolTip" type="(sa(iiay)ss)" access="read"/>
   <signal name="NewToolTip"/>
+  <signal name="NewIcon"/>
   <signal name="NewStatus"><arg type="s"/></signal>
-  <signal name="XAyatanaNewLabel"><arg type="s"/><arg type="s"/></signal>
 </interface></node>
 """
 
@@ -51,19 +50,47 @@ def battery_text(item: dict | None) -> str:
     return f"{'~' if item.get('stale') else ''}{item['level']}%{'+' if item.get('charging') else ''}"
 
 
-def panel_label(status: dict) -> str:
-    if not status.get("bt_connected"):
-        return ""
-    if not status.get("protocol"):
-        return "— · ANC ?"
-    battery = status.get("battery") or {}
-    left, right = (battery_text(battery.get(side)) for side in ("left", "right"))
-    charge = left if left == right and left != "—" else f"{left}/{right}"
-    anc = status.get("anc")
-    noise = t(f"indicator_{anc}") if anc in ANC_MODES else "ANC ?"
-    if not status.get("model", {}).get("features", {}).get("anc", True):
-        return charge
-    return f"{charge} · {noise}"
+def panel_icon(status: dict) -> str:
+    """Draw separate battery gauges and a listening-mode symbol without GTK."""
+    available = status.get("bt_connected") and status.get("protocol")
+    battery = (status.get("battery") or {}) if available else {}
+    anc = status.get("anc") if available else None
+    has_anc = status.get("model", {}).get("features", {}).get("anc", True)
+    width = 40 if has_anc else 20
+    parts = [
+        f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="22" viewBox="0 0 {width} 22">',
+        '<defs><g id="buds" fill="none" stroke-linecap="round" stroke-linejoin="round">',
+        '<path d="M7 3C2 1 1 8 5 9v5h3V6C8 4 8 3 7 3Z"/>',
+        '<path d="M13 3c5-2 6 5 2 6v5h-3V6c0-2 0-3 1-3Z"/>',
+    ]
+    if has_anc:
+        if anc in ("high", "mid", "low", "adaptive"):
+            parts.append('<path d="m29 3 6 2v5c0 3-3 5-6 7-3-2-6-4-6-7V5Z"/>')
+        elif anc == "transparency":
+            parts.append('<path d="M25 6q-4 4 0 8m-3-11q-7 7 0 14m10-11q4 4 0 8m3-11q7 7 0 14"/>')
+        elif anc == "off":
+            parts.append('<circle cx="29" cy="10" r="5"/>')
+        else:
+            parts.append('<path d="M24 10h1m4 0h1m4 0h1"/>')
+    # A thin dark outline keeps the light strokes visible on light panels too.
+    parts.extend([
+        '</g></defs><use href="#buds" stroke="#242424" stroke-width="2.5"/>',
+        '<use href="#buds" stroke="#eeeeec" stroke-width="1.5"/>',
+    ])
+    for side, x in (("left", 2), ("right", 12)):
+        item = battery.get(side) or {}
+        known = item.get("available") and not item.get("stale")
+        if not known:
+            parts.append(f'<path d="M{x} 19h2m3 0h2" stroke="#999999" stroke-width="2"/>')
+            continue
+        level = max(0, min(100, item["level"]))
+        color = "#ff7b63" if level <= 20 else "#eeeeec"
+        border = color if level == 0 else "#242424"
+        parts.append(f'<rect x="{x}" y="18" width="7" height="2" rx="1" fill="#62666c" stroke="{border}" stroke-width="1"/>')
+        if level:
+            parts.append(f'<rect x="{x}" y="18" width="{7 * level / 100:g}" height="2" rx="1" fill="{color}"/>')
+    parts.append('</svg>')
+    return "".join(parts)
 
 
 class IndicatorApp(Gio.Application):
@@ -79,6 +106,9 @@ class IndicatorApp(Gio.Application):
         Gio.Application.do_startup(self)
         self.hold()
         load_lang()
+        self._icon_dir = TemporaryDirectory(prefix="eara-indicator-")
+        self._icon_files: list[Path] = []
+        self._icon_svg = ""
         self._properties = {
             "Id": GLib.Variant("s", "eara"),
             "Category": GLib.Variant("s", "Hardware"),
@@ -87,8 +117,6 @@ class IndicatorApp(Gio.Application):
             "IconName": GLib.Variant("s", "audio-headphones-symbolic"),
             "ItemIsMenu": GLib.Variant("b", False),
             "Menu": GLib.Variant("o", ITEM_PATH + "/Menu"),
-            "XAyatanaLabel": GLib.Variant("s", "…"),
-            "XAyatanaLabelGuide": GLib.Variant("s", ""),
             "ToolTip": GLib.Variant("(sa(iiay)ss)", ("audio-headphones-symbolic", [], "EarA", "")),
         }
         self._build_menu()
@@ -203,7 +231,7 @@ class IndicatorApp(Gio.Application):
         if self._stopping:
             return False
         load_lang()
-        label = panel_label(status)
+        self._update_icon(status)
         visibility = "Active" if status.get("bt_connected") else "Passive"
         if self._properties["Status"].unpack() != visibility:
             self._properties["Status"] = GLib.Variant("s", visibility)
@@ -234,26 +262,44 @@ class IndicatorApp(Gio.Application):
         pending, self._pending_mode = self._pending_mode, None
         if pending is not None:
             self._refresh(pending)
-        if self._properties["XAyatanaLabel"].unpack() == label and self._properties["ToolTip"].equal(tooltip):
+        if self._properties["ToolTip"].equal(tooltip):
             return False
-        self._properties["XAyatanaLabel"] = GLib.Variant("s", label)
         self._properties["ToolTip"] = tooltip
-        self._bus.emit_signal(None, ITEM_PATH, ITEM_INTERFACE, "XAyatanaNewLabel", GLib.Variant("(ss)", (label, "")))
         self._bus.emit_signal(None, ITEM_PATH, ITEM_INTERFACE, "NewToolTip", None)
         self._bus.emit_signal(
             None, ITEM_PATH, "org.freedesktop.DBus.Properties", "PropertiesChanged",
             GLib.Variant("(sa{sv}as)", (ITEM_INTERFACE, {
-                "XAyatanaLabel": self._properties["XAyatanaLabel"],
                 "ToolTip": self._properties["ToolTip"],
             }, [])),
         )
         return False
+
+    def _update_icon(self, status: dict) -> None:
+        svg = panel_icon(status)
+        if svg == self._icon_svg:
+            return
+        # Different paths invalidate the host's image cache. Keep the previous
+        # file available for an asynchronous load, without accumulating files.
+        with NamedTemporaryFile(mode="w", suffix=".svg", dir=self._icon_dir.name, delete=False) as icon:
+            icon.write(svg)
+            path = Path(icon.name)
+        self._icon_files.append(path)
+        if len(self._icon_files) > 2:
+            self._icon_files.pop(0).unlink(missing_ok=True)
+        self._icon_svg = svg
+        self._properties["IconName"] = GLib.Variant("s", str(path))
+        self._bus.emit_signal(None, ITEM_PATH, ITEM_INTERFACE, "NewIcon", None)
+        self._bus.emit_signal(
+            None, ITEM_PATH, "org.freedesktop.DBus.Properties", "PropertiesChanged",
+            GLib.Variant("(sa{sv}as)", (ITEM_INTERFACE, {"IconName": self._properties["IconName"]}, [])),
+        )
 
     def do_shutdown(self) -> None:
         self._stopping = True
         GLib.source_remove(self._timer)
         Gio.bus_unwatch_name(self._watcher)
         self._bus.unregister_object(self._registration)
+        self._icon_dir.cleanup()
         Gio.Application.do_shutdown(self)
 
 

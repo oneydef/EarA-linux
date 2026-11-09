@@ -82,17 +82,21 @@ sudo apt install gir1.2-dbusmenu-glib-0.4
 eara indicator
 ```
 
-The panel shows, for example, `90%/85% · ANC Auto` (left/right). Equal levels are
-collapsed to `90%`. Click for individual battery readings, noise-control modes,
+The panel icon shows two earbuds with separate left/right battery gauges and a
+listening-mode symbol: a shield for ANC, sound waves for transparency, and a hollow
+circle when noise control is off. Low charge (20% or less) is highlighted in red;
+unavailable readings use dashed gauges. The panel has no text labels. Click for
+exact battery percentages, noise-control modes,
 **Open EarA**, and **Quit indicator**. On Ubuntu GNOME, double-clicking opens the
 full window directly; other StatusNotifier hosts choose their activation gesture.
-GNOME needs AppIndicator support, which Ubuntu enables by default. Panel text is
-shown by hosts supporting Ayatana labels; other hosts show the icon and menu.
+GNOME needs AppIndicator support, which Ubuntu enables by default. Ubuntu preserves
+the wide SVG icon; other StatusNotifier hosts may fit it into a square slot.
+The icon updates only when its appearance changes and uses no animation.
 
 Readings refresh every 10 seconds. The indicator hides when no earbuds are
 connected and reappears after connection. Monitoring does not reconnect earbuds, switch
 audio profiles, or power off Bluetooth when the indicator exits. Unavailable
-readings show `—`; a cached case reading has `~`, and charging has `+`. The
+readings in the menu show `—`; a cached case reading has `~`, and charging has `+`. The
 indicator continues running after the EarA window closes.
 
 Autostart is opt-in. For a DEB/RPM install:

@@ -1,6 +1,9 @@
 import unittest
+from pathlib import Path
+from tempfile import TemporaryDirectory
 from types import SimpleNamespace
 from unittest.mock import MagicMock, PropertyMock, patch
+from xml.etree import ElementTree
 
 from eara import bluez, i18n
 from eara.protocol import CMD_ANC_GET, CMD_BATTERY
@@ -19,27 +22,61 @@ class IndicatorTests(unittest.TestCase):
         self.lang.start()
         self.addCleanup(self.lang.stop)
 
-    def test_equal_bud_levels_are_compact(self):
+    def test_icon_has_separate_battery_gauges_without_text(self):
         status = dict(bt_connected=True, protocol=True, anc="adaptive", battery={
-            "left": dict(level=90, available=True), "right": dict(level=90, available=True),
+            "left": dict(level=90, available=True), "right": dict(level=50, available=True),
         })
-        self.assertEqual(indicator.panel_label(status), "90% · ANC Auto")
-        status["battery"]["right"]["level"] = 75
-        self.assertEqual(indicator.panel_label(status), "90%/75% · ANC Auto")
+        root = ElementTree.fromstring(indicator.panel_icon(status))
+        self.assertEqual((root.get("width"), root.get("height")), ("40", "22"))
+        self.assertEqual(root.findall(".//{*}text"), [])
+        fills = [rect for rect in root.findall("{*}rect") if rect.get("fill") == "#eeeeec"]
+        self.assertEqual([(rect.get("x"), rect.get("width")) for rect in fills], [("2", "6.3"), ("12", "3.5")])
 
     def test_missing_bud_is_not_reported_as_zero(self):
-        status = dict(bt_connected=True, protocol=True, anc="off", battery={
-            "left": dict(level=0, available=True),
-        })
-        self.assertEqual(indicator.panel_label(status), "0%/— · ANC Off")
+        status = dict(bt_connected=True, protocol=True, anc="off", battery={})
+        missing = indicator.panel_icon(status)
+        status["battery"]["left"] = dict(level=0, available=True)
+        self.assertNotEqual(indicator.panel_icon(status), missing)
 
     def test_disconnect_or_failed_read_does_not_reuse_old_values(self):
         status = dict(bt_connected=False, protocol=True, anc="high", battery={
             "left": dict(level=90, available=True), "right": dict(level=90, available=True),
         })
-        self.assertEqual(indicator.panel_label(status), "")
+        unknown = indicator.panel_icon({})
+        self.assertEqual(indicator.panel_icon(status), unknown)
         status.update(bt_connected=True, protocol=False)
-        self.assertEqual(indicator.panel_label(status), "— · ANC ?")
+        self.assertEqual(indicator.panel_icon(status), unknown)
+
+    def test_noise_modes_are_distinguishable_without_color(self):
+        icons = {indicator.panel_icon(dict(bt_connected=True, protocol=True, anc=mode))
+                 for mode in ("high", "transparency", "off", None)}
+        self.assertEqual(len(icons), 4)
+
+    def test_low_battery_uses_shorter_fill_and_warning_color(self):
+        status = dict(bt_connected=True, protocol=True, battery={"left": dict(level=10, available=True)})
+        root = ElementTree.fromstring(indicator.panel_icon(status))
+        fills = [rect for rect in root.findall("{*}rect") if rect.get("fill") == "#ff7b63"]
+        self.assertEqual(len(fills), 1)
+        self.assertEqual(fills[0].get("width"), "0.7")
+
+    def test_icon_updates_are_bounded_and_unchanged_readings_do_not_write(self):
+        with TemporaryDirectory() as directory:
+            app = SimpleNamespace(_icon_dir=SimpleNamespace(name=directory), _icon_svg="",
+                                  _icon_files=[], _properties={}, _bus=MagicMock())
+            status = dict(bt_connected=True, protocol=True, battery={"left": dict(level=90, available=True)})
+            indicator.IndicatorApp._update_icon(app, status)
+            path = Path(app._properties["IconName"].unpack())
+            app._bus.emit_signal.reset_mock()
+            with patch.object(indicator, "NamedTemporaryFile") as temporary:
+                indicator.IndicatorApp._update_icon(app, status)
+            temporary.assert_not_called()
+            app._bus.emit_signal.assert_not_called()
+            self.assertTrue(path.exists())
+            for level in (80, 70, 60):
+                status["battery"]["left"]["level"] = level
+                indicator.IndicatorApp._update_icon(app, status)
+            self.assertEqual(len(list(Path(directory).iterdir())), 2)
+            self.assertFalse(path.exists())
 
     def test_case_cache_and_charging_are_explicit(self):
         self.assertEqual(indicator.battery_text(dict(level=60, available=True, stale=True)), "~60%")
@@ -48,7 +85,8 @@ class IndicatorTests(unittest.TestCase):
 
     def test_models_without_anc_do_not_show_a_noise_mode(self):
         status = dict(bt_connected=True, protocol=True, battery={}, model={"features": {"anc": False}})
-        self.assertEqual(indicator.panel_label(status), "—/—")
+        root = ElementTree.fromstring(indicator.panel_icon(status))
+        self.assertEqual(root.get("width"), "20")
 
     def test_polling_does_not_overlap_a_command(self):
         app = SimpleNamespace(_stopping=False, _busy=True)
@@ -76,16 +114,16 @@ class IndicatorTests(unittest.TestCase):
             _busy=False, _stopping=False, _pending_mode=None,
             _device_item=MagicMock(), _battery_items={side: MagicMock() for side in ("left", "right", "case")},
             _anc_items={}, _bus=MagicMock(),
+            _update_icon=MagicMock(),
             _properties={
                 "Status": indicator.GLib.Variant("s", "Active"),
-                "XAyatanaLabel": indicator.GLib.Variant("s", "90% · ANC High"),
                 "ToolTip": indicator.GLib.Variant("(sa(iiay)ss)", ("", [], "EarA", "")),
             },
         )
         with patch.object(indicator, "load_lang"):
             indicator.IndicatorApp._show(app, {})
             self.assertEqual(app._properties["Status"].unpack(), "Passive")
-            self.assertEqual(app._properties["XAyatanaLabel"].unpack(), "")
+            self.assertNotIn("XAyatanaLabel", app._properties)
             app._bus.emit_signal.reset_mock()
             indicator.IndicatorApp._show(app, {})
             app._bus.emit_signal.assert_not_called()
