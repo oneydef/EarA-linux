@@ -29,7 +29,7 @@ class IndicatorTests(unittest.TestCase):
         root = ElementTree.fromstring(indicator.panel_icon(status))
         self.assertEqual((root.get("width"), root.get("height")), ("40", "22"))
         self.assertEqual(root.findall(".//{*}text"), [])
-        fills = [rect for rect in root.findall("{*}rect") if rect.get("fill") == "#eeeeec"]
+        fills = [rect for rect in root.findall("{*}rect") if rect.get("stroke") is None]
         self.assertEqual([(rect.get("x"), rect.get("width")) for rect in fills], [("2", "6.3"), ("12", "3.5")])
 
     def test_missing_bud_is_not_reported_as_zero(self):

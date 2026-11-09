@@ -83,8 +83,9 @@ eara indicator
 ```
 
 The panel icon shows two earbuds with separate left/right battery gauges and a
-listening-mode symbol: a shield for ANC, sound waves for transparency, and a hollow
-circle when noise control is off. Low charge (20% or less) is highlighted in red;
+listening-mode symbol: a green shield for ANC, yellow sound waves for transparency,
+and a red hollow circle when noise control is off. Each battery gauge smoothly
+changes from green (80% and above) through yellow (50%) to red (20% and below);
 unavailable readings use dashed gauges. The panel has no text labels. Click for
 exact battery percentages, noise-control modes,
 **Open EarA**, and **Quit indicator**. On Ubuntu GNOME, double-clicking opens the

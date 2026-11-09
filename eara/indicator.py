@@ -55,6 +55,7 @@ def panel_icon(status: dict) -> str:
     available = status.get("bt_connected") and status.get("protocol")
     battery = (status.get("battery") or {}) if available else {}
     anc = status.get("anc") if available else None
+    noise_color = "#999999"
     has_anc = status.get("model", {}).get("features", {}).get("anc", True)
     width = 40 if has_anc else 20
     parts = [
@@ -64,18 +65,23 @@ def panel_icon(status: dict) -> str:
         '<path d="M13 3c5-2 6 5 2 6v5h-3V6c0-2 0-3 1-3Z"/>',
     ]
     if has_anc:
+        parts.append('<g stroke="currentColor">')
         if anc in ("high", "mid", "low", "adaptive"):
+            noise_color = "#57e389"
             parts.append('<path d="m29 3 6 2v5c0 3-3 5-6 7-3-2-6-4-6-7V5Z"/>')
         elif anc == "transparency":
+            noise_color = "#f8e45c"
             parts.append('<path d="M25 6q-4 4 0 8m-3-11q-7 7 0 14m10-11q4 4 0 8m3-11q7 7 0 14"/>')
         elif anc == "off":
+            noise_color = "#ff7b63"
             parts.append('<circle cx="29" cy="10" r="5"/>')
         else:
             parts.append('<path d="M24 10h1m4 0h1m4 0h1"/>')
+        parts.append('</g>')
     # A thin dark outline keeps the light strokes visible on light panels too.
     parts.extend([
-        '</g></defs><use href="#buds" stroke="#242424" stroke-width="2.5"/>',
-        '<use href="#buds" stroke="#eeeeec" stroke-width="1.5"/>',
+        '</g></defs><use href="#buds" stroke="#242424" color="#242424" stroke-width="2.5"/>',
+        f'<use href="#buds" stroke="#eeeeec" color="{noise_color}" stroke-width="1.5"/>',
     ])
     for side, x in (("left", 2), ("right", 12)):
         item = battery.get(side) or {}
@@ -84,7 +90,14 @@ def panel_icon(status: dict) -> str:
             parts.append(f'<path d="M{x} 19h2m3 0h2" stroke="#999999" stroke-width="2"/>')
             continue
         level = max(0, min(100, item["level"]))
-        color = "#ff7b63" if level <= 20 else "#eeeeec"
+        # Red through 20%, yellow at 50%, green from 80%; blend in between.
+        if level < 50:
+            start, end = (255, 123, 99), (248, 228, 92)
+            fraction = max(0, (level - 20) / 30)
+        else:
+            start, end = (248, 228, 92), (87, 227, 137)
+            fraction = min(1, (level - 50) / 30)
+        color = "#" + "".join(f"{round(a + (b - a) * fraction):02x}" for a, b in zip(start, end))
         border = color if level == 0 else "#242424"
         parts.append(f'<rect x="{x}" y="18" width="7" height="2" rx="1" fill="#62666c" stroke="{border}" stroke-width="1"/>')
         if level:
