@@ -15,7 +15,7 @@ jobs:
       - name: Test dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y python3-gi python3-gi-cairo python3-cairo python3-dbus gir1.2-gtk-4.0 gir1.2-adw-1 xvfb
+          sudo apt-get install -y python3-gi python3-gi-cairo python3-cairo python3-dbus gir1.2-gtk-4.0 gir1.2-adw-1 gir1.2-dbusmenu-glib-0.4 xvfb
       - name: Tests
         run: xvfb-run -a python3 -m unittest discover -s tests -v
       - name: i18n key parity (en / uk)

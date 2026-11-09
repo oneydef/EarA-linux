@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=EarA Indicator
+Comment=Earbud battery and noise control in the desktop panel
+Exec=eara indicator
+Icon=eara
+Terminal=false
+Type=Application
+Categories=AudioVideo;Audio;
+Keywords=Nothing;CMF;Earbuds;ANC;Bluetooth;

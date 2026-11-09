@@ -71,6 +71,46 @@ This installs `eara` to `~/.local/bin` and adds EarA to the application menu.
 
 </details>
 
+## Desktop panel indicator
+
+Native installations can run `eara indicator` (or launch **EarA Indicator** from
+the application menu) to show battery levels and the current noise-control mode
+without keeping the main window open. On Ubuntu, install the optional menu binding:
+
+```bash
+sudo apt install gir1.2-dbusmenu-glib-0.4
+eara indicator
+```
+
+The panel icon shows two earbuds with separate left/right battery gauges and a
+listening-mode symbol: a green shield for ANC, yellow sound waves for transparency,
+and a red hollow circle when noise control is off. Each battery gauge smoothly
+changes from green (80% and above) through yellow (50%) to red (20% and below);
+unavailable readings use dashed gauges. The panel has no text labels. Click for
+exact battery percentages, noise-control modes,
+**Open EarA**, and **Quit indicator**. On Ubuntu GNOME, double-clicking opens the
+full window directly; other StatusNotifier hosts choose their activation gesture.
+GNOME needs AppIndicator support, which Ubuntu enables by default. Ubuntu preserves
+the wide SVG icon; other StatusNotifier hosts may fit it into a square slot.
+The icon updates only when its appearance changes and uses no animation.
+
+Readings refresh every 10 seconds. The indicator hides when no earbuds are
+connected and reappears after connection. Monitoring does not reconnect earbuds, switch
+audio profiles, or power off Bluetooth when the indicator exits. Unavailable
+readings in the menu show `—`; a cached case reading has `~`, and charging has `+`. The
+indicator continues running after the EarA window closes.
+
+Autostart is opt-in. For a DEB/RPM install:
+
+```bash
+mkdir -p ~/.config/autostart
+cp /usr/share/applications/eara-indicator.desktop ~/.config/autostart/
+```
+
+For a user installation, copy `~/.local/share/applications/eara-indicator.desktop`
+instead. Remove that autostart file to disable startup. Flatpak/AppImage indicator
+packaging is not included yet; the existing GUI and CLI remain available there.
+
 ## Device support
 
 **Nothing Ear (a)** is validated end to end. **CMF Buds 2** has tested battery reporting, listening modes, EQ, and Bluetooth audio support.

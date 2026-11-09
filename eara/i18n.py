@@ -12,6 +12,8 @@ _CONFIG = Path.home() / ".config" / "eara" / "config.json"
 
 STRINGS = {
     "en": {
+        "indicator_open": "Open EarA",
+        "indicator_quit": "Quit indicator",
         "find_earbuds": "Find earbuds",
         "fit_test": "Ear-tip fit test",
         "service_bluetooth": "Bluetooth service",
@@ -178,6 +180,8 @@ STRINGS = {
         "tune_earbuds": "Tune your earbuds",
     },
     "uk": {
+        "indicator_open": "Відкрити EarA",
+        "indicator_quit": "Закрити індикатор",
         "find_earbuds": "Пошук навушників",
         "fit_test": "Перевірка посадки",
         "service_bluetooth": "Служба Bluetooth",
