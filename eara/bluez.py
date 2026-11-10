@@ -464,12 +464,10 @@ def dbus_connect(address: str) -> None:
     dev = dbus.Interface(bus.get_object("org.bluez", _device_path(address)), "org.bluez.Device1")
     props = dbus.Interface(bus.get_object("org.bluez", _device_path(address)), "org.freedesktop.DBus.Properties")
     props.Set("org.bluez.Device1", "Trusted", dbus.Boolean(True, variant_level=1), timeout=operations.timeout(5))
-    if not bool(props.Get("org.bluez.Device1", "Connected", timeout=operations.timeout(5))):
-        dev.Connect(timeout=operations.timeout(10))
-    try:
-        dev.ConnectProfile("0000110b-0000-1000-8000-00805f9b34fb", timeout=operations.timeout(8))  # A2DP
-    except Exception:
-        operations.check()
+    # Connected can mean RFCOMM only. Connect also negotiates missing audio
+    # profiles on an existing ACL link. Do not immediately issue another
+    # ConnectProfile while BlueZ is still publishing the audio transport.
+    dev.Connect(timeout=operations.timeout(10))
 
 
 def dbus_connect_profile(address: str, uuid: str) -> None:
@@ -578,16 +576,8 @@ def _trust_and_connect(address: str, timeout: float, *, scan: bool, max_rounds: 
         if scan and round_num > 0:
             scan_for_device(address, dwell=5.0)
 
-        if is_connected(address):
-            if has_audio_sink(address):
-                return
-            from eara.audio import ensure_bluez_card
-
-            ensure_bluez_card(address)
-            if has_audio_sink(address):
-                return
-            dbus_disconnect(address)
-            operations.pause(1.0)
+        if is_connected(address) and has_audio_sink(address):
+            return
 
         round_deadline = time.monotonic() + per_round
         while time.monotonic() < round_deadline:
@@ -608,13 +598,6 @@ def _trust_and_connect(address: str, timeout: float, *, scan: bool, max_rounds: 
                 while time.monotonic() < settle_deadline:
                     if has_audio_sink(address):
                         return
-                    info = device_info(address)
-                    if "ServicesResolved: yes" in info:
-                        from eara.audio import ensure_bluez_card
-
-                        ensure_bluez_card(address)
-                        if has_audio_sink(address):
-                            return
                     operations.pause(0.4)
                 if has_audio_sink(address):
                     return

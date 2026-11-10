@@ -40,6 +40,7 @@ overrides:
       - gir1.2-gtk-4.0
       - gir1.2-adw-1
       - bluez
+      - pulseaudio-utils
   rpm:
     depends:
       - python3
@@ -49,3 +50,4 @@ overrides:
       - gtk4
       - libadwaita
       - bluez
+      - pulseaudio-utils

@@ -46,17 +46,35 @@ class BluezTests(unittest.TestCase):
         self.assertTrue(value)
         device.Connect.assert_called_once()
 
-    def test_connected_device_waits_for_card_once_before_reconnect(self):
-        class StopProbe(Exception):
-            pass
-        with patch.object(bluez, 'power_on'), patch.object(bluez, '_is_paired', return_value=True), \
+    def test_connected_control_link_requests_audio_without_disconnect(self):
+        now = [0.0]
+        def pause(seconds):
+            now[0] += seconds
+        with patch.object(bluez.operations.time, 'monotonic', side_effect=lambda: now[0]), \
+             patch.object(bluez.operations, 'pause', side_effect=pause), \
+             patch.object(bluez, 'power_on'), patch.object(bluez, '_is_paired', return_value=True), \
              patch.object(bluez, '_ctl'), patch.object(bluez, 'is_connected', return_value=True), \
-             patch.object(bluez, 'has_audio_sink', return_value=False), \
-             patch('eara.audio.ensure_bluez_card', return_value=False) as wait, \
-             patch.object(bluez, 'dbus_disconnect', side_effect=StopProbe):
-            with self.assertRaises(StopProbe):
-                bluez.trust_and_connect('AA', max_rounds=1)
-        wait.assert_called_once_with('AA')
+             patch.object(bluez, 'has_audio_sink', side_effect=lambda address: now[0] >= 3), \
+             patch.object(bluez, 'dbus_connect') as connect, \
+             patch.object(bluez, 'dbus_disconnect') as disconnect:
+            bluez.trust_and_connect('AA', timeout=28, scan=False, max_rounds=1)
+        connect.assert_called_once_with('AA')
+        disconnect.assert_not_called()
+        self.assertLess(now[0], 4)
+
+    def test_dbus_connect_negotiates_profiles_on_existing_control_link(self):
+        try:
+            import dbus
+        except ImportError:
+            self.skipTest('python3-dbus unavailable')
+        device, properties = MagicMock(), MagicMock()
+        properties.Get.return_value = True
+        with patch.object(dbus, 'SystemBus'), \
+             patch.object(dbus, 'Interface', side_effect=[device, properties]), \
+             patch.object(bluez, '_device_path', return_value='/test/device'):
+            bluez.dbus_connect('AA')
+        device.Connect.assert_called_once()
+        device.ConnectProfile.assert_not_called()
 
     SDP_CHANNEL_16 = """
     <record>
