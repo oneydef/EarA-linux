@@ -47,7 +47,7 @@ Section: sound
 Priority: optional
 Architecture: all
 Maintainer: oneydef <oneydefwork@gmail.com>
-Depends: python3 (>= 3.10), python3-gi, python3-gi-cairo, python3-cairo, python3-dbus, gir1.2-gtk-4.0, gir1.2-adw-1, bluez, pulseaudio-utils | pipewire-bin
+Depends: python3 (>= 3.10), python3-gi, python3-gi-cairo, python3-cairo, python3-dbus, gir1.2-gtk-4.0, gir1.2-adw-1, bluez, pulseaudio-utils
 Description: Unofficial Linux companion for compatible True Wireless earbuds
  Controls ANC, EQ, gestures, battery and Bluetooth audio for compatible
  earbuds over a community RFCOMM protocol. Independent of the hardware vendor.
