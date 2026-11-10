@@ -1,0 +1,31 @@
+bluetooth:
+  - changed-files:
+      - any-glob-to-any-file:
+          - eara/bluez.py
+          - eara/protocol.py
+          - eara/session.py
+          - eara/platforms/**
+          - tests/test_bluez.py
+          - tests/test_protocol.py
+          - tests/test_session.py
+packaging:
+  - changed-files:
+      - any-glob-to-any-file:
+          - packaging/**
+          - scripts/build-*
+          - scripts/install-*
+          - nfpm.yaml
+          - pyproject.toml
+          - meson.build
+          - .github/workflows/ci.yml
+documentation:
+  - changed-files:
+      - any-glob-to-any-file:
+          - '**/*.md'
+          - docs/**
+device support:
+  - changed-files:
+      - any-glob-to-any-file:
+          - eara/models.py
+          - tests/test_models.py
+          - LINEUP.md
