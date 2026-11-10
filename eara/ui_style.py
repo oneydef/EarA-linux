@@ -91,6 +91,25 @@ def build_css(dot_font, ui_font, dark):
     p = PALETTES[dark]
     css = '''
 window.eara-window { background: $bg; color: $text; font-family: "$font"; }
+popover.eara-menu contents { background: $bg; color: $text; border: 1px solid $line; border-radius: 16px; }
+.eara-menu-heading { font-size: 14px; font-weight: 700; color: $text; }
+.eara-menu label { font-size: 14px; }
+.eara-menu .dim-label { font-size: 12px; color: $muted; }
+.eara-menu .eara-toggle-row { padding: 0; min-height: 44px; border: none; }
+.eara-menu button.eara-chip { padding: 8px 10px; min-height: 20px; background: $control; color: $text; border: 1px solid $line; }
+.eara-menu button.eara-chip-active { background: #d70b1b; color: white; border-color: #d70b1b; }
+.eara-menu button { margin: 0; }
+.eara-menu separator { margin: 4px 0; }
+.eara-menu button.eara-menu-action { margin: 0; padding: 10px 12px; min-height: 24px; border-radius: 10px; border: none; background: transparent; color: $text; }
+.eara-menu button.eara-menu-action:hover { background: $line; }
+.eara-about-window .eara-about-brand { font-size: 32px; font-weight: 750; }
+.eara-about-window .eara-about-version { padding: 5px 10px; background: $line; border-radius: 12px; font-size: 13px; color: $muted; }
+.eara-about-window .eara-about-body { font-size: 15px; }
+.eara-about-window .eara-about-meta { font-size: 13px; color: $muted; }
+.eara-about-window .eara-about-link, .eara-about-window .eara-about-link label { padding: 0; margin: 0; min-height: 28px; font-size: 14px; color: $text; }
+.eara-about-window .eara-about-support { border: 1px solid $line; border-radius: 14px; padding: 16px; }
+.eara-about-window button.eara-chip { min-height: 24px; padding: 10px 16px; font-size: 14px; background: $control; color: $text; border: 1px solid $line; }
+.eara-about-window button.eara-about-coffee { background: #d70b1b; color: white; border-color: #d70b1b; }
 .eara-stack { background: $bg; }
 headerbar { min-height: $header_height; padding: 0 24px; background: $header; color: $text; border-bottom: 1px solid $line; }
 headerbar separator { min-width: 1px; background: $line; margin: 18px 20px; }

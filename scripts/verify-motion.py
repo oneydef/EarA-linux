@@ -27,24 +27,14 @@ w._last={'name':'Nothing Ear (a)','bt_connected':True,'protocol':True,
          'model':{'features':{'anc':True,'custom_eq':True,'bass_enhance':True,'in_ear':True,'low_latency':True,'gestures':True}},
          'audio':{'profile':'a2dp-sink'}}
 w._paint();w.present()
-checks={};frames=[];errors=[]
+checks={};frames=[];errors=[];geometry=[]
 settings=Gtk.Settings.get_default();original=settings.get_property('gtk-enable-animations')
 settings.set_property('gtk-enable-animations',True)
 loop=GLib.MainLoop()
-def later(ms,fn):
-    def call():
-        try:fn()
-        except Exception as exc:errors.append(repr(exc))
-        return False
-    GLib.timeout_add(ms,call)
-def sample(widget,clock):
-    frames.append(clock.get_frame_time())
-    return True
-w.add_tick_callback(sample)
 def start():
     w._reset_eq()
-    w.btn_save_preset.set_state_flags(Gtk.StateFlags.ACTIVE,False)
     checks['press_geometry_before']=[w.btn_save_preset.get_width(),w.btn_save_preset.get_height()]
+    w.btn_save_preset.set_state_flags(Gtk.StateFlags.ACTIVE,False)
 def midway():
     checks['eq_interpolates'] = 0 < w.eq_bands[0].get_value() < 2
     checks['native_press_without_layout'] = checks['press_geometry_before']==[w.btn_save_preset.get_width(),w.btn_save_preset.get_height()]
@@ -116,7 +106,12 @@ def reduced():
     checks['reduced_switch_native_state']=w.lat_switch.get_active() and w.lat_switch.get_state()
     w._show_tab('tools');w._show_tab('device');w._show_tab('sound')
     checks['rapid_navigation_final_page']=w.stack.get_visible_child_name()=='sound'
-    checks['fixed_window']=(w.get_width(),w.get_height(),w.get_resizable())==(1200,720,False)
+    # GTK versions account for CSD borders/shadows differently. Verify the
+    # requested fixed size and that the allocated content stayed unchanged.
+    checks['fixed_window']=(tuple(w.get_default_size())==(1200,720) and
+                            tuple(w.get_size_request())==(1200,720) and
+                            not w.get_resizable() and
+                            [w.get_width(),w.get_height()]==geometry[-1][:2])
     checks['no_hardware_calls']=not commands
     checks['sidebar_width_unchanged']=round(w.buttons.compute_bounds(w)[1].get_width())==218
     checks['no_custom_press_animation']=not hasattr(w.btn_save_preset,'press')
@@ -124,11 +119,85 @@ def reduced():
 def finish():
     settings.set_property('gtk-enable-animations',original)
     intervals=[(b-a)/1000 for a,b in zip(frames,frames[1:]) if b>a]
-    report={'checks':checks,'errors':errors,'frame_intervals_ms':{'count':len(intervals),'median':sorted(intervals)[len(intervals)//2] if intervals else None,'max':max(intervals,default=0)},'hardware_commands':len(commands)}
+    report={'checks':checks,'errors':errors,'geometry_samples':geometry,'frame_intervals_ms':{'count':len(intervals),'median':sorted(intervals)[len(intervals)//2] if intervals else None,'max':max(intervals,default=0)},'hardware_commands':len(commands),
+            'toggle_state':{'writes':toggle_writes,'events':toggle_events,'busy':w._busy}}
     path=Path('docs/verification/motion');path.mkdir(parents=True,exist_ok=True)
     (path/'checks.json').write_text(json.dumps(report,indent=2)+'\n')
     print(json.dumps(report,indent=2))
     w.destroy();loop.quit()
-for ms,fn in [(500,lambda:w._show_tab('sound')),(700,start),(820,midway),(940,reverse),(1020,selection_mid),(1120,selection_velocity),(1600,switch_start),(1700,switch_mid),(1950,toggle_transaction),(2250,check_transaction),(2400,reduced),(2700,finish)]:later(ms,fn)
+w._show_tab('sound')
+def stable_allocation():
+    sizes=[w.get_width(),w.get_height(),w.btn_save_preset.get_width(),w.btn_save_preset.get_height()]
+    geometry.append(sizes)
+    return (w.btn_save_preset.get_mapped() and min(sizes)>0 and
+            len(geometry)>=6 and all(g==sizes for g in geometry[-6:]) and
+            not w.stack.get_transition_running())
+def group():
+    return w.anc_buttons['off'].get_parent()
+steps=[
+    ('stable_allocation',stable_allocation,start),
+    ('eq_interpolation',lambda:0<w.eq_bands[0].get_value()<2,midway),
+    ('eq_retarget',lambda:-2<w.eq_bands[0].get_value()<0,reverse),
+    ('selection_motion',lambda:bool(group().motion.tick) and bool(group().bounds) and group().bounds[0]>0,selection_mid),
+    ('selection_velocity',lambda:any(abs(s.velocity)>0 for s in group().motion.states),selection_velocity),
+    ('selection_settle',lambda:not group().motion.tick,switch_start),
+    ('switch_native',lambda:w.lat_switch.get_active(),switch_mid),
+    ('toggle_begin',lambda:not w.lat_switch.get_active(),toggle_transaction),
+    ('toggle_complete',lambda:bool(toggle_writes) and not w._busy,check_transaction),
+    ('reduced_motion',lambda:True,reduced),
+    ('finish',lambda:True,finish),
+]
+step_started=time.monotonic()
+def await_worker():
+    """Leave the frame clock idle so GTK's idle completion can be dispatched.
+
+    A permanent tick callback forces software-rendered frames even though this
+    stage tests worker acknowledgement, not animation. On slow GTK/Xvfb that
+    can starve the lower-priority idle callback which unlocks the transaction.
+    """
+    global step_started
+    name,ready,action=steps[0]
+    try:
+        if ready():
+            steps.pop(0)
+            action()
+            step_started=time.monotonic()
+            w.add_tick_callback(sample)
+            return False
+        if time.monotonic()-step_started>5:
+            raise TimeoutError('Worker condition not reached: '+name)
+    except Exception as exc:
+        errors.append(repr(exc))
+        finish()
+        return False
+    return True
+
+def sample(widget,clock):
+    global step_started
+    frames.append(clock.get_frame_time())
+    if not steps:
+        return False
+    name,ready,action=steps[0]
+    try:
+        if ready():
+            steps.pop(0)
+            action()
+            step_started=time.monotonic()
+            if steps and steps[0][0]=='toggle_complete':
+                GLib.timeout_add(16,await_worker)
+                return False
+        elif time.monotonic()-step_started>5:
+            raise TimeoutError('Frame condition not reached: '+name)
+    except Exception as exc:
+        errors.append(repr(exc))
+        finish()
+        return False
+    return bool(steps)
+def watchdog():
+    errors.append('No frame-clock progress before global watchdog')
+    finish()
+    return False
+w.add_tick_callback(sample)
+GLib.timeout_add_seconds(30,watchdog)
 loop.run()
 sys.exit(0 if all(checks.values()) and not errors else 1)

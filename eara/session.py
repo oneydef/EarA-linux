@@ -3,12 +3,22 @@
 from __future__ import annotations
 
 import socket
+import subprocess
 import threading
 import time
 from typing import Optional
+from functools import wraps
+from eara import operations
+from eara.diagnostics import timed
 
-from eara import audio, bluez
 from eara.models import MODELS_BY_BASE, Model, model_from_name, model_from_serial
+from eara.platforms import (
+    AudioBackend,
+    BluetoothTransport,
+    resolve_backends,
+)
+from eara.platforms.base import ByteChannel
+from eara.platforms.cache import AudioStateCache
 from eara.protocol import (
     ANC_MODES,
     CMD_ADVANCED_EQ_GET,
@@ -74,23 +84,58 @@ from eara.protocol import (
 )
 
 
+def _changes_audio(method):
+    @wraps(method)
+    def change(self, *args, **kwargs):
+        self._audio_cache.invalidate()
+        try:
+            return method(self, *args, **kwargs)
+        finally:
+            self._audio_cache.invalidate()
+    return change
+
+
 class Device:
-    def __init__(self, address: str = "", name: str = "") -> None:
+    def __init__(
+        self,
+        address: str = "",
+        name: str = "",
+        *,
+        transport: BluetoothTransport | None = None,
+        audio_backend: AudioBackend | None = None,
+    ) -> None:
         self.address = address.upper()
         self.name = name or "Compatible earbuds"
         self.model: Model = model_from_name(self.name)
-        self._sock: Optional[socket.socket] = None
+        transport, audio_backend = resolve_backends(transport, audio_backend)
+        self.transport = transport
+        self.audio_backend = audio_backend
+        self._sock: Optional[ByteChannel] = None
         self._parser = FrameParser()
         self._seq = 1
         self._battery_cache: dict[str, dict[str, object]] = {}
         self._lock = threading.RLock()
+        self._audio_cache = AudioStateCache()
 
     @classmethod
-    def discover(cls, preferred: str = "") -> "Device":
-        device = bluez.find_nothing_device(preferred)
+    @timed("discovery")
+    def discover(
+        cls,
+        preferred: str = "",
+        *,
+        transport: BluetoothTransport | None = None,
+        audio_backend: AudioBackend | None = None,
+    ) -> "Device":
+        transport, audio_backend = resolve_backends(transport, audio_backend)
+        device = transport.discover(preferred)
         if not device:
             raise LookupError("No paired compatible audio device found")
-        return cls(device["address"], device["name"])
+        return cls(
+            str(device["address"]),
+            str(device["name"]),
+            transport=transport,
+            audio_backend=audio_backend,
+        )
 
     @staticmethod
     def _resolve_model(serial: str, named: Model) -> Model:
@@ -106,16 +151,23 @@ class Device:
 
     @property
     def connected(self) -> bool:
-        return bool(self.address) and bluez.is_connected(self.address)
+        return bool(self.address) and self.transport.is_connected(self.address)
 
+    @timed("connect_audio")
+    @operations.bounded(90)
+    @_changes_audio
     def connect_audio(self, with_mic: bool = False, attempts: int = 3) -> dict[str, object]:
+        if attempts < 1:
+            raise ValueError("attempts must be at least 1")
         if not self.address:
             raise RuntimeError("No Bluetooth address")
-        fn = audio.ensure_call_audio if with_mic else audio.ensure_music_audio
+        fn = self.audio_backend.ensure_calls if with_mic else self.audio_backend.ensure_music
+        if not getattr(self.audio_backend, "supports_routing", True):
+            return {"ok": False, "error": "Host audio routing is not supported by this adapter"}
         last: dict[str, object] = {"ok": False, "error": "Connect failed"}
 
         # Already linked with A2DP — just (re)apply the audio profile.
-        if self.connected and bluez.has_audio_sink(self.address):
+        if self.connected and self.transport.has_audio_sink(self.address):
             result = fn(self.address)
             if result.get("ok"):
                 result["attempt"] = 0
@@ -124,22 +176,24 @@ class Device:
         for attempt in range(attempts):
             self.close_control()
             try:
-                bluez.trust_and_connect(
+                self.transport.connect(
                     self.address,
-                    timeout=28 if attempt == 0 else 36,
+                    timeout=operations.timeout(28 if attempt == 0 else 36),
                     scan=attempt > 0 or not self.connected,
                     max_rounds=2 if attempt == 0 else 3,
                 )
             except TimeoutError as exc:
+                operations.check()
                 last = {"ok": False, "error": str(exc), "attempt": attempt + 1}
-                bluez.dbus_disconnect(self.address)
-                audio.reload_bluetooth_modules(force=True)
-                time.sleep(1.0 + attempt)
+                self.transport.abort_connection(self.address)
+                self.audio_backend.reload()
+                if attempt + 1 < attempts:
+                    operations.pause(1.0 + attempt)
                 continue
 
             # trust_and_connect only returns with the A2DP sink already up;
             # a short beat before the profile check is enough.
-            time.sleep(0.1)
+            operations.pause(0.1)
             result = fn(self.address)
             if result.get("ok"):
                 result["attempt"] = attempt + 1
@@ -147,53 +201,84 @@ class Device:
 
             last = dict(result)
             last["attempt"] = attempt + 1
-            audio.reload_bluetooth_modules(force=True)
-            bluez.dbus_disconnect(self.address)
-            time.sleep(1.0 + attempt * 0.5)
+            self.audio_backend.reload()
+            self.transport.abort_connection(self.address)
+            if attempt + 1 < attempts:
+                operations.pause(1.0 + attempt * 0.5)
 
         err = str(last.get("error") or "Connect failed")
         return {
             "ok": False,
             "error": (
                 f"{err} (tried {attempts} times). "
-                "Take both buds out of the case, disable phone Bluetooth "
-                "(dual connection), then Connect or Reset again."
+                "Check the earbuds and run diagnostics before retrying. "
+                "If they are connected to another device, disconnect them there first."
             ),
             "attempt": attempts,
         }
 
+    @timed("host_audio_snapshot")
+    def host_audio_state(self, *, refresh: bool = False) -> dict[str, object]:
+        """Return host routing information through the platform audio backend."""
+        if not self.address:
+            return {"sink": None, "source": None, "profile": "", "codec": "", "codecs": []}
+        try:
+            operations.check()
+            return self._audio_cache.get(self.audio_backend, self.address, refresh=refresh)
+        except (RuntimeError, OSError, subprocess.SubprocessError) as exc:
+            operations.check()
+            # Host routing and earbud control are independently available.
+            return {"sink": None, "source": None, "profile": "", "codec": "",
+                    "codecs": [], "available": False, "error": str(exc)}
+
+    @_changes_audio
+    def route_audio(self, mode: str = "music") -> dict[str, object]:
+        """Select a platform audio route without changing the wire protocol."""
+        if mode == "music":
+            return self.audio_backend.ensure_music(self.address)
+        if mode == "calls":
+            return self.audio_backend.ensure_calls(self.address)
+        if mode == "hfp":
+            return self.audio_backend.ensure_hfp(self.address)
+        raise ValueError("mode must be music|calls|hfp")
+
+    @_changes_audio
     def reset_connection(self) -> dict[str, object]:
         if not self.address:
             raise RuntimeError("No Bluetooth address")
         self.close_control()
-        bluez.reset_link(self.address)
+        self.transport.reset(self.address)
         time.sleep(1.0)
-        result = audio.ensure_music_audio(self.address)
+        result = self.audio_backend.ensure_music(self.address)
         if not result.get("ok"):
-            audio.reload_bluetooth_modules(force=True)
+            self.audio_backend.reload()
             time.sleep(1.0)
-            result = audio.ensure_music_audio(self.address)
+            result = self.audio_backend.ensure_music(self.address)
         return result
 
+    @_changes_audio
     def disconnect_audio(self) -> None:
         self.close_control()
         if self.address:
-            bluez.disconnect(self.address)
+            self.transport.disconnect(self.address)
 
+    @_changes_audio
     def shutdown(self, *, power_off: bool = True) -> None:
         """Release control; optionally disconnect earbuds and power off Bluetooth."""
         self.close_control()
         if power_off and self.address:
             try:
-                bluez.disconnect(self.address)
+                self.transport.disconnect(self.address)
             except Exception:
                 pass
         if power_off:
             try:
-                bluez.power_off()
+                self.transport.power_off()
             except Exception:
                 pass
 
+    @timed("open_control")
+    @operations.bounded(45)
     def open_control(self, *, probe_device: bool = False) -> None:
         with self._lock:
             if self._sock is not None:
@@ -203,17 +288,18 @@ class Device:
             if not self.connected:
                 for attempt in range(4):
                     try:
-                        bluez.trust_and_connect(self.address, timeout=35, scan=True, max_rounds=3)
+                        self.transport.connect(self.address, timeout=operations.timeout(35), scan=True, max_rounds=3)
                         break
                     except TimeoutError:
+                        operations.check()
                         if attempt >= 3:
                             raise
-                        time.sleep(1.5 + attempt)
-                time.sleep(0.5)
+                        operations.pause(1.5 + attempt)
+                operations.pause(0.5)
             try:
-                self._sock = bluez.open_rfcomm(self.address)
+                self._sock = self.transport.open_channel(self.address)
             except OSError as exc:
-                raise RuntimeError(bluez.permission_hint(exc)) from exc
+                raise RuntimeError(self.transport.permission_hint(exc)) from exc
             self._parser = FrameParser()
             if probe_device:
                 self._request(CMD_DEVICE_INFO, DIR_GET)
@@ -235,7 +321,9 @@ class Device:
         self._parser.clear()
 
     def _send(self, command: int, direction: int, payload: bytes = b"", seq: Optional[int] = None) -> int:
+        operations.check()
         assert self._sock is not None
+        self._sock.settimeout(operations.timeout(1.2))
         wire_seq = self._next_seq() if seq is None else seq
         self._sock.sendall(build_frame(command, direction, payload, wire_seq))
         return wire_seq
@@ -245,6 +333,7 @@ class Device:
         deadline = time.monotonic() + timeout
         wanted = command & 0xFF
         while time.monotonic() < deadline:
+            operations.check()
             for frame in self._parser.frames():
                 if frame.command != wanted or frame.direction not in (DIR_RESPONSE, DIR_ACK):
                     continue
@@ -252,7 +341,7 @@ class Device:
                     continue
                 return frame.payload
             remaining = max(0.05, deadline - time.monotonic())
-            self._sock.settimeout(min(0.25, remaining))
+            self._sock.settimeout(operations.timeout(min(0.25, remaining)))
             try:
                 chunk = self._sock.recv(512)
             except socket.timeout:
@@ -268,12 +357,13 @@ class Device:
         assert self._sock is not None
         deadline = time.monotonic() + timeout
         while time.monotonic() < deadline:
+            operations.check()
             for frame in self._parser.frames():
                 picked = match(frame)
                 if picked is not None:
                     return picked
             remaining = max(0.05, deadline - time.monotonic())
-            self._sock.settimeout(min(0.25, remaining))
+            self._sock.settimeout(operations.timeout(min(0.25, remaining)))
             try:
                 chunk = self._sock.recv(512)
             except socket.timeout:
@@ -285,6 +375,7 @@ class Device:
             self._parser.feed(chunk)
         return None
 
+    @timed("protocol_request", response=True)
     def _request(
         self,
         command: int,
@@ -325,7 +416,8 @@ class Device:
 
         return _Guard(self, probe_device)
 
-    def status(self) -> dict[str, object]:
+    @timed("status")
+    def status(self, *, refresh_audio: bool = False) -> dict[str, object]:
         result: dict[str, object] = {
             "name": self.name,
             "address": self.address,
@@ -345,13 +437,7 @@ class Device:
             "gestures": [],
             "listening": None,
             "personalized_anc": None,
-            "audio": {
-                "sink": audio.find_sink(self.address) if self.address else None,
-                "source": audio.find_source(self.address) if self.address else None,
-                "profile": audio.active_profile(self.address) if self.address else "",
-                "codec": audio.active_codec(self.address) if self.address else "",
-                "codecs": audio.list_a2dp_codecs(self.address) if self.address else [],
-            },
+            "audio": self.host_audio_state(refresh=refresh_audio),
             "graphic_eq": None,
             "device_codec": None,
             "error": "",
@@ -471,9 +557,9 @@ class Device:
         with self._lock:
             if self._sock is None:
                 try:
-                    self._sock = bluez.open_rfcomm(self.address)
+                    self._sock = self.transport.open_channel(self.address)
                 except OSError as exc:
-                    raise RuntimeError(bluez.permission_hint(exc)) from exc
+                    raise RuntimeError(self.transport.permission_hint(exc)) from exc
                 self._parser = FrameParser()
             try:
                 payload = self._request(CMD_BATTERY, timeout=1.0, require=True)
@@ -536,10 +622,13 @@ class Device:
             )
             time.sleep(0.2)
 
+    @_changes_audio
     def set_codec(self, name: str) -> dict[str, object]:
         from eara.protocol import CODEC_FROM_NAME
 
-        host = audio.set_host_codec(self.address, name)
+        host = self.audio_backend.set_codec(self.address, name)
+        if not host.get("ok"):
+            return host
         code = CODEC_FROM_NAME.get(name.lower().replace("-", "_"))
         if code is not None:
             try:

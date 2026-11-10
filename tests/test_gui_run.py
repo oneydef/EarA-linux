@@ -41,7 +41,7 @@ class BackgroundActionTests(unittest.TestCase):
 
         with (
             patch.object(gui.threading, "Thread", ImmediateThread),
-            patch.object(gui.GLib, "idle_add", side_effect=lambda callback: callback()),
+            patch.object(gui.GLib, "idle_add", side_effect=lambda callback, **kw: callback()),
             patch.object(gui.traceback, "print_exc") as print_exc,
         ):
             gui.EarAWindow._run(window, fail, soft_timeout=0)
@@ -73,7 +73,7 @@ class BackgroundActionTests(unittest.TestCase):
                         raise RuntimeError("write failed")
                 with (
                     patch.object(gui.threading, "Thread", ImmediateThread),
-                    patch.object(gui.GLib, "idle_add", side_effect=lambda cb: cb()),
+                    patch.object(gui.GLib, "idle_add", side_effect=lambda cb, **kw: cb()),
                 ):
                     gui.EarAWindow._run(window, action, soft_timeout=0,
                                        local_widgets=[switch], repaint=repaint)

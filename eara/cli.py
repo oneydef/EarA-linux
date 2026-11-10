@@ -6,7 +6,7 @@ import argparse
 import json
 import sys
 
-from eara import __version__, audio
+from eara import __version__
 from eara.protocol import (
     ANC_MODES,
     CMF_BUDS_2_EQ_PRESETS,
@@ -119,7 +119,8 @@ def cmd_graphic_eq(args: argparse.Namespace) -> int:
 def cmd_codec(args: argparse.Namespace) -> int:
     ear = _device(args)
     if args.name == "list":
-        print(json.dumps({"host": audio.list_a2dp_codecs(ear.address), "active": audio.active_codec(ear.address)}, indent=2))
+        state = ear.host_audio_state()
+        print(json.dumps({"host": state["codecs"], "active": state["codec"]}, indent=2))
         return 0
     result = ear.set_codec(args.name)
     print(json.dumps(result, ensure_ascii=False, indent=2) if args.json else result)
@@ -188,46 +189,41 @@ def cmd_fit(args: argparse.Namespace) -> int:
 def cmd_audio(args: argparse.Namespace) -> int:
     ear = _device(args)
     if not ear.connected:
-        ear.connect_audio(with_mic=args.mode == "headset")
-    result = (
-        audio.ensure_music_audio(ear.address)
-        if args.mode in ("music", "headset", "mic")
-        else audio.ensure_hfp_audio(ear.address)
-    )
+        result = ear.connect_audio(with_mic=args.mode == "headset")
+        if not result.get("ok"):
+            print(result)
+            return 1
+    result = ear.route_audio("hfp" if args.mode == "hfp" else "music")
     print(result)
     return 0 if result.get("ok") else 1
 
 
-def cmd_doctor(args: argparse.Namespace) -> int:
-    from eara import bluez
+def cmd_doctor(args: argparse.Namespace, *, services=None) -> int:
+    from eara.platforms import default_services
+    from eara.health import inspect_services
 
-    show = bluez._ctl("show")
-    powered = "Powered: yes" in show
+    provider = default_services() if services is None else services
+    health = inspect_services(provider)
+    powered = health['bluetooth'] is True
     print(f"Adapter powered: {'yes' if powered else 'NO'}")
+    print(f"Audio service: {'ready' if health['audio'] is True else 'unavailable'}")
     try:
         ear = _device(args)
         print(f"Device: {ear.name} ({ear.address})")
         print(f"Connected: {'yes' if ear.connected else 'no'}")
-        info = bluez.device_info(ear.address)
-        for key in ("Trusted", "ServicesResolved", "Paired"):
-            for line in info.splitlines():
-                if key in line:
-                    print(line.strip())
+        for line in provider.device_details(ear.address):
+            print(line)
     except LookupError as exc:
         print(exc)
-    import subprocess
-
-    cards = subprocess.check_output(["pactl", "list", "short", "cards"], text=True)
-    sinks = subprocess.check_output(["pactl", "list", "short", "sinks"], text=True)
-    sources = subprocess.check_output(["pactl", "list", "short", "sources"], text=True)
-    print("Pulse cards:\n" + (cards.strip() or "(empty)"))
-    print("Pulse sinks:\n" + (sinks.strip() or "(empty)"))
-    print("Pulse sources:\n" + (sources.strip() or "(empty)"))
+    audio_ok = health['audio'] is True
+    for section in provider.audio_diagnostics():
+        print(f"{section.label}:\n{section.text}")
+        audio_ok = audio_ok and section.ok
     if not powered:
         print()
-        print(bluez.recover_hint())
+        print(provider.recovery_hint())
         return 1
-    return 0
+    return 0 if audio_ok else 1
 
 
 def build_parser() -> argparse.ArgumentParser:

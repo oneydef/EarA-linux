@@ -208,6 +208,11 @@ class FrameParser:
             _sof, ctrl, command, length = struct.unpack_from("<BHHH", self._buf)
             crc_size = 2 if ctrl & 0x20 else 0
             total = 8 + length + crc_size
+            if total > MAX_FRAME_BUFFER:
+                # This frame can never fit the bounded receive buffer. Skip
+                # the false start rather than waiting forever for its body.
+                del self._buf[0]
+                continue
             if len(self._buf) < total:
                 return
             raw = bytes(self._buf[:total])

@@ -7,6 +7,57 @@ from eara import bluez
 
 
 class BluezTests(unittest.TestCase):
+    def test_power_failure_preserves_error_without_prescribing_service_restarts(self):
+        with patch.object(bluez, '_ctl', side_effect=[
+            'Powered: no', 'Failed to set power on: org.bluez.Error.Busy', 'Powered: no'
+        ]):
+            with self.assertRaisesRegex(RuntimeError, 'org.bluez.Error.Busy') as error:
+                bluez.power_on()
+        self.assertNotIn('systemctl restart', str(error.exception))
+        self.assertIn('eara doctor', str(error.exception))
+
+    def test_connect_timeout_stops_fallback_after_dbus_failure(self):
+        now = [0.0]
+        def fail():
+            now[0] = 3.0
+            raise OSError('connect failed')
+        with patch.object(bluez.operations.time, 'monotonic', side_effect=lambda: now[0]), \
+             patch.object(bluez, 'power_on'), patch.object(bluez, '_is_paired', return_value=True), \
+             patch.object(bluez, 'is_connected', return_value=False), \
+             patch.object(bluez, '_ctl') as ctl, \
+             patch.object(bluez, 'dbus_connect', side_effect=lambda address: fail()):
+            with self.assertRaises(TimeoutError):
+                bluez.trust_and_connect('AA', timeout=2, scan=False, max_rounds=1)
+        ctl.assert_called_once_with('trust', 'AA')
+
+    def test_trusted_property_is_sent_as_dbus_variant(self):
+        try:
+            import dbus
+        except ImportError:
+            self.skipTest('python3-dbus unavailable')
+        device, properties = MagicMock(), MagicMock()
+        properties.Get.return_value = False
+        with patch.object(dbus, 'SystemBus'), \
+             patch.object(dbus, 'Interface', side_effect=[device, properties]), \
+             patch.object(bluez, '_device_path', return_value='/test/device'):
+            bluez.dbus_connect('AA')
+        value = properties.Set.call_args.args[2]
+        self.assertEqual(value.variant_level, 1)
+        self.assertTrue(value)
+        device.Connect.assert_called_once()
+
+    def test_connected_device_waits_for_card_once_before_reconnect(self):
+        class StopProbe(Exception):
+            pass
+        with patch.object(bluez, 'power_on'), patch.object(bluez, '_is_paired', return_value=True), \
+             patch.object(bluez, '_ctl'), patch.object(bluez, 'is_connected', return_value=True), \
+             patch.object(bluez, 'has_audio_sink', return_value=False), \
+             patch('eara.audio.ensure_bluez_card', return_value=False) as wait, \
+             patch.object(bluez, 'dbus_disconnect', side_effect=StopProbe):
+            with self.assertRaises(StopProbe):
+                bluez.trust_and_connect('AA', max_rounds=1)
+        wait.assert_called_once_with('AA')
+
     SDP_CHANNEL_16 = """
     <record>
       <attribute id="0x0001"><sequence>

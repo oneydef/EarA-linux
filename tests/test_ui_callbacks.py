@@ -1,7 +1,7 @@
 """UI synchronization must never send commands while no device is selected."""
 import unittest
 from types import SimpleNamespace
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 try:
     from eara.gui import EarAWindow
@@ -11,6 +11,23 @@ except (ImportError, ValueError):
 
 @unittest.skipIf(EarAWindow is None, 'GTK unavailable')
 class CallbackTests(unittest.TestCase):
+    def test_connect_preserves_existing_controls_without_host_audio(self):
+        device = MagicMock()
+        device.connected = True
+        status = {'bt_connected': True, 'protocol': True, 'audio': {'sink': None},
+                  'battery': {'left': {'level': 40}}}
+        device.status.return_value = status
+        window = SimpleNamespace(device=device, _require=lambda: device, _last={},
+                                 _render_found_options=MagicMock(), _show=MagicMock())
+        window._services = MagicMock()
+        with patch.object(EarAWindow, '_post', side_effect=lambda w, cb: cb()), \
+             patch('eara.gui.t', side_effect=lambda key: key):
+            EarAWindow._do_connect(window)
+        device.connect_audio.assert_not_called()
+        window._services.is_paired.assert_not_called()
+        self.assertEqual(window._last, status)
+        window._show.assert_called_with('connect_controls_only')
+
     def test_populating_listening_without_device_does_not_start_command(self):
         window = SimpleNamespace(_busy=False, _ignore_listening=False, device=None, _run=MagicMock())
         EarAWindow._on_listening_changed(window)
