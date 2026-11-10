@@ -18,6 +18,24 @@ jobs:
           sudo apt-get install -y python3-gi python3-gi-cairo python3-cairo python3-dbus gir1.2-gtk-4.0 gir1.2-adw-1 xvfb
       - name: Tests
         run: xvfb-run -a python3 -m unittest discover -s tests -v
+      - name: GTK controls (no hardware commands)
+        env:
+          GSETTINGS_BACKEND: memory
+          PYTHONDONTWRITEBYTECODE: "1"
+        run: xvfb-run -a python3 scripts/verify-ui-controls.py
+      - name: GTK motion (frame-clock conditions, no hardware commands)
+        env:
+          GSETTINGS_BACKEND: memory
+          PYTHONDONTWRITEBYTECODE: "1"
+        run: xvfb-run -a python3 scripts/verify-motion.py
+      - name: Preserve GTK verification reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gtk-verification
+          path: |
+            docs/verification/motion/checks.json
+            docs/verification/audit/control-checks.json
       - name: i18n key parity (en / uk)
         run: |
           PYTHONPATH=. python3 - <<'PY'
@@ -66,8 +84,7 @@ jobs:
         run: |
           curl -fsSL -o /tmp/nfpm.deb https://github.com/goreleaser/nfpm/releases/download/v2.41.3/nfpm_2.41.3_amd64.deb
           sudo dpkg -i /tmp/nfpm.deb
-          VER=$(PYTHONPATH=. python3 -c 'from eara import __version__; print(__version__)')
-          nfpm pkg --packager rpm --target "dist/eara-${VER}-1.noarch.rpm"
+          python3 scripts/build-rpm.py
       - uses: actions/upload-artifact@v4
         with:
           name: linux-packages

@@ -8,11 +8,15 @@ import unittest
 
 
 class FlatpakBuildTests(unittest.TestCase):
-    def test_manifest_uses_upstream_meson_without_network_access(self):
+    def test_manifest_exposes_host_bluetooth_without_unrestricted_bus_or_files(self):
         repo = Path(__file__).resolve().parents[1]
         manifest = (repo / 'flatpak/io.github.oneydef.eara.yml').read_text()
         self.assertIn('buildsystem: meson', manifest)
-        self.assertNotIn('--share=network', manifest)
+        # AF_BLUETOOTH is unavailable in a separate network namespace.
+        for permission in ('--share=network', '--allow=bluetooth', '--system-talk-name=org.bluez'):
+            self.assertIn(permission, manifest)
+        for permission in ('--socket=system-bus', '--filesystem=host', '--filesystem=home'):
+            self.assertNotIn(permission, manifest)
 
     def test_snapshot_and_manifest_runtime_with_optional_install(self):
         repo = Path(__file__).resolve().parents[1]

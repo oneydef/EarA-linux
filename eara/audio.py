@@ -9,6 +9,9 @@ from pathlib import Path
 from typing import Optional
 
 from eara import bluez
+from eara import operations
+from eara.diagnostics import timed
+from eara.platforms.base import AudioResult
 
 
 def _pactl(*args: str, timeout: float = 6) -> str:
@@ -18,10 +21,11 @@ def _pactl(*args: str, timeout: float = 6) -> str:
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
-            timeout=timeout,
+            timeout=operations.timeout(timeout),
             check=False,
         )
     except (OSError, subprocess.SubprocessError):
+        operations.check()
         return ""
     return result.stdout if result.returncode == 0 else ""
 
@@ -57,10 +61,11 @@ def wait_for_card(address: str, timeout: float = 28) -> bool:
         if not reloaded and time.monotonic() + timeout - deadline > 4:
             reload_bluetooth_modules(force=True)
             reloaded = True
-        time.sleep(0.4)
+        operations.pause(0.4)
     return False
 
 
+@timed("linux.audio.set_profile")
 def set_profile(address: str, profile: str) -> bool:
     """profile examples: a2dp_sink, headset_head_unit, off"""
     out = subprocess.run(
@@ -68,7 +73,7 @@ def set_profile(address: str, profile: str) -> bool:
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True,
-        timeout=6,
+        timeout=operations.timeout(6),
         check=False,
     )
     return out.returncode == 0
@@ -88,7 +93,7 @@ def wait_for_sink(address: str, timeout: float = 18) -> Optional[str]:
         sink = find_sink(address)
         if sink:
             return sink
-        time.sleep(0.35)
+        operations.pause(0.35)
     return None
 
 
@@ -112,7 +117,7 @@ def wait_for_source(address: str, timeout: float = 12) -> Optional[str]:
         source = find_source(address)
         if source:
             return source
-        time.sleep(0.35)
+        operations.pause(0.35)
     return None
 
 
@@ -122,7 +127,7 @@ def set_default_source(source: str) -> bool:
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
         check=False,
-        timeout=6,
+        timeout=operations.timeout(6),
     ).returncode == 0
 
 
@@ -135,7 +140,7 @@ def move_record_streams(source: str) -> None:
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
                 check=False,
-                timeout=6,
+                timeout=operations.timeout(6),
             )
 
 
@@ -145,7 +150,7 @@ def set_default_sink(sink: str) -> bool:
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
         check=False,
-        timeout=6,
+        timeout=operations.timeout(6),
     ).returncode == 0
 
 
@@ -165,7 +170,7 @@ def move_streams_to_default() -> None:
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
                 check=False,
-                timeout=6,
+                timeout=operations.timeout(6),
             )
 
 
@@ -189,9 +194,8 @@ def ensure_bluez_card(address: str) -> bool:
     return wait_for_card(address, timeout=14)
 
 
-def ensure_music_audio(address: str) -> dict[str, object]:
+def ensure_music_audio(address: str) -> AudioResult:
     """Connect A2DP and make it the default output."""
-    keep_a2dp_in_calls()
     if not ensure_bluez_card(address):
         return {
             "ok": False,
@@ -265,7 +269,7 @@ def active_codec(address: str) -> str:
     return ""
 
 
-def set_host_codec(address: str, wanted: str) -> dict[str, object]:
+def set_host_codec(address: str, wanted: str) -> AudioResult:
     wanted_l = wanted.lower().replace("-", "_")
     options = list_a2dp_codecs(address)
     selected = next((o for o in options if o["key"] == wanted_l or wanted_l in o["profile"].lower()), None)
@@ -305,14 +309,14 @@ def keep_a2dp_in_calls() -> None:
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
             check=False,
-            timeout=6,
+            timeout=operations.timeout(6),
         )
     subprocess.run(
         ["pactl", "load-module", "module-bluetooth-policy", "auto_switch=0"],
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
         check=False,
-        timeout=6,
+        timeout=operations.timeout(6),
     )
     _write_pulse_override()
 
@@ -340,9 +344,8 @@ def _write_pulse_override() -> None:
     path.write_text(body, encoding="utf-8")
 
 
-def ensure_call_audio(address: str) -> dict[str, object]:
+def ensure_call_audio(address: str) -> AudioResult:
     """Discord/calls use the same A2DP path as music (not HFP/mSBC)."""
-    keep_a2dp_in_calls()
     result = ensure_music_audio(address)
     if result.get("ok"):
         result["source"] = find_source(address)
@@ -354,31 +357,49 @@ def ensure_call_audio(address: str) -> dict[str, object]:
     return result
 
 
-def ensure_hfp_audio(address: str) -> dict[str, object]:
+@timed("linux.audio.hfp")
+@operations.bounded(90)
+def ensure_hfp_audio(address: str) -> AudioResult:
     """Optional: HFP/mSBC so the earbud microphone appears (tinny audio)."""
     if not ensure_bluez_card(address):
         return {"ok": False, "error": "PulseAudio still has no Bluetooth card"}
     try:
         bluez.dbus_connect_profile(address, "0000111e-0000-1000-8000-00805f9b34fb")
     except Exception:
-        pass
+        operations.check()
     last_err = "Headset profile is not available"
-    for profile in ("handsfree_head_unit", "headset_head_unit"):
-        if not set_profile(address, profile):
-            continue
-        sink = wait_for_sink(address, timeout=8)
-        source = wait_for_source(address, timeout=10)
-        if sink:
-            set_default_sink(sink)
-            move_streams_to_default()
-        if source:
-            set_default_source(source)
-            move_record_streams(source)
-            return {
-                "ok": True,
-                "sink": sink,
-                "source": source,
-                "profile": profile,
-            }
-        last_err = f"Switched to {profile} but no microphone source appeared."
+    # PipeWire names use hyphens; retain PulseAudio's legacy spellings.
+    # Try wideband mSBC before the server's default headset profile.
+    # A newly connected card can appear before its HFP transport is ready.
+    # Retry only complete rejection; never repeat a route already selected.
+    for attempt in range(3):
+        selected = False
+        for profile in ("headset-head-unit-msbc", "headset-head-unit", "handsfree-head-unit",
+                        "handsfree_head_unit", "headset_head_unit"):
+            operations.check()
+            if not set_profile(address, profile):
+                continue
+            selected = True
+            sink = wait_for_sink(address, timeout=8)
+            source = wait_for_source(address, timeout=10)
+            if source:
+                if not set_default_source(source):
+                    return {"ok": False, "error": "Could not select the earbud microphone",
+                            "profile": profile}
+                if sink:
+                    if not set_default_sink(sink):
+                        return {"ok": False, "error": "Could not select the earbud audio output",
+                                "profile": profile}
+                    move_streams_to_default()
+                move_record_streams(source)
+                return {
+                    "ok": True,
+                    "sink": sink,
+                    "source": source,
+                    "profile": profile,
+                }
+            last_err = f"Switched to {profile} but no microphone source appeared."
+        if selected or attempt == 2:
+            break
+        operations.pause(0.5 * (attempt + 1))
     return {"ok": False, "error": last_err}

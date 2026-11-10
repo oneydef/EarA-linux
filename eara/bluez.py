@@ -1,6 +1,7 @@
 """BlueZ helpers: pair/connect A2DP and open the Nothing control channel."""
 
 from __future__ import annotations
+from eara import operations
 
 import errno
 import os
@@ -56,10 +57,11 @@ def discover_rfcomm_channel(address: str) -> int:
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
-            timeout=8,
+            timeout=operations.timeout(8),
             check=False,
         )
     except (OSError, subprocess.SubprocessError):
+        operations.check()
         return RFCOMM_CHANNEL
     channel = _rfcomm_channel_from_sdp(result.stdout or "")
     if channel is not None:
@@ -76,10 +78,11 @@ def _ctl(*args: str, timeout: float = 8) -> str:
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
-            timeout=timeout,
+            timeout=operations.timeout(timeout),
             check=False,
         )
     except (OSError, subprocess.SubprocessError):
+        operations.check()
         return ""
     return (result.stdout or "") + (result.stderr or "")
 
@@ -137,7 +140,7 @@ def _dbus_objects() -> Optional[dict]:
         import dbus
         bus = dbus.SystemBus()
         manager = dbus.Interface(bus.get_object("org.bluez", "/"), "org.freedesktop.DBus.ObjectManager")
-        return dict(manager.GetManagedObjects(timeout=5))
+        return dict(manager.GetManagedObjects(timeout=operations.timeout(5)))
     except Exception:
         return None
 
@@ -159,7 +162,7 @@ def start_discovery() -> None:
     bus = dbus.SystemBus()
     adapter = dbus.Interface(bus.get_object("org.bluez", path), "org.bluez.Adapter1")
     try:
-        adapter.StartDiscovery()
+        adapter.StartDiscovery(timeout=operations.timeout(5))
     except dbus.exceptions.DBusException as exc:
         # Already discovering is fine; anything else surfaces to the caller.
         name = exc.get_dbus_name()
@@ -175,7 +178,7 @@ def stop_discovery() -> None:
     try:
         bus = dbus.SystemBus()
         adapter = dbus.Interface(bus.get_object("org.bluez", path), "org.bluez.Adapter1")
-        adapter.StopDiscovery()
+        adapter.StopDiscovery(timeout=5)
     except Exception:
         pass
 
@@ -263,9 +266,10 @@ def scan_nothing_devices(seconds: float = 9.0, progress=None) -> list[dict[str, 
                     progress(visible)
                 except Exception:
                     pass
-            time.sleep(0.7)
+            operations.pause(0.7)
     finally:
-        stop_discovery()
+        with operations.cleanup():
+            stop_discovery()
     by_name: dict[str, dict[str, object]] = {}
     for cand in known.values():
         best = by_name.get(cand["name"])
@@ -287,6 +291,7 @@ class _AgentSession:
         self.proc: Optional[subprocess.Popen] = None
 
     def __enter__(self) -> "_AgentSession":
+        operations.check()
         try:
             self.proc = subprocess.Popen(
                 ["bluetoothctl"],
@@ -300,10 +305,13 @@ class _AgentSession:
             self.proc.stdin.write("agent NoInputNoOutput\n")
             self.proc.stdin.write("default-agent\n")
             self.proc.stdin.flush()
-            time.sleep(0.6)
+            operations.pause(0.6)
         except (OSError, AssertionError):
             self.close()
             self.proc = None
+        except BaseException:
+            self.close()
+            raise
         return self
 
     def close(self) -> None:
@@ -340,7 +348,7 @@ def pair_device(address: str, timeout: float = 25.0) -> None:
         return
     try:
         dbus_disconnect(address)  # a stale unpaired ACL blocks Pair()
-        time.sleep(1.0)
+        operations.pause(1.0)
     except Exception:
         pass
     error = ""
@@ -348,8 +356,9 @@ def pair_device(address: str, timeout: float = 25.0) -> None:
         try:
             bus = dbus.SystemBus()
             dev = bus.get_object("org.bluez", f"/org/bluez/hci0/dev_{address.upper().replace(':', '_')}")
-            dev.Pair(dbus_interface="org.bluez.Device1", timeout=timeout)
+            dev.Pair(dbus_interface="org.bluez.Device1", timeout=operations.timeout(timeout))
         except Exception as exc:
+            operations.check()
             error = str(exc)
             out = _ctl("pair", address, timeout=timeout)
             if out.strip():
@@ -361,19 +370,19 @@ def pair_device(address: str, timeout: float = 25.0) -> None:
                     bus = dbus.SystemBus()
                     dev = bus.get_object("org.bluez", f"/org/bluez/hci0/dev_{address.upper().replace(':', '_')}")
                     dbus.Interface(dev, "org.freedesktop.DBus.Properties").Set(
-                        "org.bluez.Device1", "Trusted", dbus.Boolean(True))
+                        "org.bluez.Device1", "Trusted", dbus.Boolean(True, variant_level=1), timeout=operations.timeout(5))
                 except Exception:
                     _ctl("trust", address)
                 # Hold check: buds can accept Pair() and then drop it seconds
                 # later when they snap back to the phone.
-                time.sleep(2.5)
+                operations.pause(2.5)
                 if is_paired_dbus(address):
                     return
                 raise RuntimeError(
                     f"{address} accepted pairing and then dropped it — the earbuds went back to your phone."
                     " Keep them IN THE CASE with the lid open and turn off the phone's Bluetooth for a minute."
                 )
-            time.sleep(0.5)
+            operations.pause(0.5)
     raise RuntimeError(
         f"Pairing {address} did not complete"
         + (f" ({error})" if error else "")
@@ -438,11 +447,11 @@ def _device_path(address: str) -> str:
             bus.get_object("org.bluez", "/"),
             "org.freedesktop.DBus.ObjectManager",
         )
-        for path, ifaces in manager.GetManagedObjects(timeout=5).items():
+        for path, ifaces in manager.GetManagedObjects(timeout=operations.timeout(5)).items():
             if str(path).endswith(mac) and "org.bluez.Device1" in ifaces:
                 return str(path)
     except Exception:
-        pass
+        operations.check()
     return "/org/bluez/hci0/dev_" + address.replace(":", "_")
 
 
@@ -454,13 +463,11 @@ def dbus_connect(address: str) -> None:
     bus = dbus.SystemBus()
     dev = dbus.Interface(bus.get_object("org.bluez", _device_path(address)), "org.bluez.Device1")
     props = dbus.Interface(bus.get_object("org.bluez", _device_path(address)), "org.freedesktop.DBus.Properties")
-    props.Set("org.bluez.Device1", "Trusted", dbus.Boolean(True))
-    if not bool(props.Get("org.bluez.Device1", "Connected")):
-        dev.Connect(timeout=10)
-    try:
-        dev.ConnectProfile("0000110b-0000-1000-8000-00805f9b34fb", timeout=8)  # A2DP
-    except Exception:
-        pass
+    props.Set("org.bluez.Device1", "Trusted", dbus.Boolean(True, variant_level=1), timeout=operations.timeout(5))
+    # Connected can mean RFCOMM only. Connect also negotiates missing audio
+    # profiles on an existing ACL link. Do not immediately issue another
+    # ConnectProfile while BlueZ is still publishing the audio transport.
+    dev.Connect(timeout=operations.timeout(10))
 
 
 def dbus_connect_profile(address: str, uuid: str) -> None:
@@ -470,7 +477,7 @@ def dbus_connect_profile(address: str, uuid: str) -> None:
         raise RuntimeError("python3-dbus is required") from exc
     bus = dbus.SystemBus()
     dev = dbus.Interface(bus.get_object("org.bluez", _device_path(address)), "org.bluez.Device1")
-    dev.ConnectProfile(uuid, timeout=8)
+    dev.ConnectProfile(uuid, timeout=operations.timeout(8))
 
 
 def dbus_disconnect(address: str) -> None:
@@ -481,7 +488,7 @@ def dbus_disconnect(address: str) -> None:
         return
     try:
         bus = dbus.SystemBus()
-        dbus.Interface(bus.get_object("org.bluez", _device_path(address)), "org.bluez.Device1").Disconnect(timeout=5)
+        dbus.Interface(bus.get_object("org.bluez", _device_path(address)), "org.bluez.Device1").Disconnect(timeout=operations.timeout(5))
     except Exception:
         _ctl("disconnect", address)
 
@@ -518,10 +525,11 @@ def scan_for_device(address: str, dwell: float = 6.0) -> bool:
             if props.get("Connected") or props.get("RSSI") is not None:
                 seen = True  # buds are alive: BlueZ can auto-connect or we can page
                 break
-            time.sleep(0.8)
+            operations.pause(0.8)
     finally:
         if discovery:
-            stop_discovery()
+            with operations.cleanup():
+                stop_discovery()
         else:
             _ctl("scan", "off")
     return seen or is_connected(wanted)
@@ -540,6 +548,11 @@ def trust_and_connect(
     max_rounds: int = 5,
 ) -> None:
     """Connect A2DP; mark Trusted only for paired devices (RFCOMM auto-connect)."""
+    with operations.scope(timeout):
+        _trust_and_connect(address, timeout, scan=scan, max_rounds=max_rounds)
+
+
+def _trust_and_connect(address: str, timeout: float, *, scan: bool, max_rounds: int) -> None:
     power_on()
     if not _is_paired(address):
         # The buds can remember this host while the host-side link key is gone
@@ -553,14 +566,6 @@ def trust_and_connect(
     if is_connected(address) and has_audio_sink(address):
         return
 
-    # Connected but PulseAudio card lagging — wait before tearing the link down.
-    if is_connected(address):
-        from eara.audio import ensure_bluez_card
-
-        ensure_bluez_card(address)
-        if has_audio_sink(address):
-            return
-
     last_err = ""
     per_round = max(10.0, timeout / max_rounds)
 
@@ -571,16 +576,8 @@ def trust_and_connect(
         if scan and round_num > 0:
             scan_for_device(address, dwell=5.0)
 
-        if is_connected(address):
-            if has_audio_sink(address):
-                return
-            from eara.audio import ensure_bluez_card
-
-            ensure_bluez_card(address)
-            if has_audio_sink(address):
-                return
-            dbus_disconnect(address)
-            time.sleep(1.0)
+        if is_connected(address) and has_audio_sink(address):
+            return
 
         round_deadline = time.monotonic() + per_round
         while time.monotonic() < round_deadline:
@@ -589,28 +586,22 @@ def trust_and_connect(
                 dbus_connect(address)  # synchronous: returns only with the link up
                 linked = True
             except Exception as exc:
+                operations.check()
                 last_err = str(exc)
                 out = _ctl("connect", address, timeout=12)
                 if out.strip():
                     last_err = out.strip()
             if not linked:
-                time.sleep(0.8)
+                operations.pause(0.8)
             if linked or is_connected(address):
                 settle_deadline = time.monotonic() + 12
                 while time.monotonic() < settle_deadline:
                     if has_audio_sink(address):
                         return
-                    info = device_info(address)
-                    if "ServicesResolved: yes" in info:
-                        from eara.audio import ensure_bluez_card
-
-                        ensure_bluez_card(address)
-                        if has_audio_sink(address):
-                            return
-                    time.sleep(0.4)
+                    operations.pause(0.4)
                 if has_audio_sink(address):
                     return
-            time.sleep(0.5)
+            operations.pause(0.5)
 
         if round_num + 1 < max_rounds:
             try:
@@ -620,7 +611,7 @@ def trust_and_connect(
             from eara.audio import reload_bluetooth_modules
 
             reload_bluetooth_modules(force=True)
-            time.sleep(1.0 + round_num * 0.4)
+            operations.pause(1.0 + round_num * 0.4)
 
     raise TimeoutError(
         f"Bluetooth connect timed out for {address} after {max_rounds} attempts: {last_err}"
@@ -630,7 +621,7 @@ def trust_and_connect(
 def reset_link(address: str) -> None:
     """Drop RFCOMM/A2DP and reconnect from scratch."""
     dbus_disconnect(address)
-    time.sleep(2.0)
+    operations.pause(2.0)
     from eara.audio import reload_bluetooth_modules
 
     reload_bluetooth_modules(force=True)
@@ -639,11 +630,10 @@ def reset_link(address: str) -> None:
 
 def recover_hint() -> str:
     return (
-        "Bluetooth adapter is stuck. Run:\n"
-        "  sudo systemctl restart bluetooth\n"
-        "  systemctl --user restart pulseaudio || systemctl --user restart pipewire-pulse\n"
-        "  bluetoothctl power on\n"
-        "then: eara connect"
+        "Bluetooth adapter could not be powered on. "
+        "Check Bluetooth and airplane-mode settings, then run eara doctor. "
+        "If the adapter remains unavailable, inspect the Bluetooth service "
+        "and kernel logs before restarting services."
     )
 
 
@@ -655,11 +645,15 @@ def open_rfcomm(address: str, timeout: float = 8) -> socket.socket:
     last: Optional[OSError] = None
     channel = discover_rfcomm_channel(address)
     for attempt in range(8):
+        operations.check()
         sock = socket.socket(socket.AF_BLUETOOTH, socket.SOCK_STREAM, socket.BTPROTO_RFCOMM)
-        sock.settimeout(timeout)
         try:
+            sock.settimeout(operations.timeout(timeout))
             sock.connect((address, channel))
             return sock
+        except operations.Cancelled:
+            sock.close()
+            raise
         except OSError as exc:
             last = exc
             try:
@@ -675,7 +669,7 @@ def open_rfcomm(address: str, timeout: float = 8) -> socket.socket:
             ):
                 if attempt in (2, 5):
                     scan_for_device(address, dwell=4.0)
-                time.sleep(0.7 + attempt * 0.35)
+                operations.pause(0.7 + attempt * 0.35)
                 continue
             raise
     assert last is not None
@@ -691,7 +685,7 @@ def permission_hint(exc: OSError) -> str:
             "then log out and back in."
         )
     if exc.errno in (errno.EBUSY, errno.EALREADY):
-        return "Control channel busy (PulseAudio). Retry in a second."
+        return "Control channel busy. Close other earbud-control apps and retry."
     if exc.errno in (111, 112):
         return "Earbuds asleep or out of range. Take them out of the case."
     return str(exc)
