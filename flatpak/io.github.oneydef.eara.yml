@@ -6,6 +6,8 @@ sdk: org.gnome.Sdk
 command: io.github.oneydef.eara
 
 finish-args:
+  # RFCOMM uses the host Bluetooth network namespace, even with --allow=bluetooth.
+  - --share=network
   - --share=ipc
   - --socket=wayland
   - --socket=fallback-x11
