@@ -59,6 +59,11 @@
   </keywords>
   <content_rating type="oars-1.1"/>
   <releases>
+    <release version="0.6.2" date="2026-11-10">
+      <description>
+        <p>Improve Bluetooth audio recovery, HFP routing and GUI state handling. Refine preferences and fix Flatpak Bluetooth access and RPM dependencies.</p>
+      </description>
+    </release>
     <release version="0.6.1" date="2026-11-01">
       <description>
         <p>Refresh AppStream metadata and prepare the Flatpak package for Flathub with the GNOME 51 runtime.</p>
