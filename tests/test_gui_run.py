@@ -1,4 +1,6 @@
+import tempfile
 import unittest
+from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
@@ -117,6 +119,57 @@ class GtkLogFilterTests(unittest.TestCase):
         self.assertEqual(args[0], "Gtk")
         self.assertEqual(args[1], gui.GLib.LogLevelFlags.LEVEL_CRITICAL)
         app.return_value.run.assert_called_once_with(None)
+
+
+@unittest.skipIf(gui is None, "GTK 4 / libadwaita not available")
+class ButtonIconTests(unittest.TestCase):
+    def test_horizontal_fallback_icon_without_pixel_size_does_not_crash(self):
+        button = gui.Gtk.Button()
+        with patch.object(gui, "_asset_path", return_value=None):
+            gui._icon_button(button, "off", "Off", horizontal=True)
+        icon = button.get_child().get_first_child()
+        self.assertIsInstance(icon, gui.Gtk.DrawingArea)
+        self.assertEqual(icon.get_next_sibling().get_label(), "Off")
+
+    def test_fallback_icon_without_pixel_size_does_not_crash(self):
+        icon = gui.Gtk.DrawingArea()
+        button = MagicMock()
+        with patch.object(gui, "_line_icon", return_value=icon):
+            gui._button_with_icon(button, "reset", "Reset")
+        self.assertTrue(icon.has_css_class("eara-button-icon"))
+        button.set_child.assert_called_once()
+
+
+@unittest.skipIf(gui is None, "GTK 4 / libadwaita not available")
+class AssetPathTests(unittest.TestCase):
+    def test_finds_assets_in_the_installed_data_directory(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            asset = Path(tmp) / "share/eara/packaging/ui/icons/probe-symbolic.svg"
+            asset.parent.mkdir(parents=True)
+            asset.write_text("<svg/>", encoding="utf-8")
+            with patch.object(gui.sysconfig, "get_path", return_value=tmp):
+                self.assertEqual(gui._asset_path("ui/icons/probe-symbolic.svg"), asset)
+
+    def test_missing_data_directory_does_not_crash(self):
+        with patch.object(gui.sysconfig, "get_path", return_value=None):
+            self.assertIsNone(gui._asset_path("ui/icons/does-not-exist.svg"))
+
+    def test_fonts_are_installed_from_the_resolved_asset_path(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            source = Path(tmp) / "Inter-Regular.ttf"
+            source.write_bytes(b"font")
+            home = Path(tmp) / "home"
+            home.mkdir()
+            with (
+                patch.object(gui.Path, "home", return_value=home),
+                patch.object(gui, "_asset_path", return_value=source) as resolve,
+                patch("subprocess.run") as run,
+            ):
+                gui._ensure_fonts()
+            installed = home / ".local/share/fonts/eara/Inter-Regular.ttf"
+            self.assertEqual(installed.read_bytes(), b"font")
+            resolve.assert_any_call("fonts/Inter-Regular.ttf")
+            run.assert_called_once()
 
 
 if __name__ == "__main__":

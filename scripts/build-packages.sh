@@ -128,6 +128,17 @@ HERE="${APPDIR:-$(dirname "$(readlink -f "$0")")}"
 if [ "$(basename "$HERE")" = "bin" ] && [ "$(basename "$(dirname "$HERE")")" = "usr" ]; then
   HERE="$(dirname "$(dirname "$HERE")")"
 fi
+# Save host values before adding bundled libraries and Python paths. Unset
+# variables stay absent; empty values are preserved for child host utilities.
+if [ "${EARA_APPIMAGE:-}" != "1" ]; then
+  for name in PATH LD_LIBRARY_PATH LD_PRELOAD PYTHONHOME PYTHONPATH GI_TYPELIB_PATH XDG_DATA_DIRS; do
+    unset "EARA_HOST_$name"
+    if value=$(printenv "$name"); then
+      export "EARA_HOST_$name=$value"
+    fi
+  done
+  export EARA_APPIMAGE=1
+fi
 export PATH="$HERE/usr/bin:$PATH"
 export LD_LIBRARY_PATH="$HERE/usr/lib:$HERE/usr/lib/x86_64-linux-gnu${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
 export PYTHONHOME="$HERE/usr"

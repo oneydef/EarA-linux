@@ -1,6 +1,6 @@
 """Linux discovery and read-only health shared by frontends."""
-import os
 import subprocess
+from eara.process_env import host_environment
 from eara import bluez, operations
 from eara.diagnostics import timed
 from eara.platforms.base import DiagnosticSection, ServiceHealth
@@ -17,7 +17,7 @@ class LinuxPlatformServices:
             try:
                 response = subprocess.run(command, capture_output=True, text=True,
                                           timeout=operations.timeout(6),
-                                          env={**os.environ, 'LC_ALL': 'C'}, check=False)
+                                          env={**host_environment(), 'LC_ALL': 'C'}, check=False)
                 result[key] = response.returncode == 0 and marker in response.stdout
                 if key == 'bluetooth':
                     result[key] = result[key] and 'Powered: yes' in response.stdout
@@ -60,7 +60,7 @@ class LinuxPlatformServices:
                 output = subprocess.check_output(
                     ['pactl', 'list', 'short', kind], text=True,
                     stderr=subprocess.PIPE, timeout=operations.timeout(6),
-                    env={**os.environ, 'LC_ALL': 'C'},
+                    env={**host_environment(), 'LC_ALL': 'C'},
                 )
                 sections.append(DiagnosticSection(f'Pulse {kind}', output.strip() or '(empty)', True))
             except (subprocess.SubprocessError, OSError) as exc:
