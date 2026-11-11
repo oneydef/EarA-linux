@@ -16,6 +16,11 @@ from eara.protocol import NT_LINK_UUID, RFCOMM_CHANNEL
 ADDRESS_RE = __import__("re").compile(r"^[0-9A-Fa-f]{2}(?::[0-9A-Fa-f]{2}){5}$")
 _RFCOMM_CHANNEL_CACHE: dict[str, int] = {}
 
+# Modern BlueZ no longer ships ``sdptool``, so SDP discovery silently falls back
+# to the legacy channel. Probe the known NTAPP channels as well: CMF Buds 2
+# (B179) answers on channel 16 (see LINEUP.md).
+PROBE_CHANNELS = (16, RFCOMM_CHANNEL)
+
 
 def _normalized_uuid(value: str) -> str:
     return re.sub(r"[^0-9a-f]", "", value.lower().removeprefix("0x"))
@@ -641,37 +646,75 @@ def disconnect(address: str) -> None:
     dbus_disconnect(address)
 
 
+_TRANSIENT_ERRNOS = (
+    errno.EBUSY,
+    errno.EAGAIN,
+    errno.EINPROGRESS,
+    errno.EALREADY,
+    errno.ETIMEDOUT,
+)
+
+
+def _channel_candidates(address: str) -> list[int]:
+    """Channels to try, discovered or cached first, then the known NTAPP ones.
+
+    A cached channel is only a preference: if it starts refusing (firmware
+    update, re-pair), the probe channels are still tried instead of locking the
+    process to a channel that no longer answers.
+    """
+    cached = _RFCOMM_CHANNEL_CACHE.get(address.upper())
+    if cached is not None:
+        return [cached, *(channel for channel in PROBE_CHANNELS if channel != cached)]
+    discovered = discover_rfcomm_channel(address)
+    return list(dict.fromkeys((discovered, *PROBE_CHANNELS)))
+
+
+def _connect_channel(address: str, channel: int, timeout: float) -> socket.socket:
+    sock = socket.socket(socket.AF_BLUETOOTH, socket.SOCK_STREAM, socket.BTPROTO_RFCOMM)
+    try:
+        sock.settimeout(operations.timeout(timeout))
+        sock.connect((address, channel))
+        return sock
+    except BaseException:
+        try:
+            sock.close()
+        except OSError:
+            pass
+        raise
+
+
 def open_rfcomm(address: str, timeout: float = 8) -> socket.socket:
+    key = address.upper()
     last: Optional[OSError] = None
-    channel = discover_rfcomm_channel(address)
     for attempt in range(8):
         operations.check()
-        sock = socket.socket(socket.AF_BLUETOOTH, socket.SOCK_STREAM, socket.BTPROTO_RFCOMM)
-        try:
-            sock.settimeout(operations.timeout(timeout))
-            sock.connect((address, channel))
-            return sock
-        except operations.Cancelled:
-            sock.close()
-            raise
-        except OSError as exc:
-            last = exc
+        transient = False
+        for channel in _channel_candidates(address):
             try:
-                sock.close()
-            except OSError:
-                pass
-            if exc.errno in (
-                errno.EBUSY,
-                errno.EAGAIN,
-                errno.EINPROGRESS,
-                errno.EALREADY,
-                errno.ETIMEDOUT,
-            ):
-                if attempt in (2, 5):
-                    scan_for_device(address, dwell=4.0)
-                operations.pause(0.7 + attempt * 0.35)
-                continue
-            raise
+                sock = _connect_channel(address, channel, timeout)
+            except operations.Cancelled:
+                raise
+            except OSError as exc:
+                last = exc
+                if exc.errno == errno.ECONNREFUSED:
+                    # A refusal may mean a wrong channel. Drop a stale cache entry so later connects
+                    # go straight to probing, then try the next candidate.
+                    if _RFCOMM_CHANNEL_CACHE.get(key) == channel:
+                        _RFCOMM_CHANNEL_CACHE.pop(key, None)
+                    continue
+                if exc.errno in _TRANSIENT_ERRNOS:
+                    transient = True
+                    break
+                raise
+            _RFCOMM_CHANNEL_CACHE[key] = channel
+            return sock
+        if not transient:
+            # Every candidate refused this attempt. Report it promptly; the
+            # caller can retry later if the device is temporarily unavailable.
+            break
+        if attempt in (2, 5):
+            scan_for_device(address, dwell=4.0)
+        operations.pause(0.7 + attempt * 0.35)
     assert last is not None
     raise last
 
@@ -686,6 +729,12 @@ def permission_hint(exc: OSError) -> str:
         )
     if exc.errno in (errno.EBUSY, errno.EALREADY):
         return "Control channel busy. Close other earbud-control apps and retry."
-    if exc.errno in (111, 112):
+    if exc.errno == errno.ECONNREFUSED:
+        return (
+            "Earbud control connection refused. The control channel may be "
+            "unsupported or temporarily unavailable. Close other earbud-control "
+            "apps and retry."
+        )
+    if exc.errno == errno.EHOSTDOWN:
         return "Earbuds asleep or out of range. Take them out of the case."
     return str(exc)

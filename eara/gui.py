@@ -8,6 +8,7 @@ from eara.diagnostics import timed
 from copy import deepcopy
 
 import math
+import sysconfig
 import threading
 import traceback
 from pathlib import Path
@@ -91,11 +92,16 @@ def _pick_ui_font() -> str:
 
 def _asset_path(name: str) -> Path | None:
     """Find a UI asset in a source checkout or an installed package."""
-    for path in (
+    candidates = [
         Path(__file__).resolve().parents[1] / "packaging" / name,
         Path.home() / ".local/share/eara/packaging" / name,
-        Path("/usr/share/eara/packaging") / name,
-    ):
+    ]
+    data_dir = sysconfig.get_path("data")
+    if data_dir:
+        # Wheels install the data files under ``<prefix>/share/eara/packaging``.
+        candidates.append(Path(data_dir) / "share/eara/packaging" / name)
+    candidates.append(Path("/usr/share/eara/packaging") / name)
+    for path in candidates:
         if path.is_file():
             return path
     return None
@@ -124,7 +130,7 @@ def _icon_button(button: Gtk.Button, icon: str, text: str, *, horizontal=False) 
     box.set_halign(Gtk.Align.CENTER)
     box.set_valign(Gtk.Align.CENTER)
     image = _line_icon(icon)
-    if horizontal:
+    if horizontal and hasattr(image, "set_pixel_size"):
         image.set_pixel_size(20)
     box.append(image)
     label = Gtk.Label(label=text)
@@ -193,7 +199,7 @@ def _button_with_icon(button: Gtk.Button, icon_name: str, text: str = "") -> Gtk
     content = Gtk.Box(spacing=12)
     content.set_halign(Gtk.Align.CENTER)
     icon = _line_icon(icon_name) if icon_name in ("reset", "save", "info", "refresh", "diagnostics", "find") else Gtk.Image.new_from_icon_name(icon_name)
-    if icon_name in ("reset", "save", "info"):
+    if icon_name in ("reset", "save", "info") and hasattr(icon, "set_pixel_size"):
         icon.set_pixel_size(20)
     icon.add_css_class("eara-button-icon")
     label = _ui_text(Gtk.Label(label=text))
@@ -233,16 +239,14 @@ def _ensure_fonts() -> None:
         dest = dest_dir / name
         if dest.is_file():
             continue
-        for base in (Path(__file__).resolve().parents[1], Path("/usr/share/eara")):
-            src = base / "packaging/fonts" / name
-            if not src.is_file():
-                continue
-            try:
-                dest.write_bytes(src.read_bytes())
-                installed = True
-            except OSError:
-                pass
-            break
+        src = _asset_path(f"fonts/{name}")
+        if src is None:
+            continue
+        try:
+            dest.write_bytes(src.read_bytes())
+            installed = True
+        except OSError:
+            pass
     if installed:
         import subprocess
 

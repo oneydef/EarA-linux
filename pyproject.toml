@@ -22,5 +22,20 @@ build-backend = "setuptools.build_meta"
 [tool.setuptools.packages.find]
 include = ["eara*"]
 
+[tool.setuptools.data-files]
+"share/eara/packaging" = [
+  "packaging/eara",
+  "packaging/eara.desktop",
+  "packaging/eara.metainfo.xml",
+  "packaging/eara.png",
+  "packaging/eara.svg",
+  "packaging/earbuds-hero.svg",
+]
+"share/eara/packaging/arch" = ["packaging/arch/PKGBUILD"]
+"share/eara/packaging/fonts" = ["packaging/fonts/*.ttf"]
+"share/eara/packaging/screenshots" = ["packaging/screenshots/*.png"]
+"share/eara/packaging/ui" = ["packaging/ui/*.png", "packaging/ui/README.md"]
+"share/eara/packaging/ui/icons" = ["packaging/ui/icons/*.svg"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]

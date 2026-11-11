@@ -7,6 +7,21 @@ from eara import bluez
 
 
 class BluezTests(unittest.TestCase):
+    def test_refused_control_channel_is_not_reported_as_sleeping(self):
+        hint = bluez.permission_hint(OSError(errno.ECONNREFUSED, "Connection refused"))
+        self.assertIn("control connection refused", hint)
+        self.assertIn("unsupported or temporarily unavailable", hint)
+        self.assertNotIn("asleep", hint)
+
+    def test_unreachable_device_retains_wake_up_hint(self):
+        self.assertIn("asleep", bluez.permission_hint(OSError(errno.EHOSTDOWN, "Host down")))
+
+    def setUp(self):
+        bluez._RFCOMM_CHANNEL_CACHE.clear()
+
+    def tearDown(self):
+        bluez._RFCOMM_CHANNEL_CACHE.clear()
+
     def test_power_failure_preserves_error_without_prescribing_service_restarts(self):
         with patch.object(bluez, '_ctl', side_effect=[
             'Powered: no', 'Failed to set power on: org.bluez.Error.Busy', 'Powered: no'
@@ -194,12 +209,95 @@ class BluezTests(unittest.TestCase):
             patch.object(bluez.socket, "AF_BLUETOOTH", 31, create=True),
             patch.object(bluez.socket, "BTPROTO_RFCOMM", 3, create=True),
             patch.object(bluez.socket, "socket", side_effect=[first, second]),
-            patch.object(bluez.time, "sleep"),
+            patch.object(bluez.operations, "pause"),
         ):
             result = bluez.open_rfcomm("AA:BB:CC:DD:EE:FF")
         self.assertIs(result, second)
         first.close.assert_called_once()
         second.connect.assert_called_once_with(("AA:BB:CC:DD:EE:FF", 15))
+
+    def test_open_rfcomm_probes_alternate_channel_when_refused(self):
+        bluez._RFCOMM_CHANNEL_CACHE.clear()
+        refused = MagicMock()
+        refused.connect.side_effect = OSError(errno.ECONNREFUSED, "Connection refused")
+        accepted = MagicMock()
+        with (
+            patch.object(bluez, "discover_rfcomm_channel", return_value=15),
+            patch.object(bluez.operations, "pause"),
+            patch.object(bluez.socket, "AF_BLUETOOTH", 31, create=True),
+            patch.object(bluez.socket, "BTPROTO_RFCOMM", 3, create=True),
+            patch.object(bluez.socket, "socket", side_effect=[refused, accepted]),
+        ):
+            result = bluez.open_rfcomm("AA:BB:CC:DD:EE:FF")
+        self.assertIs(result, accepted)
+        refused.close.assert_called_once()
+        accepted.connect.assert_called_once_with(("AA:BB:CC:DD:EE:FF", 16))
+        self.assertEqual(bluez._RFCOMM_CHANNEL_CACHE["AA:BB:CC:DD:EE:FF"], 16)
+
+    def test_open_rfcomm_prefers_cached_channel(self):
+        bluez._RFCOMM_CHANNEL_CACHE.clear()
+        bluez._RFCOMM_CHANNEL_CACHE["AA:BB:CC:DD:EE:FF"] = 16
+        accepted = MagicMock()
+        with (
+            patch.object(bluez, "discover_rfcomm_channel") as discover,
+            patch.object(bluez.socket, "AF_BLUETOOTH", 31, create=True),
+            patch.object(bluez.socket, "BTPROTO_RFCOMM", 3, create=True),
+            patch.object(bluez.socket, "socket", return_value=accepted),
+        ):
+            result = bluez.open_rfcomm("AA:BB:CC:DD:EE:FF")
+        self.assertIs(result, accepted)
+        discover.assert_not_called()
+        accepted.connect.assert_called_once_with(("AA:BB:CC:DD:EE:FF", 16))
+
+    def test_open_rfcomm_recovers_when_the_cached_channel_stops_answering(self):
+        bluez._RFCOMM_CHANNEL_CACHE["AA:BB:CC:DD:EE:FF"] = 15
+        refused = MagicMock()
+        refused.connect.side_effect = OSError(errno.ECONNREFUSED, "Connection refused")
+        accepted = MagicMock()
+        with (
+            patch.object(bluez, "discover_rfcomm_channel") as discover,
+            patch.object(bluez.socket, "AF_BLUETOOTH", 31, create=True),
+            patch.object(bluez.socket, "BTPROTO_RFCOMM", 3, create=True),
+            patch.object(bluez.socket, "socket", side_effect=[refused, accepted]),
+        ):
+            result = bluez.open_rfcomm("AA:BB:CC:DD:EE:FF")
+        self.assertIs(result, accepted)
+        discover.assert_not_called()
+        accepted.connect.assert_called_once_with(("AA:BB:CC:DD:EE:FF", 16))
+        self.assertEqual(bluez._RFCOMM_CHANNEL_CACHE["AA:BB:CC:DD:EE:FF"], 16)
+
+    def test_open_rfcomm_reports_refusal_without_retry_backoff(self):
+        sockets = [MagicMock(), MagicMock()]
+        for sock in sockets:
+            sock.connect.side_effect = OSError(errno.ECONNREFUSED, "Connection refused")
+        with (
+            patch.object(bluez, "discover_rfcomm_channel", return_value=15),
+            patch.object(bluez.operations, "pause") as pause,
+            patch.object(bluez, "scan_for_device") as scan,
+            patch.object(bluez.socket, "AF_BLUETOOTH", 31, create=True),
+            patch.object(bluez.socket, "BTPROTO_RFCOMM", 3, create=True),
+            patch.object(bluez.socket, "socket", side_effect=sockets),
+        ):
+            with self.assertRaises(OSError) as error:
+                bluez.open_rfcomm("AA:BB:CC:DD:EE:FF")
+        self.assertEqual(error.exception.errno, errno.ECONNREFUSED)
+        pause.assert_not_called()
+        scan.assert_not_called()
+
+    def test_open_rfcomm_does_not_probe_when_the_device_is_unreachable(self):
+        unreachable = MagicMock()
+        unreachable.connect.side_effect = OSError(errno.EHOSTDOWN, "Host is down")
+        with (
+            patch.object(bluez, "discover_rfcomm_channel", return_value=15),
+            patch.object(bluez.operations, "pause"),
+            patch.object(bluez.socket, "AF_BLUETOOTH", 31, create=True),
+            patch.object(bluez.socket, "BTPROTO_RFCOMM", 3, create=True),
+            patch.object(bluez.socket, "socket", return_value=unreachable) as factory,
+        ):
+            with self.assertRaises(OSError) as error:
+                bluez.open_rfcomm("AA:BB:CC:DD:EE:FF")
+        self.assertEqual(error.exception.errno, errno.EHOSTDOWN)
+        self.assertEqual(factory.call_count, 1)
 
 
 if __name__ == "__main__":
