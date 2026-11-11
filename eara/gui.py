@@ -8,6 +8,7 @@ from eara.diagnostics import timed
 from copy import deepcopy
 
 import math
+import sysconfig
 import threading
 import traceback
 from pathlib import Path
@@ -94,6 +95,7 @@ def _asset_path(name: str) -> Path | None:
     for path in (
         Path(__file__).resolve().parents[1] / "packaging" / name,
         Path.home() / ".local/share/eara/packaging" / name,
+        Path(sysconfig.get_path("data")) / "share/eara/packaging" / name,
         Path("/usr/share/eara/packaging") / name,
     ):
         if path.is_file():
@@ -193,7 +195,7 @@ def _button_with_icon(button: Gtk.Button, icon_name: str, text: str = "") -> Gtk
     content = Gtk.Box(spacing=12)
     content.set_halign(Gtk.Align.CENTER)
     icon = _line_icon(icon_name) if icon_name in ("reset", "save", "info", "refresh", "diagnostics", "find") else Gtk.Image.new_from_icon_name(icon_name)
-    if icon_name in ("reset", "save", "info"):
+    if icon_name in ("reset", "save", "info") and hasattr(icon, "set_pixel_size"):
         icon.set_pixel_size(20)
     icon.add_css_class("eara-button-icon")
     label = _ui_text(Gtk.Label(label=text))

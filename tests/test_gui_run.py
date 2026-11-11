@@ -119,5 +119,16 @@ class GtkLogFilterTests(unittest.TestCase):
         app.return_value.run.assert_called_once_with(None)
 
 
+@unittest.skipIf(gui is None, "GTK 4 / libadwaita not available")
+class ButtonIconTests(unittest.TestCase):
+    def test_fallback_icon_without_pixel_size_does_not_crash(self):
+        icon = gui.Gtk.DrawingArea()
+        button = MagicMock()
+        with patch.object(gui, "_line_icon", return_value=icon):
+            gui._button_with_icon(button, "reset", "Reset")
+        self.assertTrue(icon.has_css_class("eara-button-icon"))
+        button.set_child.assert_called_once()
+
+
 if __name__ == "__main__":
     unittest.main()
