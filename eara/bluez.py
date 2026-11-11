@@ -16,6 +16,11 @@ from eara.protocol import NT_LINK_UUID, RFCOMM_CHANNEL
 ADDRESS_RE = __import__("re").compile(r"^[0-9A-Fa-f]{2}(?::[0-9A-Fa-f]{2}){5}$")
 _RFCOMM_CHANNEL_CACHE: dict[str, int] = {}
 
+# Modern BlueZ no longer ships ``sdptool``, so SDP discovery silently falls back
+# to the legacy channel. Probe the known NTAPP channels as well: CMF Buds 2
+# (B179) answers on channel 16 (see LINEUP.md).
+PROBE_CHANNELS = (16, RFCOMM_CHANNEL)
+
 
 def _normalized_uuid(value: str) -> str:
     return re.sub(r"[^0-9a-f]", "", value.lower().removeprefix("0x"))
@@ -641,37 +646,51 @@ def disconnect(address: str) -> None:
     dbus_disconnect(address)
 
 
+def _channel_candidates(address: str) -> list[int]:
+    """Channels to try, discovered first and known NTAPP channels as fallbacks."""
+    cached = _RFCOMM_CHANNEL_CACHE.get(address.upper())
+    if cached is not None:
+        return [cached]
+    discovered = discover_rfcomm_channel(address)
+    return list(dict.fromkeys((discovered, *PROBE_CHANNELS)))
+
+
 def open_rfcomm(address: str, timeout: float = 8) -> socket.socket:
     last: Optional[OSError] = None
-    channel = discover_rfcomm_channel(address)
+    channels = _channel_candidates(address)
     for attempt in range(8):
         operations.check()
-        sock = socket.socket(socket.AF_BLUETOOTH, socket.SOCK_STREAM, socket.BTPROTO_RFCOMM)
-        try:
-            sock.settimeout(operations.timeout(timeout))
-            sock.connect((address, channel))
-            return sock
-        except operations.Cancelled:
-            sock.close()
-            raise
-        except OSError as exc:
-            last = exc
+        for channel in channels:
+            sock = socket.socket(socket.AF_BLUETOOTH, socket.SOCK_STREAM, socket.BTPROTO_RFCOMM)
             try:
+                sock.settimeout(operations.timeout(timeout))
+                sock.connect((address, channel))
+                _RFCOMM_CHANNEL_CACHE[address.upper()] = channel
+                return sock
+            except operations.Cancelled:
                 sock.close()
-            except OSError:
-                pass
-            if exc.errno in (
-                errno.EBUSY,
-                errno.EAGAIN,
-                errno.EINPROGRESS,
-                errno.EALREADY,
-                errno.ETIMEDOUT,
-            ):
-                if attempt in (2, 5):
-                    scan_for_device(address, dwell=4.0)
-                operations.pause(0.7 + attempt * 0.35)
-                continue
-            raise
+                raise
+            except OSError as exc:
+                last = exc
+                try:
+                    sock.close()
+                except OSError:
+                    pass
+                if exc.errno in (111, 112):
+                    # Connection refused: this channel is not the control channel.
+                    continue
+                if exc.errno in (
+                    errno.EBUSY,
+                    errno.EAGAIN,
+                    errno.EINPROGRESS,
+                    errno.EALREADY,
+                    errno.ETIMEDOUT,
+                ):
+                    break
+                raise
+        if attempt in (2, 5):
+            scan_for_device(address, dwell=4.0)
+        operations.pause(0.7 + attempt * 0.35)
     assert last is not None
     raise last
 
