@@ -1,4 +1,6 @@
+import tempfile
 import unittest
+from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
@@ -128,6 +130,38 @@ class ButtonIconTests(unittest.TestCase):
             gui._button_with_icon(button, "reset", "Reset")
         self.assertTrue(icon.has_css_class("eara-button-icon"))
         button.set_child.assert_called_once()
+
+
+@unittest.skipIf(gui is None, "GTK 4 / libadwaita not available")
+class AssetPathTests(unittest.TestCase):
+    def test_finds_assets_in_the_installed_data_directory(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            asset = Path(tmp) / "share/eara/packaging/ui/icons/probe-symbolic.svg"
+            asset.parent.mkdir(parents=True)
+            asset.write_text("<svg/>", encoding="utf-8")
+            with patch.object(gui.sysconfig, "get_path", return_value=tmp):
+                self.assertEqual(gui._asset_path("ui/icons/probe-symbolic.svg"), asset)
+
+    def test_missing_data_directory_does_not_crash(self):
+        with patch.object(gui.sysconfig, "get_path", return_value=None):
+            self.assertIsNone(gui._asset_path("ui/icons/does-not-exist.svg"))
+
+    def test_fonts_are_installed_from_the_resolved_asset_path(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            source = Path(tmp) / "Inter-Regular.ttf"
+            source.write_bytes(b"font")
+            home = Path(tmp) / "home"
+            home.mkdir()
+            with (
+                patch.object(gui.Path, "home", return_value=home),
+                patch.object(gui, "_asset_path", return_value=source) as resolve,
+                patch("subprocess.run") as run,
+            ):
+                gui._ensure_fonts()
+            installed = home / ".local/share/fonts/eara/Inter-Regular.ttf"
+            self.assertEqual(installed.read_bytes(), b"font")
+            resolve.assert_any_call("fonts/Inter-Regular.ttf")
+            run.assert_called_once()
 
 
 if __name__ == "__main__":

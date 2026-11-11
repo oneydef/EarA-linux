@@ -92,12 +92,16 @@ def _pick_ui_font() -> str:
 
 def _asset_path(name: str) -> Path | None:
     """Find a UI asset in a source checkout or an installed package."""
-    for path in (
+    candidates = [
         Path(__file__).resolve().parents[1] / "packaging" / name,
         Path.home() / ".local/share/eara/packaging" / name,
-        Path(sysconfig.get_path("data")) / "share/eara/packaging" / name,
-        Path("/usr/share/eara/packaging") / name,
-    ):
+    ]
+    data_dir = sysconfig.get_path("data")
+    if data_dir:
+        # Wheels install the data files under ``<prefix>/share/eara/packaging``.
+        candidates.append(Path(data_dir) / "share/eara/packaging" / name)
+    candidates.append(Path("/usr/share/eara/packaging") / name)
+    for path in candidates:
         if path.is_file():
             return path
     return None
@@ -235,16 +239,14 @@ def _ensure_fonts() -> None:
         dest = dest_dir / name
         if dest.is_file():
             continue
-        for base in (Path(__file__).resolve().parents[1], Path("/usr/share/eara")):
-            src = base / "packaging/fonts" / name
-            if not src.is_file():
-                continue
-            try:
-                dest.write_bytes(src.read_bytes())
-                installed = True
-            except OSError:
-                pass
-            break
+        src = _asset_path(f"fonts/{name}")
+        if src is None:
+            continue
+        try:
+            dest.write_bytes(src.read_bytes())
+            installed = True
+        except OSError:
+            pass
     if installed:
         import subprocess
 
