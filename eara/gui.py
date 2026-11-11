@@ -130,7 +130,7 @@ def _icon_button(button: Gtk.Button, icon: str, text: str, *, horizontal=False) 
     box.set_halign(Gtk.Align.CENTER)
     box.set_valign(Gtk.Align.CENTER)
     image = _line_icon(icon)
-    if horizontal:
+    if horizontal and hasattr(image, "set_pixel_size"):
         image.set_pixel_size(20)
     box.append(image)
     label = Gtk.Label(label=text)

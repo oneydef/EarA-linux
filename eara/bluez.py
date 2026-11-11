@@ -697,7 +697,7 @@ def open_rfcomm(address: str, timeout: float = 8) -> socket.socket:
             except OSError as exc:
                 last = exc
                 if exc.errno == errno.ECONNREFUSED:
-                    # Wrong channel. Drop a stale cache entry so later connects
+                    # A refusal may mean a wrong channel. Drop a stale cache entry so later connects
                     # go straight to probing, then try the next candidate.
                     if _RFCOMM_CHANNEL_CACHE.get(key) == channel:
                         _RFCOMM_CHANNEL_CACHE.pop(key, None)
@@ -709,8 +709,8 @@ def open_rfcomm(address: str, timeout: float = 8) -> socket.socket:
             _RFCOMM_CHANNEL_CACHE[key] = channel
             return sock
         if not transient:
-            # Every candidate refused the connection. A refusal is
-            # deterministic, so report it instead of burning retry backoff.
+            # Every candidate refused this attempt. Report it promptly; the
+            # caller can retry later if the device is temporarily unavailable.
             break
         if attempt in (2, 5):
             scan_for_device(address, dwell=4.0)
@@ -729,6 +729,12 @@ def permission_hint(exc: OSError) -> str:
         )
     if exc.errno in (errno.EBUSY, errno.EALREADY):
         return "Control channel busy. Close other earbud-control apps and retry."
-    if exc.errno in (111, 112):
+    if exc.errno == errno.ECONNREFUSED:
+        return (
+            "Earbud control connection refused. The control channel may be "
+            "unsupported or temporarily unavailable. Close other earbud-control "
+            "apps and retry."
+        )
+    if exc.errno == errno.EHOSTDOWN:
         return "Earbuds asleep or out of range. Take them out of the case."
     return str(exc)

@@ -7,6 +7,15 @@ from eara import bluez
 
 
 class BluezTests(unittest.TestCase):
+    def test_refused_control_channel_is_not_reported_as_sleeping(self):
+        hint = bluez.permission_hint(OSError(errno.ECONNREFUSED, "Connection refused"))
+        self.assertIn("control connection refused", hint)
+        self.assertIn("unsupported or temporarily unavailable", hint)
+        self.assertNotIn("asleep", hint)
+
+    def test_unreachable_device_retains_wake_up_hint(self):
+        self.assertIn("asleep", bluez.permission_hint(OSError(errno.EHOSTDOWN, "Host down")))
+
     def setUp(self):
         bluez._RFCOMM_CHANNEL_CACHE.clear()
 
