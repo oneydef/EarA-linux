@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from eara.motion import MotionButton, MotionSwitch, SelectionBox, MotionStack, motion_scale, GestureLabel
+from eara.process_env import host_environment
 from eara import motion, operations
 from eara.diagnostics import timed
 from copy import deepcopy
@@ -48,6 +49,7 @@ def _pick_dot_font() -> str:
     try:
         text = subprocess.run(
             ["fc-list", ":", "family"],
+            env=host_environment(),
             capture_output=True,
             text=True,
             check=False,
@@ -72,6 +74,7 @@ def _pick_ui_font() -> str:
     try:
         text = subprocess.run(
             ["fc-list", ":", "family"],
+            env=host_environment(),
             capture_output=True,
             text=True,
             check=False,
@@ -228,7 +231,7 @@ def _open_uri(parent: Gtk.Window | None, uri: str) -> None:
     except (TypeError, GLib.Error, OSError):
         import subprocess
 
-        subprocess.Popen(["xdg-open", uri], start_new_session=True)  # noqa: S603
+        subprocess.Popen(["xdg-open", uri], env=host_environment(), start_new_session=True)  # noqa: S603
 
 
 def _ensure_fonts() -> None:
@@ -250,7 +253,7 @@ def _ensure_fonts() -> None:
     if installed:
         import subprocess
 
-        subprocess.run(["fc-cache", "-f", str(dest_dir)], check=False, capture_output=True)
+        subprocess.run(["fc-cache", "-f", str(dest_dir)], env=host_environment(), check=False, capture_output=True)
 
 
 def _load_css() -> None:

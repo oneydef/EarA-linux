@@ -1,6 +1,7 @@
 """BlueZ helpers: pair/connect A2DP and open the Nothing control channel."""
 
 from __future__ import annotations
+from eara.process_env import host_environment
 from eara import operations
 
 import errno
@@ -59,6 +60,7 @@ def discover_rfcomm_channel(address: str) -> int:
     try:
         result = subprocess.run(
             ["sdptool", "browse", "--xml", address],
+            env=host_environment(),
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
@@ -80,6 +82,7 @@ def _ctl(*args: str, timeout: float = 8) -> str:
     try:
         result = subprocess.run(
             ["bluetoothctl", *args],
+            env=host_environment(),
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
@@ -300,6 +303,7 @@ class _AgentSession:
         try:
             self.proc = subprocess.Popen(
                 ["bluetoothctl"],
+                env=host_environment(),
                 stdin=subprocess.PIPE,
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,

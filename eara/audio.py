@@ -8,6 +8,7 @@ import time
 from pathlib import Path
 from typing import Optional
 
+from eara.process_env import host_environment
 from eara import bluez
 from eara import operations
 from eara.diagnostics import timed
@@ -18,6 +19,7 @@ def _pactl(*args: str, timeout: float = 6) -> str:
     try:
         result = subprocess.run(
             ["pactl", *args],
+            env=host_environment(),
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
@@ -70,6 +72,7 @@ def set_profile(address: str, profile: str) -> bool:
     """profile examples: a2dp_sink, headset_head_unit, off"""
     out = subprocess.run(
         ["pactl", "set-card-profile", card_name(address), profile],
+        env=host_environment(),
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True,
@@ -124,6 +127,7 @@ def wait_for_source(address: str, timeout: float = 12) -> Optional[str]:
 def set_default_source(source: str) -> bool:
     return subprocess.run(
         ["pactl", "set-default-source", source],
+        env=host_environment(),
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
         check=False,
@@ -137,6 +141,7 @@ def move_record_streams(source: str) -> None:
         if parts:
             subprocess.run(
                 ["pactl", "move-source-output", parts[0], source],
+                env=host_environment(),
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
                 check=False,
@@ -147,6 +152,7 @@ def move_record_streams(source: str) -> None:
 def set_default_sink(sink: str) -> bool:
     return subprocess.run(
         ["pactl", "set-default-sink", sink],
+        env=host_environment(),
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
         check=False,
@@ -167,6 +173,7 @@ def move_streams_to_default() -> None:
         if parts:
             subprocess.run(
                 ["pactl", "move-sink-input", parts[0], default],
+                env=host_environment(),
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
                 check=False,
@@ -306,6 +313,7 @@ def keep_a2dp_in_calls() -> None:
     for idx in _module_indexes("module-bluetooth-policy"):
         subprocess.run(
             ["pactl", "unload-module", idx],
+            env=host_environment(),
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
             check=False,
@@ -313,6 +321,7 @@ def keep_a2dp_in_calls() -> None:
         )
     subprocess.run(
         ["pactl", "load-module", "module-bluetooth-policy", "auto_switch=0"],
+        env=host_environment(),
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
         check=False,
