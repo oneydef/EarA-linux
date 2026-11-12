@@ -59,7 +59,7 @@ echo "built $DEB"
 
 # source tarball
 tar -C "$ROOT" --exclude dist --exclude .git --exclude '*/__pycache__' --exclude '*.py[co]' \
-    -czf "$DIST/eara-${VERSION}.tar.gz" eara packaging tests docs README.md LINEUP.md LICENSE NOTICE TRADEMARKS.md pyproject.toml nfpm.yaml
+    -czf "$DIST/eara-${VERSION}.tar.gz" eara packaging tests docs README.md LINEUP.md LICENSE NOTICE TRADEMARKS.md pyproject.toml nfpm.yaml meson.build scripts flatpak
 echo "built $DIST/eara-${VERSION}.tar.gz"
 
 # Portable AppImage. Bundle the Python runtime, PyGObject/DBus modules,
