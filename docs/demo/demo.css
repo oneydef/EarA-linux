@@ -375,3 +375,8 @@ footer > a:last-child {
     transition: none;
   }
 }
+
+.release-version { margin: 24px 0 10px; color: var(--muted, #a3a3a3); font-size: .9rem; }
+.release-version a { color: inherit; text-decoration: none; }
+.release-downloads { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px 20px; font-size: .9rem; }
+.release-downloads a { color: inherit; text-underline-offset: 4px; }

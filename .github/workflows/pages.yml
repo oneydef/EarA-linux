@@ -7,6 +7,13 @@ on:
       - "docs/demo/**"
       - "docs/index.html"
       - ".github/workflows/pages.yml"
+      - "scripts/build-pages.py"
+  release:
+    types: [published, edited, released, unpublished]
+  # Releases created with GITHUB_TOKEN do not trigger another workflow.
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
   workflow_dispatch:
 
 permissions:
@@ -20,15 +27,28 @@ concurrency:
 
 jobs:
   deploy:
+    if: >-
+      github.repository == 'oneydef/EarA-linux' &&
+      (github.event_name != 'workflow_run' ||
+       (github.event.workflow_run.conclusion == 'success' &&
+        github.event.workflow_run.event == 'push'))
     runs-on: ubuntu-latest
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Render latest published release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api repos/oneydef/EarA-linux/releases/latest > "$RUNNER_TEMP/release.json"
+          python3 scripts/build-pages.py "$RUNNER_TEMP/release.json" "$RUNNER_TEMP/site"
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: docs/demo
+          path: ${{ runner.temp }}/site
       - id: deployment
         uses: actions/deploy-pages@v4
