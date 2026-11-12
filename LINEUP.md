@@ -5,45 +5,56 @@ EarA targets the **community RFCOMM family** used by compatible earbuds
 uses. It is **not** a guarantee that every SKU is fully tested on Linux,
 and EarA is not an official vendor product.
 
+## Status definitions
+
+- **Reference device** — exercised end to end with EarA on Linux.
+- **Confirmed** — the listed device replies were captured on real hardware.
+- **Expected** — EarA has a matching profile or the vendor documents the feature,
+  but no successful Linux report has confirmed it yet.
+- **Unknown** — do not assume the feature works until a hardware report is available.
+
+Audio playback is always handled by the host Bluetooth stack (BlueZ plus
+PulseAudio/PipeWire), not by EarA. LHDC/LDAC availability depends on the adapter and
+distro codecs.
+
 ## Matrix
 
-| Product | Base | Audio (A2DP) | ANC | EQ / bass | Gestures | Fit test | Notes |
+| Product | Base / profile | Audio (A2DP) | ANC | EQ / bass | Gestures | Fit test | QA status |
 |---|---|---|---|---|---|---|---|
-| Nothing Ear (1) | B181 | host BT | yes (no adaptive) | presets only | yes | — | |
-| Nothing Ear (stick) | B157 | host BT | limited | yes | yes | — | |
-| Nothing Ear (2) | B155 | host BT | full + personal ANC | yes | yes | yes | protocol origin |
-| Nothing Ear (a) | B162 | **tested** | full | presets + bass | yes | yes | this repo’s reference device |
-| Nothing Ear (2024) | B171 | host BT | full | yes + bass | yes | yes | same family as Ear (a) |
-| Nothing Ear (open) | B174 | host BT | no | limited | limited | no | open-ear; untested here |
-| CMF Buds | B168 | host BT | via listening mode | listening + bass | yes | — | |
-| CMF Buds Pro | B163 | host BT | yes | yes | yes | yes | |
-| CMF Buds Pro 2 | B172 | host BT | yes | listening + bass | yes | yes | |
-| CMF Buds 2 | B179 | **tested** | high/off/transparency | 7 presets + custom EQ | untested | — | RFCOMM channel 16; discover via SDP |
-| CMF Neckband Pro | B164 | host BT | yes | limited | limited | no | untested |
-| Ear (3) / newer | ? | unknown | unknown | unknown | unknown | — | add SKU when dumps exist |
-
-**Audio** is always the host stack (BlueZ + PulseAudio/PipeWire). LHDC/LDAC
-depend on the dongle and distro codecs, not on this app.
+| Nothing Ear (1) | B181 | host BT | expected; no adaptive ANC | presets expected | expected | — | ❓ untested |
+| Nothing Ear (stick) | B157 | host BT | **no ANC** | presets + custom expected | expected | — | ❓ untested |
+| Nothing Ear (2) | B155 | host BT | full + personal ANC expected | presets + custom expected | expected | expected | ❓ untested |
+| Nothing Ear (a) | B162 | host BT, tested | full, tested | presets + bass, tested | tested | tested | ✅ reference device |
+| Nothing Ear (2024) | B171 | host BT | full expected | presets + bass expected | expected | expected | ❓ untested |
+| Nothing Ear (open) | B174 | host BT | **no ANC** | 4 presets + custom expected | expected | no | ❓ EarA controls untested |
+| CMF Buds | B168 | host BT | listening modes expected | presets + custom + bass expected | expected | — | ❓ untested |
+| CMF Buds Pro | B163 | host BT | expected | presets + custom expected | expected | expected | ❓ untested |
+| CMF Buds Pro 2 | B172 | host BT | full expected | 6 presets + custom + bass expected | expected | expected | ❓ untested |
+| CMF Buds 2 | B179 | host BT, tested | high / off / transparency confirmed | 7 presets + custom EQ confirmed | unknown | — | ✅ battery / ANC / EQ confirmed; RFCOMM channel 16 |
+| CMF Buds 2 Plus | unknown; name provisionally maps to B168 | host BT | unknown | unknown | unknown | unknown | 🧪 protocol not yet confirmed; see [#3](https://github.com/oneydef/EarA-linux/issues/3) |
+| CMF Neckband Pro | B164 | host BT | expected | limited controls expected | expected | no | ❓ untested |
+| Nothing Ear (3) | `ear3` profile pending | host BT | protocol confirmed; no personal ANC response | preset, custom EQ and bass protocol confirmed | protocol confirmed | unknown | 🧪 captures verified in [#29](https://github.com/oneydef/EarA-linux/issues/29); dedicated recognition awaits hardware validation in [#31](https://github.com/oneydef/EarA-linux/pull/31) |
+| Newer / unmapped devices | unknown | host BT | unknown | unknown | unknown | unknown | ❓ needs device report and protocol dump |
 
 ## What “ready for the whole lineup” means
 
 **Ready as a protocol platform:** yes, with per-model feature flags in
-`eara/models.py`. Unknown devices still get conservative controls (battery,
-ANC, EQ, latency, find).
+`eara/models.py`. Unknown devices receive only a provisional profile and must not be
+presented as hardware-confirmed.
 
-**Ready as a QA-complete companion:** no. Only Ear (a) has been exercised
-end-to-end on Linux in this tree. Other SKUs need:
+**Ready as a QA-complete companion:** no. Nothing Ear (a) is the end-to-end reference
+device. CMF Buds 2 has confirmed battery, ANC and EQ support. Nothing Ear (3) has a
+real protocol capture, while its dedicated EarA profile still needs hardware validation.
+Every other SKU remains best-effort until a Linux report confirms it.
 
-1. A serial/SKU dump from `eara status --json`
-2. Confirmation of ANC / EQ / gesture replies
-3. Optional: RFCOMM capture if a command is ignored
+## Adding or confirming a model
 
-## Adding a new model
+1. Pair the device and run `eara status --json`.
+2. Redact the Bluetooth address and most of the serial number before posting.
+3. Report which controls work: battery, ANC, EQ, gestures, find, fit test and audio.
+4. If the protocol does not connect, include a timestamped debug log or RFCOMM capture.
+5. Map a SKU prefix only after the hardware identifier is confirmed. A Bluetooth-name
+   fallback is provisional and must be labelled as such.
 
-1. Pair the device, run `eara status --json`, collect `serial` and firmware.
-2. Map SKU prefix → `base` in `SKU_PREFIX_TO_BASE`.
-3. Set capability flags on `Model`.
-4. Open an issue with the JSON if a control does nothing.
-
-Newer Nothing products that switch to LE Audio / LC3-only will need a
-**different transport**, not just new command IDs.
+Open a [device support report](https://github.com/oneydef/EarA-linux/issues/new?template=device_support.yml)
+or use [Discussions](https://github.com/oneydef/EarA-linux/discussions/categories/general).
