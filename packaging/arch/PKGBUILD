@@ -1,6 +1,6 @@
 # Maintainer: oneydef <oneydefwork@gmail.com>
 pkgname=eara
-pkgver=0.6.2
+pkgver=0.6.3
 pkgrel=1
 pkgdesc="Unofficial GTK companion for Nothing/CMF earbuds on Linux"
 arch=('any')
@@ -19,7 +19,7 @@ depends=(
 )
 makedepends=()
 source=("${pkgname}-${pkgver}.tar.gz::https://github.com/oneydef/EarA-linux/releases/download/v${pkgver}/${pkgname}-${pkgver}.tar.gz")
-sha256sums=('6c9f72812e1e17760dace5b59fac4b035062824c55049a9c4b8b6f62784dfce6')
+sha256sums=('8b3e8718e5415a20e03b138ac36c58e184470c641bee78c6b0820d82c3cad649')
 
 package() {
   cd "$srcdir"

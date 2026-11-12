@@ -115,6 +115,11 @@ jobs:
           GH_REPO: ${{ github.repository }}
           TAG: ${{ github.ref_name }}
         run: |
+          # The tags endpoint returns 404 for a draft release. Resolve draft
+          # state through gh first; announce only after publication.
+          if [ "$(gh release view "$TAG" --json isDraft,isPrerelease --jq '.isDraft or .isPrerelease')" = "true" ]; then
+            exit 0
+          fi
           RELEASE_ID=$(gh api "repos/$GH_REPO/releases/tags/$TAG" \
             --jq 'select(.draft == false and .prerelease == false and .discussion_url == null) | .id')
           if [ -n "$RELEASE_ID" ]; then
