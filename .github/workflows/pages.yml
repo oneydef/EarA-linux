@@ -9,7 +9,7 @@ on:
       - ".github/workflows/pages.yml"
       - "scripts/build-pages.py"
   release:
-    types: [published, edited, released, unpublished]
+    types: [published, edited, unpublished]
   # Releases created with GITHUB_TOKEN do not trigger another workflow.
   workflow_run:
     workflows: [CI]
@@ -22,13 +22,29 @@ permissions:
   id-token: write
 
 concurrency:
-  group: pages
+  group: pages-${{ github.event_name == 'release' && 'dispatch' || 'deploy' }}
   cancel-in-progress: true
 
 jobs:
+  # Pages only permits deployments from main. Release events run on a tag,
+  # so request a main-branch deployment without weakening environment rules.
+  release-update:
+    if: github.repository == 'oneydef/EarA-linux' && github.event_name == 'release'
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+      contents: read
+    steps:
+      - name: Request site refresh from main
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: gh workflow run pages.yml --ref main
+
   deploy:
     if: >-
       github.repository == 'oneydef/EarA-linux' &&
+      github.event_name != 'release' &&
       (github.event_name != 'workflow_run' ||
        (github.event.workflow_run.conclusion == 'success' &&
         github.event.workflow_run.event == 'push'))
