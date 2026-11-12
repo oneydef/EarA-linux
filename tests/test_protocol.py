@@ -68,6 +68,7 @@ class ProtocolTests(unittest.TestCase):
 
     def test_model_from_bt_name(self):
         self.assertEqual(model_from_name("Nothing Ear (a)").base, "B162")
+        self.assertFalse(model_from_name("Nothing Ear (stick)").anc)
         self.assertEqual(model_from_name("CMF Buds Pro 2").base, "B172")
         self.assertEqual(model_from_name("CMF Buds 2").base, "B179")
         self.assertEqual(model_from_name("CMF Buds 2 Plus").base, "B168")

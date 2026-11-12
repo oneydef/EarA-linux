@@ -76,7 +76,7 @@ MODELS_BY_BASE: dict[str, Model] = {
         name="Nothing Ear (stick)",
         base="B157",
         family="stick",
-        anc=True,
+        anc=False,
         adaptive_anc=False,
         ear_tip_fit=False,
     ),
