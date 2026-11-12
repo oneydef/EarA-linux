@@ -215,10 +215,13 @@ def ensure_music_audio(address: str) -> AudioResult:
     for profile in ("a2dp_sink", "a2dp-sink", "a2dp_sink.sbc"):
         if set_profile(address, profile):
             break
+    else:
+        return {"ok": False, "error": "Could not select an A2DP profile"}
     sink = wait_for_sink(address)
     if not sink:
         return {"ok": False, "error": "No A2DP sink after connect"}
-    set_default_sink(sink)
+    if not set_default_sink(sink):
+        return {"ok": False, "error": "Could not select the earbud audio output"}
     move_streams_to_default()
     return {
         "ok": True,

@@ -597,9 +597,16 @@ def _trust_and_connect(address: str, timeout: float, *, scan: bool, max_rounds: 
             except Exception as exc:
                 operations.check()
                 last_err = str(exc)
-                out = _ctl("connect", address, timeout=12)
-                if out.strip():
-                    last_err = out.strip()
+                error_name = getattr(exc, "get_dbus_name", lambda: "")()
+                if error_name in ("org.bluez.Error.InProgress", "org.bluez.Error.AlreadyConnected"):
+                    # Another BlueZ request is already negotiating profiles.
+                    # A CLI Connect targets the same daemon and cannot help;
+                    # allow the existing request to publish its audio sink.
+                    linked = True
+                else:
+                    out = _ctl("connect", address, timeout=12)
+                    if out.strip():
+                        last_err = out.strip()
             if not linked:
                 operations.pause(0.8)
             if linked or is_connected(address):

@@ -7,6 +7,41 @@ from eara import audio
 
 
 class AudioTests(unittest.TestCase):
+    def test_music_rejection_does_not_accept_remaining_hfp_sink(self):
+        with patch.object(audio, 'ensure_bluez_card', return_value=True), \
+             patch.object(audio, 'set_profile', return_value=False), \
+             patch.object(audio, 'wait_for_sink', return_value='old-hfp-sink') as sink, \
+             patch.object(audio, 'set_default_sink') as default, \
+             patch.object(audio, 'move_streams_to_default') as move:
+            result = audio.ensure_music_audio('AA')
+        self.assertFalse(result['ok'])
+        self.assertIn('A2DP', result['error'])
+        sink.assert_not_called()
+        default.assert_not_called()
+        move.assert_not_called()
+
+    def test_music_default_failure_does_not_move_streams(self):
+        with patch.object(audio, 'ensure_bluez_card', return_value=True), \
+             patch.object(audio, 'set_profile', return_value=True), \
+             patch.object(audio, 'wait_for_sink', return_value='a2dp-sink'), \
+             patch.object(audio, 'set_default_sink', return_value=False), \
+             patch.object(audio, 'move_streams_to_default') as move:
+            self.assertFalse(audio.ensure_music_audio('AA')['ok'])
+        move.assert_not_called()
+
+    def test_music_fallback_profile_routes_successfully(self):
+        with patch.object(audio, 'ensure_bluez_card', return_value=True), \
+             patch.object(audio, 'set_profile', side_effect=[False, True]) as profile, \
+             patch.object(audio, 'wait_for_sink', return_value='a2dp-sink'), \
+             patch.object(audio, 'set_default_sink', return_value=True), \
+             patch.object(audio, 'active_profile', return_value='a2dp-sink'), \
+             patch.object(audio, 'move_streams_to_default') as move:
+            result = audio.ensure_music_audio('AA')
+        self.assertTrue(result['ok'])
+        self.assertEqual(result['profile'], 'a2dp-sink')
+        self.assertEqual(profile.call_count, 2)
+        move.assert_called_once()
+
     def test_find_sink_accepts_pipewire_colon_mac(self):
         sinks = "42\tbluez_output.3C:B0:ED:D3:DC:40.1\tPipeWire\n"
         with patch.object(audio, "_pactl", return_value=sinks):
