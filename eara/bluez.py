@@ -3,6 +3,7 @@
 from __future__ import annotations
 from eara.process_env import host_environment
 from eara import operations
+from eara.diagnostics import timed
 
 import errno
 import os
@@ -78,6 +79,7 @@ def discover_rfcomm_channel(address: str) -> int:
     return RFCOMM_CHANNEL
 
 
+@timed("linux.bluetooth.cli")
 def _ctl(*args: str, timeout: float = 8) -> str:
     try:
         result = subprocess.run(
@@ -432,6 +434,7 @@ def is_connected(address: str) -> bool:
     return __import__("re").search(r"^\s*Connected:\s*yes\s*$", device_info(address), __import__("re").M) is not None
 
 
+@timed("linux.bluetooth.power_on")
 def power_on() -> None:
     if "Powered: yes" in _ctl("show"):
         return
@@ -464,6 +467,7 @@ def _device_path(address: str) -> str:
     return "/org/bluez/hci0/dev_" + address.replace(":", "_")
 
 
+@timed("linux.bluetooth.dbus_connect")
 def dbus_connect(address: str) -> None:
     try:
         import dbus
@@ -479,6 +483,7 @@ def dbus_connect(address: str) -> None:
     dev.Connect(timeout=operations.timeout(10))
 
 
+@timed("linux.bluetooth.dbus_connect_profile")
 def dbus_connect_profile(address: str, uuid: str) -> None:
     try:
         import dbus
@@ -508,6 +513,7 @@ def has_audio_sink(address: str) -> bool:
     return bool(find_sink(address))
 
 
+@timed("linux.bluetooth.discovery")
 def scan_for_device(address: str, dwell: float = 6.0) -> bool:
     """Run discovery so sleeping buds show up again.
 
@@ -597,9 +603,16 @@ def _trust_and_connect(address: str, timeout: float, *, scan: bool, max_rounds: 
             except Exception as exc:
                 operations.check()
                 last_err = str(exc)
-                out = _ctl("connect", address, timeout=12)
-                if out.strip():
-                    last_err = out.strip()
+                error_name = getattr(exc, "get_dbus_name", lambda: "")()
+                if error_name in ("org.bluez.Error.InProgress", "org.bluez.Error.AlreadyConnected"):
+                    # Another BlueZ request is already negotiating profiles.
+                    # A CLI Connect targets the same daemon and cannot help;
+                    # allow the existing request to publish its audio sink.
+                    linked = True
+                else:
+                    out = _ctl("connect", address, timeout=12)
+                    if out.strip():
+                        last_err = out.strip()
             if not linked:
                 operations.pause(0.8)
             if linked or is_connected(address):

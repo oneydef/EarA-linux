@@ -61,6 +61,49 @@ class BluezTests(unittest.TestCase):
         self.assertTrue(value)
         device.Connect.assert_called_once()
 
+    def test_pending_bluez_connect_waits_for_audio_without_cli_duplicate(self):
+        for name in ('org.bluez.Error.InProgress', 'org.bluez.Error.AlreadyConnected'):
+            with self.subTest(name=name):
+                now = [0.0]
+                error = RuntimeError(name)
+                error.get_dbus_name = lambda: name
+                def pause(seconds):
+                    now[0] += seconds
+                with patch.object(bluez.time, 'monotonic', side_effect=lambda: now[0]), \
+                     patch.object(bluez.operations, 'pause', side_effect=pause), \
+                     patch.object(bluez, 'power_on'), \
+                     patch.object(bluez, '_is_paired', return_value=True), \
+                     patch.object(bluez, 'is_connected', return_value=False), \
+                     patch.object(bluez, 'has_audio_sink', side_effect=lambda address: now[0] >= 3), \
+                     patch.object(bluez, '_ctl') as ctl, \
+                     patch.object(bluez, 'dbus_connect', side_effect=error) as connect, \
+                     patch.object(bluez, 'dbus_disconnect') as disconnect:
+                    bluez.trust_and_connect('AA', timeout=28, scan=False, max_rounds=1)
+                ctl.assert_called_once_with('trust', 'AA')
+                connect.assert_called_once_with('AA')
+                disconnect.assert_not_called()
+                self.assertLess(now[0], 4)
+
+    def test_pending_connect_without_audio_still_times_out(self):
+        now = [0.0]
+        error = RuntimeError('pending')
+        error.get_dbus_name = lambda: 'org.bluez.Error.InProgress'
+        def pause(seconds):
+            now[0] += seconds
+            bluez.operations.check()
+        with patch.object(bluez.time, 'monotonic', side_effect=lambda: now[0]), \
+             patch.object(bluez.operations, 'pause', side_effect=pause), \
+             patch.object(bluez, 'power_on'), \
+             patch.object(bluez, '_is_paired', return_value=True), \
+             patch.object(bluez, 'is_connected', return_value=False), \
+             patch.object(bluez, 'has_audio_sink', return_value=False), \
+             patch.object(bluez, '_ctl') as ctl, \
+             patch.object(bluez, 'dbus_connect', side_effect=error):
+            with self.assertRaises(TimeoutError):
+                bluez.trust_and_connect('AA', timeout=2, scan=False, max_rounds=1)
+        ctl.assert_called_once_with('trust', 'AA')
+        self.assertLess(now[0], 2.5)
+
     def test_connected_control_link_requests_audio_without_disconnect(self):
         now = [0.0]
         def pause(seconds):
