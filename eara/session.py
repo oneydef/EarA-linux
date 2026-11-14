@@ -141,7 +141,7 @@ class Device:
     def _resolve_model(serial: str, named: Model) -> Model:
         """Pick catalog entry from serial prefix and Bluetooth name."""
         if serial.startswith(("SH", "BH")):
-            # SH/BH serials: first digit pair often mis-identifies Ear (a) as Ear (1).
+            # SH/BH digit pairs are ambiguous; a known Bluetooth name wins.
             return named if named.base != "unknown" else model_from_serial(serial)
         serial_model = model_from_serial(serial)
         if serial_model.base != "unknown":
