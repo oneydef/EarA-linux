@@ -105,10 +105,11 @@ Linux is the primary platform. Native macOS and Windows support is planned after
 ## Featured
 
 - [OMG! Ubuntu — *This App Lets You Manage Nothing & CMF Earbuds on Linux*](https://www.omgubuntu.co.uk/2026/10/cmf-nothing-earbuds-linux-companion-app)
-- [FOSSWire — *EarA Open-Source GTK4 App Manages Nothing and CMF Earbuds on Linux*](https://fosswire.org/news/eara-open-source-gtk4-app-manages-nothing-and-cmf-earbuds-on)
+- [LinuxLinks — *EarA — manage Nothing and CMF earbuds*](https://www.linuxlinks.com/eara-manage-nothing-cmf-earbuds/)
+- [FOSSWire — *EarA brings management for Nothing and CMF earbuds to Linux*](https://fosswire.org/news/eara-brings-management-for-nothing-and-cmf-earbuds-to-linux)
 - [Root.cz — *Softwarová sklizeň: EarA for Nothing and CMF earbuds*](https://www.root.cz/clanky/softwarova-sklizen-4-11-2026-postovni-server-s-kalendari-a-kontakty/)
 - [Mamá Libre — *EarA: la app open source para manejar auriculares Nothing y CMF desde Linux*](https://mamalibre.com.ar/blog/eara-la-app-open-source-para-manejar-auriculares-nothing-y-cmf-desde-linux)
-- [LinuxFokus — *Mit dieser App können Sie Nothing- und CMF-Ohrhörer unter Linux verwalten*](https://linuxfokus.de/mit-dieser-app-koennen-sie-nothing-und-cmf-ohrhoerer-unter-linux-verwalten/)
+- [LinuxFokus — *EarA*](https://linuxfokus.de/eara/)
 - [Hacks.gr — *Νέο πρόγραμμα φέρνει τον πλήρη έλεγχο των ακουστικών Nothing και CMF στο Linux*](https://hacks.gr/neo-programma-fernei-ton-pliri-elegcho-ton-akoystikon-nothing-kai-cmf-sto-linux/)
 
 ## Support
