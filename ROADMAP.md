@@ -23,7 +23,7 @@ Future UI changes will be developed incrementally so device reliability and feat
 
 - Expand real-hardware testing across Nothing and CMF models.
 - Improve Bluetooth reconnection, diagnostics, and recovery.
-- Complete distribution work, including Flatpak and easier package updates.
+- Keep the Flathub package and downloadable release formats reliable and current.
 - Improve translations, documentation, and automated tests.
 - Keep the GUI and CLI aligned as new controls are added.
 

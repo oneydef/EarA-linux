@@ -40,7 +40,14 @@ EarA brings battery status, noise control, EQ, gestures, Find My Earbuds, and Bl
 
 ## Install
 
-Download the latest **AppImage**, **DEB**, **RPM**, or standalone **Flatpak** bundle from [GitHub Releases](https://github.com/oneydef/EarA-linux/releases/latest).
+Install EarA from [Flathub](https://flathub.org/apps/io.github.oneydef.eara):
+
+```bash
+flatpak install flathub io.github.oneydef.eara
+flatpak run io.github.oneydef.eara
+```
+
+AppImage, DEB, RPM, and standalone Flatpak bundles are also available from [GitHub Releases](https://github.com/oneydef/EarA-linux/releases/latest).
 
 ### Debian / Ubuntu
 
@@ -49,7 +56,7 @@ sudo dpkg -i eara_*_all.deb
 eara gui
 ```
 
-### Flatpak bundle
+### Standalone Flatpak bundle
 
 ```bash
 flatpak install --user ./EarA-*.flatpak
