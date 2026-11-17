@@ -112,6 +112,7 @@ Linux is the primary platform. Native macOS and Windows support is planned after
 ## Featured
 
 - [OMG! Ubuntu — *This App Lets You Manage Nothing & CMF Earbuds on Linux*](https://www.omgubuntu.co.uk/2026/10/cmf-nothing-earbuds-linux-companion-app)
+- [Linux Today — *EarA 0.6.1 Adds a Redesigned Nothing-Inspired UI, Connection Improvements, and Flatpak*](https://www.linuxtoday.com/blog/eara-0-6-1-adds-a-redesigned-nothing-inspired-ui-connection-improvements-and-flatpak/)
 - [LinuxLinks — *EarA — manage Nothing and CMF earbuds*](https://www.linuxlinks.com/eara-manage-nothing-cmf-earbuds/)
 - [FOSSWire — *EarA brings management for Nothing and CMF earbuds to Linux*](https://fosswire.org/news/eara-brings-management-for-nothing-and-cmf-earbuds-to-linux)
 - [Root.cz — *Softwarová sklizeň: EarA for Nothing and CMF earbuds*](https://www.root.cz/clanky/softwarova-sklizen-4-11-2026-postovni-server-s-kalendari-a-kontakty/)
