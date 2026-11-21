@@ -64,6 +64,15 @@ DEFAULT = Model(
 )
 
 MODELS_BY_BASE: dict[str, Model] = {
+    # Local identifier until a hardware SKU is confirmed. Issue #29, fw 1.0.1.69.
+    "ear3": Model(
+        name="Nothing Ear (3)",
+        base="ear3",
+        family="ear3",
+        bass_enhance=True,
+        adaptive_anc=False,  # Not verified in the supplied device dump.
+        find_my=False,
+    ),
     "B181": Model(
         name="Nothing Ear (1)",
         base="B181",
@@ -173,6 +182,10 @@ def model_from_serial(serial: str | None) -> Model:
     serial = serial.strip()
     if serial.startswith("B") and serial[:4] in MODELS_BY_BASE:
         return MODELS_BY_BASE[serial[:4]]
+    # SH/BH digit pairs are not SKU identifiers (Ear (3) collides with Ear (1)).
+    # Resolve these devices by their Bluetooth name instead.
+    if serial.startswith(("SH", "BH")):
+        return DEFAULT
     prefix = ""
     for ch in serial:
         if ch.isdigit():
@@ -193,6 +206,8 @@ def model_from_serial(serial: str | None) -> Model:
 def model_from_name(name: str) -> Model:
     value = (name or "").lower()
     mapping = [
+        ("ear (3)", "ear3"),
+        ("ear(3)", "ear3"),
         ("ear (a)", "B162"),
         ("ear(a)", "B162"),
         ("ear (open)", "B174"),
