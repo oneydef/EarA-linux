@@ -182,8 +182,9 @@ MAX_FRAME_BUFFER = 8192
 
 
 class FrameParser:
-    def __init__(self) -> None:
+    def __init__(self, *, allow_payload_crc: bool = False) -> None:
         self._buf = bytearray()
+        self._allow_payload_crc = allow_payload_crc
 
     def clear(self) -> None:
         self._buf.clear()
@@ -218,8 +219,16 @@ class FrameParser:
             raw = bytes(self._buf[:total])
             del self._buf[:total]
             payload = raw[8 : 8 + length]
-            if crc_size and crc16_arc(raw[:-2]) != struct.unpack_from("<H", raw, total - 2)[0]:
-                continue
+            if crc_size:
+                expected_crc = struct.unpack_from("<H", raw, total - 2)[0]
+                if crc16_arc(raw[:-2]) != expected_crc:
+                    # CMF Buds Pro 2 can checksum only the response payload.
+                    if not (
+                        self._allow_payload_crc
+                        and (command >> 8) in (DIR_RESPONSE, DIR_ACK)
+                        and crc16_arc(payload) == expected_crc
+                    ):
+                        continue
             yield Frame(
                 command=command & 0xFF,
                 direction=(command >> 8) & 0xFF,

@@ -111,7 +111,7 @@ class Device:
         self.transport = transport
         self.audio_backend = audio_backend
         self._sock: Optional[ByteChannel] = None
-        self._parser = FrameParser()
+        self._parser = FrameParser(allow_payload_crc=self.model.base == "B172")
         self._seq = 1
         self._battery_cache: dict[str, dict[str, object]] = {}
         self._lock = threading.RLock()
@@ -300,7 +300,7 @@ class Device:
                 self._sock = self.transport.open_channel(self.address)
             except OSError as exc:
                 raise RuntimeError(self.transport.permission_hint(exc)) from exc
-            self._parser = FrameParser()
+            self._parser.clear()
             if probe_device:
                 self._request(CMD_DEVICE_INFO, DIR_GET)
 
@@ -318,7 +318,9 @@ class Device:
         return self._seq
 
     def _flush_parser(self) -> None:
-        self._parser.clear()
+        # status() can identify a renamed device from its serial number.
+        # Rebuild the request parser using the current model, not its initial name.
+        self._parser = FrameParser(allow_payload_crc=self.model.base == "B172")
 
     def _send(self, command: int, direction: int, payload: bytes = b"", seq: Optional[int] = None) -> int:
         operations.check()
@@ -560,7 +562,7 @@ class Device:
                     self._sock = self.transport.open_channel(self.address)
                 except OSError as exc:
                     raise RuntimeError(self.transport.permission_hint(exc)) from exc
-                self._parser = FrameParser()
+                self._parser.clear()
             try:
                 payload = self._request(CMD_BATTERY, timeout=1.0, require=True)
             finally:
@@ -718,6 +720,20 @@ class Device:
         mapping_legacy = {"off": 0, "left": 1, "right": 2, "both": 3}
         if which not in mapping:
             raise ValueError("which must be left|right|both|off")
+        if self.model.base == "B172":
+            # Buds Pro 2 takes a separate command for each side.
+            sides = (0x02, 0x03) if which in ("both", "off") else (mapping[which][0],)
+            missing = []
+            with self._session():
+                for side in sides:
+                    reply = self._request(CMD_RING, DIR_SET, bytes([side, which != "off"]))
+                    if reply is None:
+                        missing.append("left" if side == 0x02 else "right")
+                        if which != "off":
+                            break
+            if missing:
+                raise RuntimeError("Ring command not confirmed by: " + ", ".join(missing))
+            return
         side, ring = mapping[which]
         with self._session():
             if self._request(CMD_RING, DIR_SET, bytes([side, ring])) is None:

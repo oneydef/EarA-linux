@@ -7,7 +7,8 @@ from collections import deque
 
 from eara import operations
 from eara.protocol import (
-    CMD_BATTERY, DIR_GET, DIR_RESPONSE, FrameParser, MAX_FRAME_BUFFER,
+    CMD_BATTERY, CMD_RING, DIR_ACK, DIR_GET, DIR_RESPONSE, DIR_SET,
+    FrameParser, MAX_FRAME_BUFFER,
     build_frame,
 )
 from eara.session import Device
@@ -91,6 +92,58 @@ class ProtocolStreamTests(unittest.TestCase):
         parser = FrameParser()
         parser.feed(b"noise" + bad + build_frame(CMD_BATTERY, DIR_RESPONSE, b"good"))
         self.assertEqual([f.payload for f in parser.frames()], [b"good"])
+
+    def test_buds_pro_2_accepts_payload_crc_for_battery_response(self):
+        reply = bytes.fromhex("55 60 01 07 40 05 00 02 02 02 5f 03 5f 2c a2")
+        corrupt = reply[:10] + b"\x50" + reply[11:]
+        for name in ("CMF Buds Pro 2", "Nothing Ear (a)"):
+            with self.subTest(name=name):
+                channel = ScriptedChannel([corrupt + reply])
+                device = Device("AA:BB:CC:DD:EE:FF", name, transport=StreamTransport(channel))
+                with device._session():
+                    expected = reply[8:-2] if name == "CMF Buds Pro 2" else None
+                    self.assertEqual(device._request(CMD_BATTERY), expected)
+
+    def test_buds_pro_2_rings_and_stops_each_side(self):
+        for which, enabled in (("both", 1), ("off", 0)):
+            with self.subTest(which=which):
+                channel = ScriptedChannel([
+                    build_frame(CMD_RING, DIR_ACK, seq=2),
+                    build_frame(CMD_RING, DIR_ACK, seq=3),
+                ])
+                device = Device("AA:BB:CC:DD:EE:FF", "CMF Buds Pro 2",
+                                transport=StreamTransport(channel))
+                device.ring(which)
+                self.assertEqual(channel.sent, [
+                    build_frame(CMD_RING, DIR_SET, bytes([2, enabled]), seq=2),
+                    build_frame(CMD_RING, DIR_SET, bytes([3, enabled]), seq=3),
+                ])
+
+    def test_payload_crc_tracks_model_resolved_after_construction(self):
+        reply = bytes.fromhex("55 60 01 07 40 05 00 02 02 02 5f 03 5f 2c a2")
+        channel = ScriptedChannel([reply])
+        device = Device("AA:BB:CC:DD:EE:FF", "Renamed earbuds",
+                        transport=StreamTransport(channel))
+        device.model = device._resolve_model("76TEST", device.model)
+        self.assertEqual(device.model.base, "B172")
+        with device._session():
+            self.assertEqual(device._request(CMD_BATTERY, require=True), reply[8:-2])
+
+    def test_stop_attempts_right_even_without_left_acknowledgement(self):
+        for first_reply in (b"", OSError("receive failed")):
+            with self.subTest(first_reply=first_reply):
+                channel = ScriptedChannel([
+                    first_reply, build_frame(CMD_RING, DIR_ACK, seq=3),
+                ])
+                device = Device("AA:BB:CC:DD:EE:FF", "CMF Buds Pro 2",
+                                transport=StreamTransport(channel))
+                with self.assertRaisesRegex(RuntimeError, "not confirmed by: left"):
+                    device.ring("off")
+                self.assertEqual(channel.sent, [
+                    build_frame(CMD_RING, DIR_SET, bytes([2, 0]), seq=2),
+                    build_frame(CMD_RING, DIR_SET, bytes([3, 0]), seq=3),
+                ])
+                self.assertTrue(channel.closed)
 
     def test_impossible_length_does_not_block_following_frame(self):
         for length in (MAX_FRAME_BUFFER, 65535):
