@@ -119,6 +119,32 @@ class ProtocolStreamTests(unittest.TestCase):
                     build_frame(CMD_RING, DIR_SET, bytes([3, enabled]), seq=3),
                 ])
 
+    def test_payload_crc_tracks_model_resolved_after_construction(self):
+        reply = bytes.fromhex("55 60 01 07 40 05 00 02 02 02 5f 03 5f 2c a2")
+        channel = ScriptedChannel([reply])
+        device = Device("AA:BB:CC:DD:EE:FF", "Renamed earbuds",
+                        transport=StreamTransport(channel))
+        device.model = device._resolve_model("76TEST", device.model)
+        self.assertEqual(device.model.base, "B172")
+        with device._session():
+            self.assertEqual(device._request(CMD_BATTERY, require=True), reply[8:-2])
+
+    def test_stop_attempts_right_even_without_left_acknowledgement(self):
+        for first_reply in (b"", OSError("receive failed")):
+            with self.subTest(first_reply=first_reply):
+                channel = ScriptedChannel([
+                    first_reply, build_frame(CMD_RING, DIR_ACK, seq=3),
+                ])
+                device = Device("AA:BB:CC:DD:EE:FF", "CMF Buds Pro 2",
+                                transport=StreamTransport(channel))
+                with self.assertRaisesRegex(RuntimeError, "not confirmed by: left"):
+                    device.ring("off")
+                self.assertEqual(channel.sent, [
+                    build_frame(CMD_RING, DIR_SET, bytes([2, 0]), seq=2),
+                    build_frame(CMD_RING, DIR_SET, bytes([3, 0]), seq=3),
+                ])
+                self.assertTrue(channel.closed)
+
     def test_impossible_length_does_not_block_following_frame(self):
         for length in (MAX_FRAME_BUFFER, 65535):
             with self.subTest(length=length):

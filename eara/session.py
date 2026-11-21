@@ -318,7 +318,9 @@ class Device:
         return self._seq
 
     def _flush_parser(self) -> None:
-        self._parser.clear()
+        # status() can identify a renamed device from its serial number.
+        # Rebuild the request parser using the current model, not its initial name.
+        self._parser = FrameParser(allow_payload_crc=self.model.base == "B172")
 
     def _send(self, command: int, direction: int, payload: bytes = b"", seq: Optional[int] = None) -> int:
         operations.check()
@@ -721,9 +723,16 @@ class Device:
         if self.model.base == "B172":
             # Buds Pro 2 takes a separate command for each side.
             sides = (0x02, 0x03) if which in ("both", "off") else (mapping[which][0],)
+            missing = []
             with self._session():
                 for side in sides:
-                    self._request(CMD_RING, DIR_SET, bytes([side, which != "off"]), require=True)
+                    reply = self._request(CMD_RING, DIR_SET, bytes([side, which != "off"]))
+                    if reply is None:
+                        missing.append("left" if side == 0x02 else "right")
+                        if which != "off":
+                            break
+            if missing:
+                raise RuntimeError("Ring command not confirmed by: " + ", ".join(missing))
             return
         side, ring = mapping[which]
         with self._session():
