@@ -129,6 +129,28 @@ class ProtocolTests(unittest.TestCase):
         self.assertEqual(parsed["right"]["pinch-hold"], "voice-assistant")
         self.assertEqual(parsed["right"]["double-pinch-hold"], "noise-control-trans-off")
 
+    def test_parse_count_prefixed_gestures_at_legacy_layout_length(self):
+        payload = bytes.fromhex(
+            "08 03 01 02 09 03 01 03 08 03 01 07 16 03 01 09 01 "
+            "02 01 02 09 02 01 03 08 02 01 07 16 02 01 09 01"
+        )
+        parsed = parse_gestures(payload)
+        expected = {
+            "double-pinch": "skip-forward",
+            "triple-pinch": "skip-back",
+            "pinch-hold": "noise-control",
+            "double-pinch-hold": "no-action",
+        }
+        self.assertEqual(parsed["left"], expected)
+        self.assertEqual(parsed["right"], expected)
+
+    def test_parse_play_pause_gesture_action(self):
+        payload = bytes.fromhex("01 02 01 09 02")
+        self.assertEqual(
+            parse_gestures(payload)["left"]["double-pinch-hold"],
+            "play-pause",
+        )
+
     def test_ear_tip_result_frame(self):
         # Captured-style result frame: cmd 0x0d, payload L/R seal bytes.
         body = build_frame(0x0D, DIR_RESPONSE, bytes([0, 1]), seq=0)

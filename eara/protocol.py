@@ -102,6 +102,7 @@ def parse_named_mode(payload: bytes, modes: dict[str, int]) -> Optional[str]:
 # Gesture action bytes (same encoding as Nothing X / ear-web).
 GESTURE_ACTIONS = {
     "no-action": 0x01,
+    "play-pause": 0x02,
     "skip-back": 0x08,
     "skip-forward": 0x09,
     "voice-assistant": 0x0B,
@@ -353,7 +354,12 @@ def parse_bass(payload: bytes) -> dict[str, object]:
 def parse_gestures(payload: bytes) -> dict[str, dict[str, str]]:
     """Decode gesture GET payload into side → type → action name."""
     out: dict[str, dict[str, str]] = {"left": {}, "right": {}}
-    if len(payload) >= 33:
+    if not payload:
+        return out
+
+    count = payload[0]
+    count_prefixed = 1 + count * 4 == len(payload)
+    if len(payload) >= 33 and not count_prefixed:
         for (side, gtype), offset in GESTURE_READ_OFFSETS.items():
             wire = payload[offset]
             action = ACTION_FROM_WIRE.get(wire)
@@ -361,9 +367,7 @@ def parse_gestures(payload: bytes) -> dict[str, dict[str, str]]:
                 out[side][gtype] = action
         if out["left"] or out["right"]:
             return out
-    if not payload:
-        return out
-    count = payload[0]
+
     side_from_device = {0x01: "left", 0x02: "left", 0x03: "right"}
     type_from_wire = {value: key for key, value in GESTURE_TYPES.items()}
     for i in range(count):
