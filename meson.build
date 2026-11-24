@@ -1,6 +1,6 @@
 project(
   'eara',
-  version: '0.6.4',
+  version: '0.7.0',
   meson_version: '>=0.60.0',
 )
 
