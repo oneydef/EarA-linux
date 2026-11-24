@@ -64,6 +64,10 @@
   </keywords>
   <content_rating type="oars-1.1"/>
   <releases>
+    <release version="0.7.0" date="2026-11-24">
+      <description><p>Add CMF Buds Pro 2 protocol support and fix CMF Buds 2 Plus gesture decoding,
+        including the Play / pause action confirmed on hardware.</p></description>
+    </release>
     <release version="0.6.4" date="2026-11-14">
       <description><p>Avoid duplicate Bluetooth connection requests, report failed Music routing correctly,
         and add optional connection timing diagnostics.</p></description>
